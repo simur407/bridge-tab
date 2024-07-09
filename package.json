@@ -1,0 +1,11 @@
+{
+  "name": "bridge-tab",
+  "engines": {
+    "node": "18"
+  },
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ]
+}

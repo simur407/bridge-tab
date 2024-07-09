@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "sourceMap": true,
+    "allowJs": true,
+    "baseUrl": ".",
+  },
+  "include": [
+    "backend",
+    "frontend"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "outDir": "./dist",
+    "sourceMap": true,
+    "strict": true,
+    "baseUrl": "./",
+    "paths": {
+      "@modules/*": ["modules/*"],
+      "@packages/*": ["packages/*"],
+      "@bridge-tab/*": ["*"]
+    }
+  },
+  "compileOnSave": true,
+  "include": ["packages", "modules", "src"]
+}
