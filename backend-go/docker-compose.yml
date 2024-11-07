@@ -1,0 +1,23 @@
+networks:
+  default:
+    name: bridge-tab
+services:
+  db:
+    image: postgres
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: bridge-tab
+      POSTGRES_PASSWORD: bridge-tab
+    ports:
+      - '5432:5432'
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: bridge-tab@one-unit.com
+      PGADMIN_DEFAULT_PASSWORD: DuplicateBridge
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+    - '8888:80'
+    volumes:
+    - ./servers.json:/pgadmin4/servers.json
