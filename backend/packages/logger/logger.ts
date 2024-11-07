@@ -1,4 +1,4 @@
-import firebaseLogger from 'firebase-functions/logger';
+import * as firebaseLogger from 'firebase-functions/logger';
 
 export interface Logger {
   debug(message: string, data?: object): void;

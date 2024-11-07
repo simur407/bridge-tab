@@ -1,13 +1,16 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "module": "NodeNext",
+    "module": "CommonJS",
     "noImplicitReturns": true,
-    "noUnusedLocals": true,
     "outDir": "./dist",
     "sourceMap": true,
+    "declaration": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "strict": true,
-    "baseUrl": "./",
+    "baseUrl": ".",
     "paths": {
       "@modules/*": ["modules/*"],
       "@packages/*": ["packages/*"],

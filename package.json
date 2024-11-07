@@ -3,6 +3,9 @@
   "engines": {
     "node": "18"
   },
+  "scripts": {
+    "serve:backend": "cd backend && yarn serve"
+  },
   "private": true,
   "workspaces": [
     "backend",
