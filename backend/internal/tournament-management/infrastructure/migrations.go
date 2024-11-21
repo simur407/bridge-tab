@@ -16,16 +16,16 @@ func m0001_initial(db *sql.DB) {
 
 		CREATE TABLE IF NOT EXISTS tournament_management.tournament (
 			id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
-			name VARCHAR(100) NOT NULL,
-			created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			name TEXT NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			started_at TIMESTAMP
 		);
 
 		CREATE TABLE IF NOT EXISTS tournament_management.team (
 			id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
 			tournament_id UUID NOT NULL REFERENCES tournament_management.tournament (id),
-			name VARCHAR(100) NOT NULL,
-			created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			name TEXT NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 			CONSTRAINT team_name_unique UNIQUE (tournament_id, name)
 		);
@@ -33,7 +33,7 @@ func m0001_initial(db *sql.DB) {
 		CREATE TABLE IF NOT EXISTS tournament_management.contestant (
 			id UUID PRIMARY KEY NOT NULL,
 			tournament_id UUID NOT NULL REFERENCES tournament_management.tournament (id),
-			created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 			CONSTRAINT contestant_tournament_unique UNIQUE (tournament_id, id)
 		);
@@ -41,7 +41,7 @@ func m0001_initial(db *sql.DB) {
 		CREATE TABLE IF NOT EXISTS tournament_management.team_contestant (
 			team_id UUID NOT NULL REFERENCES tournament_management.team (id),
 			contestant_id UUID NOT NULL REFERENCES tournament_management.contestant (id),
-			created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 			PRIMARY KEY (team_id, contestant_id)
 		);
