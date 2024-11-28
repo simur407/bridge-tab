@@ -33,3 +33,8 @@ func (u *User) GetEvents() []any {
 func (u *User) Commit() {
 	u.Events = slices.Delete(u.Events, 0, len(u.Events))
 }
+
+type UserRepository interface {
+	Save(user *User) error
+	Load(id *UserId) (*User, error)
+}

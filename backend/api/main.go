@@ -1,7 +1,8 @@
 package main
 
 import (
-	routes "bridge-tab/api/routes/tournament-management"
+	auth "bridge-tab/api/routes/auth"
+	tournament_management "bridge-tab/api/routes/tournament-management"
 
 	"database/sql"
 
@@ -27,7 +28,8 @@ func main() {
 		panic(err)
 	}
 
-	routes.TournamentManagement(app, db)
+	auth.Auth(app, db)
+	tournament_management.TournamentManagement(app, db)
 
 	app.Listen(":3000")
 }

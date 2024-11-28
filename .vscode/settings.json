@@ -20,4 +20,19 @@
     "Turnament",
     "turnaments"
   ],
+  "todohighlight.include": [
+    "**/*.js",
+    "**/*.jsx",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.html",
+    "**/*.css",
+    "**/*.scss",
+    "**/*.php",
+    "**/*.rb",
+    "**/*.txt",
+    "**/*.mdown",
+    "**/*.md",
+    "**/*.go",
+  ]
 }
