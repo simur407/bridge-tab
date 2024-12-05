@@ -17,15 +17,16 @@ func main() {
 	app.Use(cors.New())
 	app.Use(logger.New())
 
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("I am alive")
-	})
+	app.Static("/", "../frontend")
 
 	dbString := "postgres://bridge-tab:bridge-tab@localhost/bridge-tab?sslmode=disable"
 	db, err := sql.Open("postgres", dbString)
 
 	if err != nil {
 		panic(err)
+	}
+	if err = db.Ping(); err != nil {
+		panic("failed to connect to database")
 	}
 
 	auth.Auth(app, db)

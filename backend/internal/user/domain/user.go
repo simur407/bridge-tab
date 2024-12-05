@@ -15,13 +15,13 @@ type UserRegistered struct {
 }
 
 type User struct {
-	State UserState
+	State  UserState
 	Events []any
 }
 
 func RegisterUser(id *UserId, name string) *User {
 	return &User{
-		State: UserState{Id: *id, Name: name},
+		State:  UserState{Id: *id, Name: name},
 		Events: []any{UserRegistered{Id: *id, Name: name}},
 	}
 }
@@ -37,4 +37,13 @@ func (u *User) Commit() {
 type UserRepository interface {
 	Save(user *User) error
 	Load(id *UserId) (*User, error)
+}
+
+type UserDto struct {
+	Id   string
+	Name string
+}
+
+type UserReadRepository interface {
+	GetById(id string) (*UserDto, error)
 }

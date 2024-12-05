@@ -1,8 +1,11 @@
 package routes
 
 import (
-	auth "bridge-tab/internal/auth"
 	"time"
+
+	"bridge-tab/api/middleware"
+	auth "bridge-tab/internal/auth"
+	infra "bridge-tab/internal/user/infrastructure"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -12,11 +15,18 @@ type LoginRequestDto struct {
 	// password will be done in the future
 }
 
-func login() func (c *fiber.Ctx) error {
-	return func (c *fiber.Ctx) error {
+func login() func(c *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		body := new(LoginRequestDto)
 
 		if err := c.BodyParser(body); err != nil {
+			return err
+		}
+
+		tx := middleware.GetTransaction(c)
+		repository := infra.PostgresUserRepository{Tx: tx}
+		_, err := repository.GetById(body.Login)
+		if err != nil {
 			return err
 		}
 

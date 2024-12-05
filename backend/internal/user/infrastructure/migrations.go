@@ -12,12 +12,12 @@ func Migrate(db *sql.DB) {
 
 func m0001_initial(db *sql.DB) {
 	_, err := db.Exec(`
-		CREATE SCHEMA IF NOT EXISTS user;
+		CREATE SCHEMA IF NOT EXISTS "user";
 
-		CREATE TABLE IF NOT EXISTS user.users (
+		CREATE TABLE IF NOT EXISTS "user".users (
 			id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
 			name TEXT NOT NULL,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 		);
 	`)
 	if err != nil {

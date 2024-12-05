@@ -7,15 +7,16 @@ import (
 )
 
 // TODO: dev only; change and hide key behind envs
-var key = []byte("ZT32sOpCt6HzF7dBPVlPHIARsgiwIGbCJmyADp9iRoWhKNhtkQj0bGkrnkMZzDpX")
+var Key = []byte("ZT32sOpCt6HzF7dBPVlPHIARsgiwIGbCJmyADp9iRoWhKNhtkQj0bGkrnkMZzDpX")
+
 // 10 days
-const EXPIRES_AT = time.Hour * 24 * 10 
+const EXPIRES_AT = time.Hour * 24 * 10
 
 func Generate(userId string) (string, error) {
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":   userId,
+		"id":  userId,
 		"exp": time.Now().Add(EXPIRES_AT).Unix(),
-	}).SignedString(key)
+	}).SignedString(Key)
 }
 
 func Validate(token string) (*jwt.Token, error) {
@@ -23,6 +24,20 @@ func Validate(token string) (*jwt.Token, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrSignatureInvalid
 		}
-		return key, nil
+		return Key, nil
 	})
+}
+
+func Decode(token string) (string, error) {
+	t, err := Validate(token)
+	if err != nil {
+		return "", err
+	}
+
+	claims, ok := t.Claims.(jwt.MapClaims)
+	if !ok || !t.Valid {
+		return "", jwt.ErrSignatureInvalid
+	}
+
+	return claims["id"].(string), nil
 }

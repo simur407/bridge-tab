@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -11,7 +12,8 @@ import (
 )
 
 type PostgresUserRepository struct {
-	Db *sql.DB
+	Ctx context.Context
+	Tx  *sql.Tx
 }
 
 var ErrUserNotFound = errors.New("user not found")
@@ -19,7 +21,7 @@ var ErrUserNotFound = errors.New("user not found")
 func (r *PostgresUserRepository) Load(id *domain.UserId) (*domain.User, error) {
 	var user domain.User
 
-	row := r.Db.QueryRow("SELECT id, name FROM user WHERE id = $1", id)
+	row := r.Tx.QueryRow("SELECT id, name FROM \"user\".users WHERE id = $1", id)
 	err := row.Scan(&user.State.Id, &user.State.Name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -44,7 +46,22 @@ func (r *PostgresUserRepository) Save(user *domain.User) error {
 }
 
 func (r *PostgresUserRepository) UserRegistered(event domain.UserRegistered) error {
-	_, err := r.Db.Exec("INSERT INTO user (id, name) VALUES ($1, $2)", event.Id, event.Name)
+	_, err := r.Tx.Exec("INSERT INTO \"user\".users (id, name) VALUES ($1, $2)", event.Id, event.Name)
 
 	return err
+}
+
+func (r *PostgresUserRepository) GetById(id string) (*domain.UserDto, error) {
+	user := new(domain.UserDto)
+
+	row := r.Tx.QueryRow("SELECT id, name FROM \"user\".users WHERE id = $1", id)
+	err := row.Scan(&user.Id, &user.Name)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+
+	return user, nil
 }
