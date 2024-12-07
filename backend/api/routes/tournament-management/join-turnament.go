@@ -1,27 +1,19 @@
 package routes
 
 import (
+	"bridge-tab/api/middleware"
 	tournament_management "bridge-tab/internal/tournament-management/application"
 	domain "bridge-tab/internal/tournament-management/domain"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-type JoinTournamentRequestDto struct {
-	ContestantId string `json:"contestantId"`
-}
-
-func joinTournament(repository domain.TournamentRepository) func (c *fiber.Ctx) error {
-	return func (c *fiber.Ctx) error {
+func joinTournament(repository domain.TournamentRepository) func(c *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		tournamentId := c.Params("tournamentId")
+		contestantId := c.Locals("user").(middleware.UserMetadata).Id
 
-		body := new(JoinTournamentRequestDto)
-
-		if err := c.BodyParser(body); err != nil {
-			return err
-		}
-
-		cmd := tournament_management.JoinTournamentCommand{ TournamentId: tournamentId, ContestantId: body.ContestantId }
+		cmd := tournament_management.JoinTournamentCommand{TournamentId: tournamentId, ContestantId: contestantId}
 		err := cmd.Execute(repository)
 
 		if err != nil {
@@ -33,5 +25,4 @@ func joinTournament(repository domain.TournamentRepository) func (c *fiber.Ctx) 
 		return nil
 	}
 
-	
 }

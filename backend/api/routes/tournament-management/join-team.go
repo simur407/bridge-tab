@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"bridge-tab/api/middleware"
 	tournament_management "bridge-tab/internal/tournament-management/application"
 	domain "bridge-tab/internal/tournament-management/domain"
 
@@ -11,21 +12,16 @@ type JoinTeamRequestDto struct {
 	ContestantId string `json:"contestantId"`
 }
 
-func joinTeam(repository domain.TournamentRepository) func (c *fiber.Ctx) error {
-	return func (c *fiber.Ctx) error {
+func joinTeam(repository domain.TournamentRepository) func(c *fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		tournamentId := c.Params("tournamentId")
 		teamId := c.Params("teamId")
+		contestantId := c.Locals("user").(middleware.UserMetadata).Id
 
-		body := new(JoinTeamRequestDto)
-
-		if err := c.BodyParser(body); err != nil {
-			return err
-		}
-
-		cmd := tournament_management.JoinTeamCommand{ 
+		cmd := tournament_management.JoinTeamCommand{
 			TournamentId: tournamentId,
-			TeamId: teamId,
-			ContestantId: body.ContestantId,
+			TeamId:       teamId,
+			ContestantId: contestantId,
 		}
 		err := cmd.Execute(repository)
 
@@ -38,5 +34,4 @@ func joinTeam(repository domain.TournamentRepository) func (c *fiber.Ctx) error 
 		return nil
 	}
 
-	
 }

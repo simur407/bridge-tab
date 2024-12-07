@@ -2,7 +2,6 @@ package user
 
 import (
 	"errors"
-	"fmt"
 
 	domain "bridge-tab/internal/user/domain"
 	infra "bridge-tab/internal/user/infrastructure"
@@ -14,7 +13,6 @@ type RegisterUserCommand struct {
 }
 
 func (cmd *RegisterUserCommand) Execute(repository domain.UserRepository) error {
-	fmt.Println("register execute")
 	id := domain.UserId(cmd.Id)
 
 	u, err := repository.Load(&id)

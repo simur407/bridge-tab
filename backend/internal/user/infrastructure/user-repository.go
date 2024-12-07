@@ -21,7 +21,7 @@ var ErrUserNotFound = errors.New("user not found")
 func (r *PostgresUserRepository) Load(id *domain.UserId) (*domain.User, error) {
 	var user domain.User
 
-	row := r.Tx.QueryRow("SELECT id, name FROM \"user\".users WHERE id = $1", id)
+	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name FROM \"user\".users WHERE id = $1", id)
 	err := row.Scan(&user.State.Id, &user.State.Name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -46,7 +46,7 @@ func (r *PostgresUserRepository) Save(user *domain.User) error {
 }
 
 func (r *PostgresUserRepository) UserRegistered(event domain.UserRegistered) error {
-	_, err := r.Tx.Exec("INSERT INTO \"user\".users (id, name) VALUES ($1, $2)", event.Id, event.Name)
+	_, err := r.Tx.ExecContext(r.Ctx, "INSERT INTO \"user\".users (id, name) VALUES ($1, $2)", event.Id, event.Name)
 
 	return err
 }
@@ -54,7 +54,7 @@ func (r *PostgresUserRepository) UserRegistered(event domain.UserRegistered) err
 func (r *PostgresUserRepository) GetById(id string) (*domain.UserDto, error) {
 	user := new(domain.UserDto)
 
-	row := r.Tx.QueryRow("SELECT id, name FROM \"user\".users WHERE id = $1", id)
+	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name FROM \"user\".users WHERE id = $1", id)
 	err := row.Scan(&user.Id, &user.Name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -64,4 +64,22 @@ func (r *PostgresUserRepository) GetById(id string) (*domain.UserDto, error) {
 	}
 
 	return user, nil
+}
+
+func (r *PostgresUserRepository) FindAll() ([]domain.UserDto, error) {
+	rows, err := r.Tx.QueryContext(r.Ctx, "SELECT id, name FROM \"user\".users")
+	if err != nil {
+		return nil, err
+	}
+
+	var users []domain.UserDto
+	for rows.Next() {
+		var user domain.UserDto
+		err := rows.Scan(&user.Id, &user.Name)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
 }

@@ -24,7 +24,7 @@ func login() func(c *fiber.Ctx) error {
 		}
 
 		tx := middleware.GetTransaction(c)
-		repository := infra.PostgresUserRepository{Tx: tx}
+		repository := infra.PostgresUserRepository{Ctx: c.UserContext(), Tx: tx}
 		_, err := repository.GetById(body.Login)
 		if err != nil {
 			return err

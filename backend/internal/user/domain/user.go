@@ -46,4 +46,5 @@ type UserDto struct {
 
 type UserReadRepository interface {
 	GetById(id string) (*UserDto, error)
+	FindAll() ([]UserDto, error)
 }
