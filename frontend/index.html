@@ -4,26 +4,37 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Bridge Tab TEST SITE</title>
+    <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
   </head>
   <body>
     <div>
       <h2>Welcome</h2>
-      <form method="post" action="/auth/register">
+      <form hx-post="/auth/register" hx-swap="innerHTML" hx-target="#register-response">
         <input type="text" name="name" value=""/>
         <button type="submit">Register</button>
       </form>
+      <div id="register-response"></div>
       <h3>Login</h3>
-      <form method="post" action="/auth/login">
+      <form method="post" hx-post="/auth/login" hx-swap="none">
         <input type="text" name="login" value=""/>
         <button type="submit">Login</button>
       </form>
       <h3>Tournament 6def61c4-6e8b-4361-bae2-6a088cf7fda3</h3>
-      <form method="post" action="/tournament-management/tournaments/6def61c4-6e8b-4361-bae2-6a088cf7fda3/join">
+      <form hx-post="/tournament-management/tournaments/6def61c4-6e8b-4361-bae2-6a088cf7fda3/join" hx-swap="none">
         <button type="submit">Join</button>
       </form>
-      <form method="post" action="/tournament-management/tournaments/6def61c4-6e8b-4361-bae2-6a088cf7fda3/leave">
+      <form hx-post="/tournament-management/tournaments/6def61c4-6e8b-4361-bae2-6a088cf7fda3/leave" hx-swap="none">
         <button type="submit">Leave</button>
       </form>
+      <h3>Teams</h3>
+      <form hx-get="/tournament-management/tournaments/6def61c4-6e8b-4361-bae2-6a088cf7fda3/teams" hx-swap="innerHTML" hx-target="#team">
+        <input type="text" name="name" />
+        <button type="submit">Find team</button>
+      </form>
+      <div id="team"></div>
+      <!-- <form method="post" action="/tournament-management/tournaments/6def61c4-6e8b-4361-bae2-6a088cf7fda3/teams/">
+        <button type="submit">Leave</button>
+      </form> -->
     </div>
   </body>
 </html>

@@ -8,27 +8,27 @@ import (
 type TeamId string
 
 type TeamState struct {
-	Id   					TeamId
-	TournamentId 	TournamentId
-	Name 					string
-	Members 			[]*Contestant
-	removed 			bool
+	Id           TeamId
+	TournamentId TournamentId
+	Name         string
+	Members      []*Contestant
+	removed      bool
 }
 
 type Team struct {
-	State   TeamState
-	events  []any
+	State  TeamState
+	events []any
 }
 
 // events
 type ContestantJoinedTeam struct {
-	TeamId   			TeamId
-	ContestantId 	ContestantId
+	TeamId       TeamId
+	ContestantId ContestantId
 }
 
 type ContestantLeftTeam struct {
-	TeamId   			TeamId
-	ContestantId 	ContestantId
+	TeamId       TeamId
+	ContestantId ContestantId
 }
 
 // errors
@@ -68,7 +68,7 @@ func (t *Team) Join(contestant *Contestant) error {
 		return nil
 	}
 
-	if len(t.State.Members) == 2 { 
+	if len(t.State.Members) == 2 {
 		return ErrTeamFull
 	}
 
@@ -92,7 +92,7 @@ func (t *Team) Leave(contenstantId *ContestantId) error {
 		member := t.State.Members[memberIndex]
 		member.Team = nil
 		t.State.Members = slices.Delete(t.State.Members, memberIndex, memberIndex+1)
-	
+
 		t.events = append(t.events, ContestantLeftTeam{TeamId: t.State.Id, ContestantId: *contenstantId})
 	}
 	return nil
@@ -107,12 +107,13 @@ func (t *Team) Commit() {
 }
 
 type TeamDto struct {
-	Id   					TeamId
-	TournamentId 	TournamentId
-	Name 					string
-	Members 			[]ContestantDto
+	Id           TeamId
+	TournamentId TournamentId
+	Name         string
+	Members      []ContestantDto
 }
 
 type TeamReadRepository interface {
 	FindAll(tournamentId *string) ([]TeamDto, error)
+	FindByName(tournamentId *string, name *string) (*TeamDto, error)
 }

@@ -15,11 +15,11 @@ func TournamentManagement(app fiber.Router, db *sql.DB) error {
 	index := app.Group("/tournament-management")
 	index.Use(middleware.JwtGuard())
 
-	repository := infra.PostgresTournamentRepository{Db: db}
 	// index.Get("/tournaments")
-	index.Post("/tournaments/:tournamentId/join", middleware.Transaction(db, nil), joinTournament(&repository))
-	index.Post("/tournaments/:tournamentId/leave", middleware.Transaction(db, nil), leaveTournament(&repository))
-	index.Post("/tournaments/:tournamentId/teams/:teamId/join", middleware.Transaction(db, nil), joinTeam(&repository))
-	index.Post("/tournaments/:tournamentId/teams/:teamId/leave", middleware.Transaction(db, nil), leaveTeam(&repository))
+	index.Post("/tournaments/:tournamentId/join", middleware.Transaction(db, nil), joinTournament())
+	index.Post("/tournaments/:tournamentId/leave", middleware.Transaction(db, nil), leaveTournament())
+	index.Get("/tournaments/:tournamentId/teams", middleware.Transaction(db, &sql.TxOptions{ReadOnly: true}), findTeamByName())
+	index.Post("/tournaments/:tournamentId/teams/:teamId/join", middleware.Transaction(db, nil), joinTeam())
+	index.Post("/tournaments/:tournamentId/teams/:teamId/leave", middleware.Transaction(db, nil), leaveTeam())
 	return nil
 }

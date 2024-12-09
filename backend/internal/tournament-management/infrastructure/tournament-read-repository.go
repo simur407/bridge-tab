@@ -2,15 +2,17 @@ package tournament_management
 
 import (
 	domain "bridge-tab/internal/tournament-management/domain"
+	"context"
 	"database/sql"
 )
 
 type PostgresTournamentReadRepository struct {
-	Db *sql.DB
+	Ctx context.Context
+	Tx  *sql.Tx
 }
 
 func (r *PostgresTournamentReadRepository) FindAll() ([]domain.TournamentDto, error) {
-	rows, err := r.Db.Query("SELECT id, name FROM tournament_management.tournament")
+	rows, err := r.Tx.QueryContext(r.Ctx, "SELECT id, name FROM tournament_management.tournament")
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +30,7 @@ func (r *PostgresTournamentReadRepository) FindAll() ([]domain.TournamentDto, er
 }
 
 func (r *PostgresTournamentReadRepository) FindAllContestants(id *domain.TournamentId) ([]domain.ContestantDto, error) {
-	rows, err := r.Db.Query("SELECT id FROM tournament_management.contestant WHERE tournament_id = $1", id)
+	rows, err := r.Tx.QueryContext(r.Ctx, "SELECT id FROM tournament_management.contestant WHERE tournament_id = $1", id)
 	if err != nil {
 		return nil, err
 	}

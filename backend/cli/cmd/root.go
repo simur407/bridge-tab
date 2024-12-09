@@ -48,18 +48,23 @@ func Execute() error {
 		return err
 	}
 
-	tournamentRepo := tournament_infra.PostgresTournamentRepository{Db: db}
-	tournamentReadRepo := tournament_infra.PostgresTournamentReadRepository{Db: db}
-	teamReadRepo := tournament_infra.PostgresTeamReadRepository{Db: db}
-	TournamentRepository = &tournamentRepo
-	TournamentReadRepository = &tournamentReadRepo
-	TeamReadRepository = &teamReadRepo
-
-	userReadRepo := user_infra.PostgresUserRepository{
+	TournamentRepository = &tournament_infra.PostgresTournamentRepository{
 		Ctx: ctx,
 		Tx:  tx,
 	}
-	UserReadRepository = &userReadRepo
+	TournamentReadRepository = &tournament_infra.PostgresTournamentReadRepository{
+		Ctx: ctx,
+		Tx:  tx,
+	}
+	TeamReadRepository = &tournament_infra.PostgresTeamReadRepository{
+		Ctx: ctx,
+		Tx:  tx,
+	}
+
+	UserReadRepository = &user_infra.PostgresUserRepository{
+		Ctx: ctx,
+		Tx:  tx,
+	}
 
 	err = rootCmd.Execute()
 

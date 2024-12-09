@@ -5,6 +5,7 @@ import (
 
 	"bridge-tab/api/middleware"
 	auth "bridge-tab/internal/auth"
+	application "bridge-tab/internal/user/application"
 	infra "bridge-tab/internal/user/infrastructure"
 
 	"github.com/gofiber/fiber/v2"
@@ -25,10 +26,9 @@ func login() func(c *fiber.Ctx) error {
 
 		tx := middleware.GetTransaction(c)
 		repository := infra.PostgresUserRepository{Ctx: c.UserContext(), Tx: tx}
-		_, err := repository.GetById(body.Login)
-		if err != nil {
-			return err
-		}
+
+		cmd := application.GetUserCommand{Id: body.Login}
+		cmd.Execute(&repository)
 
 		token, err := auth.Generate(body.Login)
 
