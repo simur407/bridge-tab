@@ -23,6 +23,7 @@ var BoardProtocolsCmd = func(
 	command.MarkPersistentFlagRequired("tournamentId")
 	command.AddCommand(
 		createBoardProtocolCmd(TournamentRepository, TeamReadRepository),
+		removeBoardProtocolCmd(TournamentRepository),
 		listBoardProtocolsCmd(BoardProtocolReadRepository),
 	)
 

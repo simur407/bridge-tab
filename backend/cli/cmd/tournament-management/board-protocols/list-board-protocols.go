@@ -25,11 +25,26 @@ var listBoardProtocolsCmd = func(boardProtocolReadRepository *domain.BoardProtoc
 				return err
 			}
 
-			fmt.Printf("%-10v | %-15v\n", "Board No", "Vulnerability")
-			fmt.Println(strings.Repeat("-", 28))
+			fmt.Printf("%-10v | %-15v | %-36v | %-36v\n", "Board No", "Vulnerability", "NS", "EW")
+			fmt.Println(strings.Repeat("-", 106))
 			for _, BoardProtocol := range results {
-				fmt.Printf("%-10v | %-15v\n", BoardProtocol.BoardNo, BoardProtocol.Vulnerable)
-				fmt.Println(strings.Repeat("-", 28))
+				row := fmt.Sprintf("%-10v | %-15v | ", BoardProtocol.BoardNo, BoardProtocol.Vulnerable)
+
+				for i, TeamPair := range BoardProtocol.TeamPairs {
+					if i == 0 {
+						row += fmt.Sprintf("%-36v | %-36v\n", TeamPair.NS, TeamPair.EW)
+					} else {
+						row += fmt.Sprintf("%-10v   %-15v | %-36v | %-36v\n", "", "", TeamPair.NS, TeamPair.EW)
+					}
+				}
+
+				lastRune := []rune(row)[len(row)-1]
+				if lastRune != '\n' {
+					row += "\n"
+				}
+				fmt.Print(row)
+				fmt.Println(strings.Repeat("-", 106))
+
 			}
 
 			return nil

@@ -4,13 +4,13 @@ import (
 	domain "bridge-tab/internal/tournament-management/domain"
 )
 
-type RemoveBoardProtocol struct {
-	tournamentId string
-	boardNo      int
+type RemoveBoardProtocolCommand struct {
+	TournamentId string
+	BoardNo      int
 }
 
-func (c *RemoveBoardProtocol) Execute(repo domain.TournamentRepository) error {
-	id := domain.TournamentId(c.tournamentId)
+func (c *RemoveBoardProtocolCommand) Execute(repo domain.TournamentRepository) error {
+	id := domain.TournamentId(c.TournamentId)
 
 	// Load the Tournament from the repository
 	t, err := repo.Load(&id)
@@ -18,7 +18,7 @@ func (c *RemoveBoardProtocol) Execute(repo domain.TournamentRepository) error {
 		return err
 	}
 
-	if err := t.RemoveBoardProtocol(c.boardNo); err != nil {
+	if err := t.RemoveBoardProtocol(c.BoardNo); err != nil {
 		return err
 	}
 
