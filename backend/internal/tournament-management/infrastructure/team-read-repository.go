@@ -40,7 +40,7 @@ func (r *PostgresTeamReadRepository) FindAll(tournamentId *string) ([]domain.Tea
 
 	var teamDtos []domain.TeamDto
 	for _, team := range teams {
-		id := domain.TeamId(team.id)
+		id := team.id
 		teamIdx := slices.IndexFunc(teamDtos, func(t domain.TeamDto) bool {
 			return t.Id == id
 		})

@@ -8,5 +8,5 @@ type Contestant struct {
 }
 
 type ContestantDto struct {
-	Id   ContestantId
+	Id ContestantId
 }

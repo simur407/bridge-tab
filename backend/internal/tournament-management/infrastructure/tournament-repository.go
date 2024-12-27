@@ -97,8 +97,66 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 		}
 	}
 
+	boardProtocolRows, err := r.Tx.QueryContext(r.Ctx, "SELECT board_no, vulnerable FROM tournament_management.board_protocol WHERE tournament_id = $1", Id)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+	}
+
+	var BoardProtocols []*domain.BoardProtocol
+	for boardProtocolRows.Next() {
+		var boardProtocol domain.BoardProtocol
+		err = boardProtocolRows.Scan(&boardProtocol.BoardNo, &boardProtocol.Vulnerable)
+		if err != nil {
+			return nil, err
+		}
+		boardProtocol.TeamPairs = make([]domain.TeamPairs, 0)
+		BoardProtocols = append(BoardProtocols, &boardProtocol)
+	}
+
+	teamBoardProtocolRows, err := r.Tx.QueryContext(r.Ctx, `
+	SELECT team_ns_id, team_ew_id, board_no FROM tournament_management.board_protocol_team_pairs 
+	WHERE tournament_id = $1`, Id)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+	}
+
+	for teamBoardProtocolRows.Next() {
+		var teamBoardProtocol struct {
+			TeamNsId string
+			TeamEwId string
+			BoardNo  int
+		}
+		err = teamBoardProtocolRows.Scan(&teamBoardProtocol.TeamNsId, &teamBoardProtocol.TeamEwId, &teamBoardProtocol.BoardNo)
+		if err != nil {
+			return nil, err
+		}
+		// verify if team ns and team ew exist
+		teamNsExists := slices.ContainsFunc(Teams, func(t *domain.Team) bool {
+			return t.State.Id == domain.TeamId(teamBoardProtocol.TeamNsId)
+		})
+		teamEwExists := slices.ContainsFunc(Teams, func(t *domain.Team) bool {
+			return t.State.Id == domain.TeamId(teamBoardProtocol.TeamEwId)
+		})
+
+		if teamNsExists && teamEwExists {
+			for _, boardProtocol := range BoardProtocols {
+				if boardProtocol.BoardNo == teamBoardProtocol.BoardNo {
+					boardProtocol.TeamPairs = append(boardProtocol.TeamPairs, domain.TeamPairs{
+						NS: domain.TeamId(teamBoardProtocol.TeamNsId),
+						EW: domain.TeamId(teamBoardProtocol.TeamEwId),
+					})
+				}
+			}
+		}
+	}
+
 	Tournament.State.Contestants = Contestants
 	Tournament.State.Teams = Teams
+	Tournament.State.BoardProtocols = BoardProtocols
 
 	return &Tournament, nil
 }
@@ -124,6 +182,10 @@ func (r *PostgresTournamentRepository) Save(t *domain.Tournament) error {
 			return r.contestantJoinedTeam(event)
 		case domain.ContestantLeftTeam:
 			return r.contestantLeftTeam(event)
+		case domain.BoardProtocolCreated:
+			return r.boardProtocolCreated(event)
+		case domain.BoardProtocolRemoved:
+			return r.boardProtocolRemoved(event)
 
 		default:
 			return errors.New("unknown event")
@@ -183,6 +245,38 @@ func (r *PostgresTournamentRepository) contestantJoinedTeam(event domain.Contest
 
 func (r *PostgresTournamentRepository) contestantLeftTeam(event domain.ContestantLeftTeam) error {
 	_, err := r.Tx.ExecContext(r.Ctx, "DELETE FROM tournament_management.team_contestant WHERE team_id = $1 AND contestant_id = $2", event.TeamId, event.ContestantId)
+
+	return err
+}
+
+func (r *PostgresTournamentRepository) boardProtocolCreated(event domain.BoardProtocolCreated) error {
+	_, err := r.Tx.ExecContext(r.Ctx, "INSERT INTO tournament_management.board_protocol (tournament_id, board_no, vulnerable) VALUES ($1, $2, $3)", event.TournamentId, event.BoardNo, event.Vulnerable)
+
+	if err != nil {
+		return err
+	}
+
+	var valuesQuery string
+	var values []interface{}
+	for i, teamPair := range event.TeamPairs {
+		values = append(values, event.TournamentId, event.BoardNo, teamPair.NS, teamPair.EW)
+		valuesQuery += fmt.Sprintf("($%d, $%d, $%d, $%d), ", i*4+1, i*4+2, i*4+3, i*4+4)
+	}
+	valuesQuery = valuesQuery[:len(valuesQuery)-2]
+
+	_, err = r.Tx.ExecContext(r.Ctx, fmt.Sprintf("INSERT INTO tournament_management.board_protocol_team_pairs (tournament_id, board_no, team_ns_id, team_ew_id) VALUES %s", valuesQuery), values...)
+
+	return err
+}
+
+func (r *PostgresTournamentRepository) boardProtocolRemoved(event domain.BoardProtocolRemoved) error {
+	_, err := r.Tx.ExecContext(r.Ctx, "DELETE FROM tournament_management.board_protocol_team_pairs WHERE tournament_id = $1 AND board_no = $2", event.TournamentId, event.BoardNo)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = r.Tx.ExecContext(r.Ctx, "DELETE FROM tournament_management.board_protocol WHERE tournament_id = $1 AND board_no = $2", event.TournamentId, event.BoardNo)
 
 	return err
 }

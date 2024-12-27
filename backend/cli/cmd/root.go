@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"time"
 
+	tournament_management "bridge-tab/cli/cmd/tournament-management"
+	"bridge-tab/cli/cmd/users"
 	tournament "bridge-tab/internal/tournament-management/domain"
 	tournament_infra "bridge-tab/internal/tournament-management/infrastructure"
 	user "bridge-tab/internal/user/domain"
@@ -25,6 +27,9 @@ It allows organizers or umpires to prepare and manage tournaments, check scores,
 var TournamentRepository tournament.TournamentRepository
 var TournamentReadRepository tournament.TournamentReadRepository
 var TeamReadRepository tournament.TeamReadRepository
+var BoardProtocolReadRepository tournament.BoardProtocolReadRepository
+
+// Users
 var UserReadRepository user.UserReadRepository
 
 func Execute() error {
@@ -60,6 +65,10 @@ func Execute() error {
 		Ctx: ctx,
 		Tx:  tx,
 	}
+	BoardProtocolReadRepository = &tournament_infra.PostgresBoardProtocolReadRepository{
+		Ctx: ctx,
+		Tx:  tx,
+	}
 
 	UserReadRepository = &user_infra.PostgresUserRepository{
 		Ctx: ctx,
@@ -80,6 +89,11 @@ func Execute() error {
 func init() {
 	cobra.OnInitialize()
 
-	rootCmd.AddCommand(tournamentManagementCmd)
-	rootCmd.AddCommand(userCmd)
+	rootCmd.AddCommand(tournament_management.TournamentManagementCmd(
+		&TournamentRepository,
+		&TournamentReadRepository,
+		&TeamReadRepository,
+		&BoardProtocolReadRepository,
+	))
+	rootCmd.AddCommand(users.UserCmd(&UserReadRepository))
 }

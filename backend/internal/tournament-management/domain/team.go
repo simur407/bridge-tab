@@ -107,8 +107,8 @@ func (t *Team) Commit() {
 }
 
 type TeamDto struct {
-	Id           TeamId
-	TournamentId TournamentId
+	Id           string
+	TournamentId string
 	Name         string
 	Members      []ContestantDto
 }

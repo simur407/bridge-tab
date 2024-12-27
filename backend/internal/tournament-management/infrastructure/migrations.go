@@ -45,6 +45,25 @@ func m0001_initial(db *sql.DB) {
 
 			PRIMARY KEY (team_id, contestant_id)
 		);
+
+		CREATE TABLE IF NOT EXISTS tournament_management.board_protocol (
+			board_no INT NOT NULL,
+			tournament_id UUID NOT NULL REFERENCES tournament_management.tournament (id),
+			vulnerable TEXT NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+			PRIMARY KEY (board_no, tournament_id)
+		);
+
+		CREATE TABLE IF NOT EXISTS tournament_management.board_protocol_team_pairs (
+			board_no INT NOT NULL,
+			tournament_id UUID NOT NULL REFERENCES tournament_management.tournament (id),
+			team_ns_id UUID NOT NULL REFERENCES tournament_management.team (id),
+			team_ew_id UUID NOT NULL REFERENCES tournament_management.team (id),
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+			PRIMARY KEY (board_no, tournament_id, team_ns_id, team_ew_id)
+		)
 	`)
 	if err != nil {
 		panic(err)

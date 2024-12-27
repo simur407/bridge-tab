@@ -9,54 +9,67 @@ import (
 type TournamentId string
 
 type TournamentState struct {
-	Id   					TournamentId
-	Name 					string
-	StartedAt 		*time.Time
-	Teams					[]*Team
-	Contestants 	[]*Contestant
-	removed   		bool
+	Id             TournamentId
+	Name           string
+	StartedAt      *time.Time
+	Teams          []*Team
+	Contestants    []*Contestant
+	BoardProtocols []*BoardProtocol
+	removed        bool
 }
 
 type Tournament struct {
-	State   TournamentState
-	events  []any
+	State  TournamentState
+	events []any
 }
 
 // events
 type TournamentCreated struct {
-	TournamentId   TournamentId
-	Name 					string
+	TournamentId TournamentId
+	Name         string
 }
 
 type TournamentRemoved struct {
-	TournamentId   TournamentId
-	Name 					string
+	TournamentId TournamentId
+	Name         string
 }
 
 type TournamentStarted struct {
-	TournamentId		TournamentId
-	StartedAt 		time.Time
+	TournamentId TournamentId
+	StartedAt    time.Time
 }
 
 type ContestantJoinedTournament struct {
-	TournamentId 	TournamentId
-	ContestantId	ContestantId
+	TournamentId TournamentId
+	ContestantId ContestantId
 }
 
 type ContestantLeftTournament struct {
-	TournamentId   	TournamentId
-	ContestantId 		ContestantId
+	TournamentId TournamentId
+	ContestantId ContestantId
 }
 
 type TeamCreated struct {
-	TournamentId 	TournamentId
-	TeamId				TeamId
-	Name 					string
+	TournamentId TournamentId
+	TeamId       TeamId
+	Name         string
 }
 
 type TeamRemoved struct {
-	TournamentId 	TournamentId
-	TeamId				TeamId
+	TournamentId TournamentId
+	TeamId       TeamId
+}
+
+type BoardProtocolCreated struct {
+	TournamentId TournamentId
+	BoardNo      int
+	Vulnerable   Vulnerable
+	TeamPairs    []TeamPairs
+}
+
+type BoardProtocolRemoved struct {
+	TournamentId TournamentId
+	BoardNo      int
 }
 
 // errors
@@ -68,6 +81,9 @@ var ErrContestantNotJoinedTournament = errors.New("contestant not joined Tournam
 var ErrNoSuchTeamInTournament = errors.New("no such team in Tournament")
 var ErrTeamAlreadyExists = errors.New("team already exists")
 var ErrContestantAlreadyInOtherTeam = errors.New("contestant already in other team")
+var ErrBoardProtocolAlreadyExists = errors.New("board protocol already exists")
+var ErrNoSuchBoardProtocol = errors.New("no such board protocol")
+var ErrBoardProtocolHasTheSameTeamMultipleTimes = errors.New("board protocol has the same team multiple times")
 
 func CreateTournament(id TournamentId, name string) *Tournament {
 	return &Tournament{
@@ -151,7 +167,7 @@ func (t *Tournament) LeaveTournament(contestantId *ContestantId) error {
 		return ErrTournamentAlreadyStarted
 	}
 
-	contestantIndex := slices.IndexFunc(t.State.Contestants, func(c *Contestant) bool{
+	contestantIndex := slices.IndexFunc(t.State.Contestants, func(c *Contestant) bool {
 		return c.Id == *contestantId
 	})
 	if contestantIndex == -1 {
@@ -211,9 +227,8 @@ func (t *Tournament) DeleteTeam(teamId *TeamId) error {
 	})
 	teamToRemove := t.State.Teams[teamIndex]
 
-
 	if teamToRemove != nil {
-		if err := teamToRemove.Remove() ; err != nil {
+		if err := teamToRemove.Remove(); err != nil {
 			return err
 		}
 
@@ -222,7 +237,7 @@ func (t *Tournament) DeleteTeam(teamId *TeamId) error {
 		teamToRemove.Commit()
 		t.events = append(t.events, TeamRemoved{TournamentId: t.State.Id, TeamId: teamToRemove.State.Id})
 	}
-	
+
 	return nil
 }
 
@@ -261,7 +276,7 @@ func (t *Tournament) JoinTeam(teamId *TeamId, contestantId *ContestantId) error 
 	if err := team.Join(contestant); err != nil {
 		return err
 	}
-	
+
 	t.events = append(t.events, team.GetEvents()...)
 	team.Commit()
 	return nil
@@ -285,17 +300,72 @@ func (t *Tournament) LeaveTeam(teamId *TeamId, contestantId *ContestantId) error
 
 	contestant := t.State.Contestants[contestantIndex]
 
-	if (contestant.Team != nil) {
+	if contestant.Team != nil {
 		team := contestant.Team
 
 		if err := team.Leave(contestantId); err != nil {
 			return err
 		}
-	
+
 		t.events = append(t.events, team.GetEvents()...)
 		team.Commit()
 	}
-	
+
+	return nil
+}
+
+func (t *Tournament) CreateBoardProtocol(boardNo int, vulnerable Vulnerable, teamPairs []TeamPairs) error {
+	if t.State.removed {
+		return ErrTournamentRemoved
+	}
+
+	if t.State.StartedAt != nil {
+		return ErrTournamentAlreadyStarted
+	}
+
+	if slices.ContainsFunc(t.State.BoardProtocols, func(bp *BoardProtocol) bool {
+		return bp.BoardNo == boardNo
+	}) {
+		return ErrBoardProtocolAlreadyExists
+	}
+
+	// teams cannot play against themselves and cannot play twice
+	for i := 0; i < len(teamPairs); i++ {
+		if teamPairs[i].NS == teamPairs[i].EW {
+			return ErrBoardProtocolHasTheSameTeamMultipleTimes
+		}
+		for j := i + 1; j < len(teamPairs); j++ {
+			if teamPairs[i].NS == teamPairs[j].NS || teamPairs[i].NS == teamPairs[j].EW ||
+				teamPairs[i].EW == teamPairs[j].EW || teamPairs[i].EW == teamPairs[j].NS {
+				return ErrBoardProtocolHasTheSameTeamMultipleTimes
+			}
+		}
+	}
+
+	boardProtocol := CreateBoardProtocol(t.State.Id, boardNo, vulnerable, teamPairs)
+	t.State.BoardProtocols = append(t.State.BoardProtocols, boardProtocol)
+	t.events = append(t.events, BoardProtocolCreated{TournamentId: t.State.Id, BoardNo: boardNo, Vulnerable: vulnerable, TeamPairs: teamPairs})
+	return nil
+}
+
+func (t *Tournament) RemoveBoardProtocol(boardNo int) error {
+	if t.State.removed {
+		return ErrTournamentRemoved
+	}
+
+	if t.State.StartedAt != nil {
+		return ErrTournamentAlreadyStarted
+	}
+
+	protocolIndex := slices.IndexFunc(t.State.BoardProtocols, func(bp *BoardProtocol) bool {
+		return bp.BoardNo == boardNo
+	})
+	if protocolIndex == -1 {
+		return ErrNoSuchBoardProtocol
+	}
+
+	t.State.BoardProtocols = slices.Delete(t.State.BoardProtocols, protocolIndex, protocolIndex+1)
+	t.events = append(t.events, BoardProtocolRemoved{TournamentId: t.State.Id, BoardNo: boardNo})
 	return nil
 }
 
@@ -322,35 +392,3 @@ type TournamentReadRepository interface {
 	FindAll() ([]TournamentDto, error)
 	FindAllContestants(id *TournamentId) ([]ContestantDto, error)
 }
-
-// type InMemoryTournamentRepository struct {
-// 	Tournaments []*Tournament
-// }
-
-// func (r *InMemoryTournamentRepository) Load(Id TournamentId) (*Tournament, error) {
-// 	for _, t := range r.Tournaments {
-// 		if t.State.Id == Id {
-// 			return t, nil
-// 		}
-// 	}
-// 	return nil, nil
-// }
-
-// func (r *InMemoryTournamentRepository) Save(t *Tournament) error {
-// 	for i, Tournament := range r.Tournaments {
-// 		if Tournament.State.Id == t.State.Id {
-// 			r.Tournaments[i] = t
-// 			return nil
-// 		}
-// 	}
-// 	r.Tournaments = append(r.Tournaments, t)
-// 	return nil
-// }
-
-// func (r *InMemoryTournamentRepository) FindAll() ([]TournamentDto, error) {
-// 	var Tournaments []TournamentDto
-// 	for _, t := range r.Tournaments {
-// 		Tournaments = append(Tournaments, TournamentDto{Id: string(t.State.Id), Name: t.State.Name})
-// 	}
-// 	return Tournaments, nil
-// }
