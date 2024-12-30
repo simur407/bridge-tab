@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	tournament "bridge-tab/internal/tournament-management/application"
+	tournament "bridge-tab/internal/tournament-management/application/query"
 	tournament_domain "bridge-tab/internal/tournament-management/domain"
 
 	"github.com/spf13/cobra"

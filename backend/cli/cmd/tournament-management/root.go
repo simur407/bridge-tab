@@ -3,6 +3,7 @@ package tournament_management
 import (
 	board_protocols "bridge-tab/cli/cmd/tournament-management/board-protocols"
 	teams "bridge-tab/cli/cmd/tournament-management/teams"
+	rounds_registration "bridge-tab/internal/rounds-registration/domain"
 	tournament "bridge-tab/internal/tournament-management/domain"
 
 	"github.com/spf13/cobra"
@@ -13,6 +14,7 @@ var TournamentManagementCmd = func(
 	tournamentReadRepository *tournament.TournamentReadRepository,
 	teamReadRepository *tournament.TeamReadRepository,
 	boardProtocolReadRepository *tournament.BoardProtocolReadRepository,
+	gameSessionRepository *rounds_registration.GameSessionRepository,
 ) *cobra.Command {
 	command := &cobra.Command{
 		Use:   "tournament",
@@ -24,7 +26,7 @@ var TournamentManagementCmd = func(
 		createTournamentCmd(tournamentRepository),
 		removeTournamentCmd(tournamentRepository),
 		listTournamentsCmd(tournamentReadRepository),
-		startTournamentCmd(tournamentRepository),
+		startTournamentCmd(tournamentRepository, teamReadRepository, boardProtocolReadRepository, gameSessionRepository),
 		joinTournamentCmd(tournamentRepository),
 		leaveTournamentCmd(tournamentRepository),
 		listContestantsCmd(tournamentReadRepository),

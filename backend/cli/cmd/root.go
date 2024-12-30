@@ -5,8 +5,12 @@ import (
 	"database/sql"
 	"time"
 
+	rounds "bridge-tab/cli/cmd/rounds-registration"
 	tournament_management "bridge-tab/cli/cmd/tournament-management"
-	"bridge-tab/cli/cmd/users"
+	users "bridge-tab/cli/cmd/users"
+
+	rounds_registration "bridge-tab/internal/rounds-registration/domain"
+	rounds_registration_infra "bridge-tab/internal/rounds-registration/infrastructure"
 	tournament "bridge-tab/internal/tournament-management/domain"
 	tournament_infra "bridge-tab/internal/tournament-management/infrastructure"
 	user "bridge-tab/internal/user/domain"
@@ -22,6 +26,9 @@ var rootCmd = &cobra.Command{
 	Long: `Bridge Tab CLI is a tool to manage duplicate bridge tournaments. 
 It allows organizers or umpires to prepare and manage tournaments, check scores, and more.`,
 }
+
+// Round Registration
+var GameSessionRepository rounds_registration.GameSessionRepository
 
 // Tournament Management
 var TournamentRepository tournament.TournamentRepository
@@ -44,6 +51,7 @@ func Execute() error {
 
 	user_infra.Migrate(db)
 	tournament_infra.Migrate(db)
+	rounds_registration_infra.Migrate(db)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
@@ -51,6 +59,12 @@ func Execute() error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
+	}
+
+	// Round Registration
+	GameSessionRepository = &rounds_registration_infra.PostgresGameSessionRepository{
+		Ctx: ctx,
+		Tx:  tx,
 	}
 
 	TournamentRepository = &tournament_infra.PostgresTournamentRepository{
@@ -94,6 +108,8 @@ func init() {
 		&TournamentReadRepository,
 		&TeamReadRepository,
 		&BoardProtocolReadRepository,
+		&GameSessionRepository,
 	))
 	rootCmd.AddCommand(users.UserCmd(&UserReadRepository))
+	rootCmd.AddCommand(rounds.RoundsRegistrationCmd(&GameSessionRepository, &TeamReadRepository))
 }

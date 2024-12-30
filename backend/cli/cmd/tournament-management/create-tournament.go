@@ -3,7 +3,7 @@ package tournament_management
 import (
 	"fmt"
 
-	tournament "bridge-tab/internal/tournament-management/application"
+	tournament "bridge-tab/internal/tournament-management/application/command"
 	tournament_domain "bridge-tab/internal/tournament-management/domain"
 
 	"github.com/google/uuid"

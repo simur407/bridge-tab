@@ -1,7 +1,8 @@
 package board_protocols
 
 import (
-	application "bridge-tab/internal/tournament-management/application"
+	application "bridge-tab/internal/tournament-management/application/command"
+	application_query "bridge-tab/internal/tournament-management/application/query"
 	domain "bridge-tab/internal/tournament-management/domain"
 	"fmt"
 	"strings"
@@ -50,7 +51,7 @@ var createBoardProtocolCmd = func(
 					return fmt.Errorf("invalid argument, expected format: {NS Team Name};{EW Team Name}")
 				}
 
-				nsTeamByNameQuery := application.GetTeamByNameQuery{
+				nsTeamByNameQuery := application_query.GetTeamByNameQuery{
 					TournamentId: boardProtocolsTournamentId,
 					Name:         teamNames[0],
 				}
@@ -59,7 +60,7 @@ var createBoardProtocolCmd = func(
 					return err
 				}
 
-				ewTeamByNameQuery := application.GetTeamByNameQuery{
+				ewTeamByNameQuery := application_query.GetTeamByNameQuery{
 					TournamentId: boardProtocolsTournamentId,
 					Name:         teamNames[1],
 				}

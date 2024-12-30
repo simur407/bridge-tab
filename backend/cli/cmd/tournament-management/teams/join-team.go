@@ -1,7 +1,7 @@
 package teams
 
 import (
-	tournament_management "bridge-tab/internal/tournament-management/application"
+	tournament_management "bridge-tab/internal/tournament-management/application/command"
 	tournament_domain "bridge-tab/internal/tournament-management/domain"
 
 	"fmt"

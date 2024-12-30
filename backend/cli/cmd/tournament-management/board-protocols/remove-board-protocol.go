@@ -1,7 +1,7 @@
 package board_protocols
 
 import (
-	application "bridge-tab/internal/tournament-management/application"
+	application "bridge-tab/internal/tournament-management/application/command"
 	domain "bridge-tab/internal/tournament-management/domain"
 	"fmt"
 

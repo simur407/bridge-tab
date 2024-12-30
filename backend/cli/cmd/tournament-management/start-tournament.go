@@ -1,7 +1,8 @@
 package tournament_management
 
 import (
-	tournament_management "bridge-tab/internal/tournament-management/application"
+	rounds_domain "bridge-tab/internal/rounds-registration/domain"
+	tournament_management "bridge-tab/internal/tournament-management/application/command"
 	tournament_domain "bridge-tab/internal/tournament-management/domain"
 	"fmt"
 
@@ -10,7 +11,12 @@ import (
 
 var startTournamentId string
 
-var startTournamentCmd = func(TournamentRepository *tournament_domain.TournamentRepository) *cobra.Command {
+var startTournamentCmd = func(
+	TournamentRepository *tournament_domain.TournamentRepository,
+	TeamRepository *tournament_domain.TeamReadRepository,
+	BoardProtocolRepository *tournament_domain.BoardProtocolReadRepository,
+	GameSessionRepository *rounds_domain.GameSessionRepository,
+) *cobra.Command {
 	command := &cobra.Command{
 		Use:   "start",
 		Short: "Starts a tournament",
@@ -20,7 +26,7 @@ var startTournamentCmd = func(TournamentRepository *tournament_domain.Tournament
 		RunE: func(cmd *cobra.Command, args []string) error {
 			command := &tournament_management.StartTurnamentCommand{TournamentId: startTournamentId}
 
-			if err := command.Execute(*TournamentRepository); err != nil {
+			if err := command.Execute(*TournamentRepository, *TeamRepository, *BoardProtocolRepository, *GameSessionRepository); err != nil {
 				return err
 			}
 
