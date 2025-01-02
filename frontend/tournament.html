@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bridge-tab: {{ .TournamentName }}</title>
+  </head>
+  <body>
+    <h1>Turniej "{{ .TournamentName }}"</h1>
+    <form method="post" action="/tournaments/{{.TournamentId}}/join">
+      <input type="text" name="id" value="{{.TournamentId}}" hidden/>
+      <button type="submit">Dołącz</button>
+    </form>
+  </body>
+</html>

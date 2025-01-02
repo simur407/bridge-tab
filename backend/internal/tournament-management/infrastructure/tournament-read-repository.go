@@ -46,3 +46,18 @@ func (r *PostgresTournamentReadRepository) FindAllContestants(id *domain.Tournam
 	}
 	return contestants, nil
 }
+
+func (r *PostgresTournamentReadRepository) FindById(id string) (*domain.TournamentDto, error) {
+	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name FROM tournament_management.tournament WHERE id = $1", id)
+
+	var Tournament domain.TournamentDto
+	err := row.Scan(&Tournament.Id, &Tournament.Name)
+	if err != nil {
+		return nil, err
+	}
+	if Tournament.Id == "" {
+		return nil, nil
+	}
+
+	return &Tournament, nil
+}

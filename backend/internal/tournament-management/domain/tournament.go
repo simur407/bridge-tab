@@ -389,6 +389,7 @@ type TournamentDto struct {
 }
 
 type TournamentReadRepository interface {
+	FindById(id string) (*TournamentDto, error)
 	FindAll() ([]TournamentDto, error)
 	FindAllContestants(id *TournamentId) ([]ContestantDto, error)
 }

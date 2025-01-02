@@ -23,7 +23,8 @@ func (r *PostgresTeamReadRepository) FindAll(tournamentId *string) ([]domain.Tea
 	SELECT team.id, team.name, team_contestant.contestant_id FROM tournament_management.team 
 	LEFT JOIN tournament_management.team_contestant 
 		ON team.id = team_contestant.team_id
-	WHERE team.tournament_id = $1`, tournamentId)
+	WHERE team.tournament_id = $1
+	ORDER BY team.name ASC`, tournamentId)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +66,7 @@ func (r *PostgresTeamReadRepository) FindByName(tournamentId *string, name *stri
 	row := r.Tx.QueryRowContext(r.Ctx, `
 	SELECT team.id, team.name FROM tournament_management.team 
 	WHERE team.tournament_id = $1 AND team.name = $2
-	ORDER BY team.name`, tournamentId, name)
+	ORDER BY team.name ASC`, tournamentId, name)
 	var team domain.TeamDto
 	err := row.Scan(&team.Id, &team.Name)
 	if err != nil {
@@ -82,7 +83,7 @@ func (r *PostgresTeamReadRepository) FindByMemberId(tournamentId *string, member
 		ON team.id = team_contestant.team_id
 	WHERE team.tournament_id = $1
 	AND team_contestant.contestant_id = $2
-	ORDER BY team.name`, tournamentId, memberId)
+	ORDER BY team.name ASC`, tournamentId, memberId)
 	var team domain.TeamDto
 	err := row.Scan(&team.Id, &team.Name)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	tournament_management "bridge-tab/internal/tournament-management/application/query"
 	tournament_management_domain "bridge-tab/internal/tournament-management/domain"
 	"errors"
+	"fmt"
 	"regexp"
 )
 
@@ -23,14 +24,14 @@ func (c *PlayRoundCommand) Execute(repository domain.GameSessionRepository, team
 	if err := validate(c); err != nil {
 		return err
 	}
-
+	fmt.Println("Here?")
 	gameSessionId := domain.GameSessionId(c.GameSessionId)
 
 	t, err := repository.Load(&gameSessionId)
 	if err != nil {
 		return err
 	}
-
+	fmt.Println(c.GameSessionId, c.PlayerId)
 	// find player team
 	getPlayerTeam := tournament_management.GetTeamByMemberQuery{TournamentId: c.GameSessionId, MemberId: c.PlayerId}
 	playerTeam, err := getPlayerTeam.Execute(teamRepository)
@@ -38,7 +39,7 @@ func (c *PlayRoundCommand) Execute(repository domain.GameSessionRepository, team
 	if err != nil {
 		return err
 	}
-
+	fmt.Println("Here?")
 	// find other team by name
 	getTeamByName := tournament_management.GetTeamByNameQuery{TournamentId: c.GameSessionId, Name: c.VersusTeamName}
 	versusTeam, err := getTeamByName.Execute(teamRepository)
@@ -46,13 +47,13 @@ func (c *PlayRoundCommand) Execute(repository domain.GameSessionRepository, team
 	if err != nil {
 		return err
 	}
-
+	fmt.Println("Here?")
 	err = t.AddRoundScore(c.DealNo, domain.TeamId(playerTeam.Id), domain.TeamId(versusTeam.Id), c.Contract, c.Tricks, c.Declarer, c.OpeningLead)
 
 	if err != nil {
 		return err
 	}
-
+	fmt.Println("Here?")
 	return repository.Save(t)
 }
 
