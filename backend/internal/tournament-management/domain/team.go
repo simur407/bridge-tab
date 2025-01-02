@@ -116,4 +116,5 @@ type TeamDto struct {
 type TeamReadRepository interface {
 	FindAll(tournamentId *string) ([]TeamDto, error)
 	FindByName(tournamentId *string, name *string) (*TeamDto, error)
+	FindByMemberId(tournamentId *string, memberId *string) (*TeamDto, error)
 }

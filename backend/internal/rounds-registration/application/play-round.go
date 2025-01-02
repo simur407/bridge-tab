@@ -32,7 +32,12 @@ func (c *PlayRoundCommand) Execute(repository domain.GameSessionRepository, team
 	}
 
 	// find player team
-	var playerTeam string = "2b8bc317-dab5-4c19-a77a-ac313586f077"
+	getPlayerTeam := tournament_management.GetTeamByMemberQuery{TournamentId: c.GameSessionId, MemberId: c.PlayerId}
+	playerTeam, err := getPlayerTeam.Execute(teamRepository)
+
+	if err != nil {
+		return err
+	}
 
 	// find other team by name
 	getTeamByName := tournament_management.GetTeamByNameQuery{TournamentId: c.GameSessionId, Name: c.VersusTeamName}
@@ -42,7 +47,7 @@ func (c *PlayRoundCommand) Execute(repository domain.GameSessionRepository, team
 		return err
 	}
 
-	err = t.AddRoundScore(c.DealNo, domain.TeamId(playerTeam), domain.TeamId(versusTeam.Id), c.Contract, c.Tricks, c.Declarer, c.OpeningLead)
+	err = t.AddRoundScore(c.DealNo, domain.TeamId(playerTeam.Id), domain.TeamId(versusTeam.Id), c.Contract, c.Tricks, c.Declarer, c.OpeningLead)
 
 	if err != nil {
 		return err
