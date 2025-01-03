@@ -47,7 +47,7 @@ func main() {
 	rounds_registration_infra.Migrate(db)
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Render("index", nil)
+		return c.Render("index", nil, "layout")
 	})
 	app.Get("/register", GetRegister)
 	app.Post("/register", middleware.Transaction(db, nil), PostRegister)
@@ -111,7 +111,7 @@ func PostRegister(c *fiber.Ctx) error {
 
 	if err := c.BodyParser(body); err != nil {
 		log.Debug(err)
-		return err
+		return notFound(c, "Bład przy przetwarzaniu formularza")
 	}
 
 	tx := middleware.GetTransaction(c)
@@ -125,14 +125,14 @@ func PostRegister(c *fiber.Ctx) error {
 	}
 	if err := command.Execute(&repository); err != nil {
 		log.Debug(err)
-		return err
+		return notFound(c, "Bład przy rejestracji")
 	}
 
 	token, err := auth.Generate(id)
 
 	if err != nil {
 		log.Debug(err)
-		return err
+		return notFound(c, "Bład przy rejestracji")
 	}
 
 	cookie := new(fiber.Cookie)
@@ -141,8 +141,7 @@ func PostRegister(c *fiber.Ctx) error {
 	cookie.Expires = time.Now().Add(auth.EXPIRES_AT)
 	c.Cookie(cookie)
 
-	// TODO: handle no redirect
-	redirect := c.Query("redirect")
+	redirect := c.Query("redirect", "/")
 	return c.Redirect(redirect)
 }
 
@@ -151,12 +150,12 @@ func GetTournament(c *fiber.Ctx) error {
 
 	if tournamentId == "" {
 		log.Debug("tournamentId is empty")
-		return c.Render("404", nil)
+		return notFound(c, "Nie znaleziono turnieju")
 	}
 
 	if err := uuid.Validate(tournamentId); err != nil {
 		log.Debug(err)
-		return c.Render("404", nil)
+		return notFound(c, "Niepoprawny identyfikator turnieju")
 	}
 
 	joinedTournament := c.Cookies("tournamentId")

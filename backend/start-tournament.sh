@@ -1,11 +1,17 @@
 alias bridge-tab='go run ./cli/main.go'
 
 # Create tournament
-tournament_id=$(bridge-tab tournament create -n "IX Turniej w Zagorzynie" | grep -oE '[0-9a-f-]{36}')
+message=$(bridge-tab tournament create -n "IX Turniej w Zagorzynie")
+echo $message
+tournament_id=$(echo $message | grep -oE '[0-9a-f-]{36}')
 
 # Create teams
+team_ids=()
 for i in {1..12}; do
-    bridge-tab tournament team create -t $tournament_id -n "$i"
+    message=$(bridge-tab tournament team create -t $tournament_id -n "$i")
+    echo $message
+    team_id=$(echo $message | grep -oE '[0-9a-f-]{36}' | head -1)
+    team_ids+=($team_id)
 done
 
 # Create board protocols
@@ -42,3 +48,11 @@ bridge-tab tournament board-protocol create -i $tournament_id -n "30" -v "None" 
 bridge-tab tournament board-protocol create -i $tournament_id -n "31" -v "NS" "10;8" "4;7" "6;1" "5;9" "2;3" "12;11"
 bridge-tab tournament board-protocol create -i $tournament_id -n "32" -v "EW" "10;8" "4;7" "6;1" "5;9" "2;3" "12;11"
 bridge-tab tournament board-protocol create -i $tournament_id -n "33" -v "None" "10;8" "4;7" "6;1" "5;9" "2;3" "12;11"
+
+# Create contestants (testing purposes)
+for team_id in "${team_ids[@]}"; do
+    uuid=$(uuidgen)
+    bridge-tab tournament join -i $tournament_id -c $uuid
+    echo $team_id
+    bridge-tab tournament team join -t $tournament_id -c $uuid -i $team_id
+done
