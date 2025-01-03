@@ -199,12 +199,12 @@ func JoinTournament(c *fiber.Ctx) error {
 
 	if tournamentId == "" {
 		log.Debug("tournamentId is empty")
-		return c.Render("404", nil)
+		return notFound(c, "Nie znaleziono turnieju")
 	}
 
 	if err := uuid.Validate(tournamentId); err != nil {
 		log.Debug(err)
-		return c.Render("404", nil)
+		return notFound(c, "Niepoprawny identyfikator turnieju")
 	}
 
 	contestantId := c.Locals("user").(middleware.UserMetadata).Id
@@ -220,7 +220,7 @@ func JoinTournament(c *fiber.Ctx) error {
 
 	if err != nil {
 		log.Debug(err)
-		return c.Render("404", nil)
+		return notFound(c, "Błąd przy dołączeniu do turnieju")
 	}
 
 	c.Cookie(&fiber.Cookie{
@@ -336,7 +336,7 @@ func JoinTeam(c *fiber.Ctx) error {
 
 	if err != nil {
 		log.Debug(err)
-		return c.Render("404", nil)
+		return notFound(c, "Błąd przy dołączeniu do drużyny")
 	}
 
 	c.Cookie(&fiber.Cookie{

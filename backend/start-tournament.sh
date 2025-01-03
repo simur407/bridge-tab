@@ -1,7 +1,7 @@
 alias bridge-tab='go run ./cli/main.go'
 
 # Create tournament
-message=$(bridge-tab tournament create -n "IX Turniej w Zagorzynie")
+message=$(bridge-tab tournament create -n "TEST - IX Turniej w Zagorzynie")
 echo $message
 tournament_id=$(echo $message | grep -oE '[0-9a-f-]{36}')
 
