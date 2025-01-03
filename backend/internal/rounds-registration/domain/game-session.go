@@ -114,6 +114,17 @@ type RoundDto struct {
 	EwTeamName string
 }
 
+type PlayedRoundDto struct {
+	DealNo      int
+	NsTeamName  string
+	EwTeamName  string
+	Contract    string
+	Tricks      int
+	Declarer    string
+	OpeningLead string
+}
+
 type GameSessionReadRepository interface {
 	FindRound(gameSessionId *string, dealNo int, playerTeamId string, versusTeamId string) (*RoundDto, error)
+	FindAllRounds(gameSessionId *string) ([]PlayedRoundDto, error)
 }

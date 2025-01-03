@@ -4,6 +4,7 @@ import (
 	"bridge-tab/http/middleware"
 	auth "bridge-tab/internal/auth"
 	rounds_registration_cmd "bridge-tab/internal/rounds-registration/application"
+	rounds_registration_query "bridge-tab/internal/rounds-registration/application/query"
 	rounds_registration_domain "bridge-tab/internal/rounds-registration/domain"
 	rounds_registration_infra "bridge-tab/internal/rounds-registration/infrastructure"
 	tournament_management_cmd "bridge-tab/internal/tournament-management/application/command"
@@ -470,7 +471,7 @@ func VerifyRound(c *fiber.Ctx) error {
 
 	contestantId := c.Locals("user").(middleware.UserMetadata).Id
 
-	getRound := rounds_registration_cmd.GetRoundQuery{
+	getRound := rounds_registration_query.GetRoundQuery{
 		GameSessionId:  gameSessionId,
 		PlayerId:       contestantId,
 		DealNo:         body.DealNo,
@@ -577,6 +578,8 @@ func translateError(e error) string {
 		return "Brak drużyn w rozgrywce"
 	case rounds_registration_domain.ErrRoundsAreEmpty:
 		return "Brak rund w rozgrywce"
+	case sql.ErrNoRows:
+		return "Nie znaleziono pojedynku"
 	default:
 		return e.Error()
 	}

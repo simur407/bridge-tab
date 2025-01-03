@@ -9,6 +9,7 @@ import (
 
 var RoundsRegistrationCmd = func(
 	gameSessionRepository *rounds_registration.GameSessionRepository,
+	gameSessionReadRepository *rounds_registration.GameSessionReadRepository,
 	teamRepository *tournament_management.TeamReadRepository,
 ) *cobra.Command {
 	command := &cobra.Command{
@@ -19,6 +20,7 @@ var RoundsRegistrationCmd = func(
 
 	command.AddCommand(
 		playRoundCmd(gameSessionRepository, teamRepository),
+		listRoundsCsvCmd(gameSessionReadRepository),
 	)
 
 	return command

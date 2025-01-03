@@ -173,7 +173,7 @@ func (r *PostgresGameSessionRepository) gameSessionStarted(event domain.GameSess
 func (r *PostgresGameSessionRepository) roundPlayed(event domain.RoundPlayed) error {
 	_, err := r.Tx.ExecContext(r.Ctx, `
 		UPDATE rounds_registration.round 
-		SET contract = $5, tricks = $6, declarer = $7, opening_lead = $8 
+		SET contract = $5, tricks = $6, declarer = $7, opening_lead = $8, updated_at = now()
 		WHERE game_session_id = $1 AND deal_no = $2 AND ns_team_id = $3 AND ew_team_id = $4`,
 		event.GameSessionId,
 		event.DealNo,

@@ -30,6 +30,7 @@ It allows organizers or umpires to prepare and manage tournaments, check scores,
 
 // Round Registration
 var GameSessionRepository rounds_registration.GameSessionRepository
+var GameSessionReadRepository rounds_registration.GameSessionReadRepository
 
 // Tournament Management
 var TournamentRepository tournament.TournamentRepository
@@ -64,6 +65,10 @@ func Execute() error {
 
 	// Round Registration
 	GameSessionRepository = &rounds_registration_infra.PostgresGameSessionRepository{
+		Ctx: ctx,
+		Tx:  tx,
+	}
+	GameSessionReadRepository = &rounds_registration_infra.PostgresGameSessionReadRepository{
 		Ctx: ctx,
 		Tx:  tx,
 	}
@@ -112,5 +117,5 @@ func init() {
 		&GameSessionRepository,
 	))
 	rootCmd.AddCommand(users.UserCmd(&UserReadRepository))
-	rootCmd.AddCommand(rounds.RoundsRegistrationCmd(&GameSessionRepository, &TeamReadRepository))
+	rootCmd.AddCommand(rounds.RoundsRegistrationCmd(&GameSessionRepository, &GameSessionReadRepository, &TeamReadRepository))
 }

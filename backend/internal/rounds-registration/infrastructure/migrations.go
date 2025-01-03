@@ -8,6 +8,7 @@ import (
 
 func Migrate(db *sql.DB) {
 	m0001_initial(db)
+	m0002_add_updated_at(db)
 }
 
 func m0001_initial(db *sql.DB) {
@@ -23,7 +24,7 @@ func m0001_initial(db *sql.DB) {
 			declarer TEXT,
 			tricks INTEGER,
 			opening_lead TEXT,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMPTZ,
 
 			CONSTRAINT round_game_session_deal_no_unique UNIQUE (game_session_id, deal_no, ns_team_id, ew_team_id)
 		);
@@ -35,6 +36,16 @@ func m0001_initial(db *sql.DB) {
 
 			CONSTRAINT team_players_game_session_team_player_unique UNIQUE (game_session_id, team_id, player_id)
 		)
+	`)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func m0002_add_updated_at(db *sql.DB) {
+	_, err := db.Exec(`
+		ALTER TABLE rounds_registration.round
+		ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ;
 	`)
 	if err != nil {
 		panic(err)
