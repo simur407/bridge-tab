@@ -24,11 +24,11 @@ var listTournamentsCmd = func(TournamentReadRepository *tournament_domain.Tourna
 				return err
 			}
 
-			fmt.Printf("%-36v | %-15v\n", "Id", "Name")
-			fmt.Println(strings.Repeat("-", 55))
+			fmt.Printf("%-36v | %-15v | %-30v\n", "Id", "Name", "Started At")
+			fmt.Println(strings.Repeat("-", 88))
 			for _, Tournament := range results {
-				fmt.Printf("%-36v | %-15v\n", Tournament.Id, Tournament.Name)
-				fmt.Println(strings.Repeat("-", 55))
+				fmt.Printf("%-36v | %-15v | %-30v\n", Tournament.Id, Tournament.Name, Tournament.StartedAt)
+				fmt.Println(strings.Repeat("-", 88))
 			}
 			return nil
 		},

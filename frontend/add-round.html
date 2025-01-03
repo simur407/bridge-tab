@@ -1,80 +1,31 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-       /* Tooltip container */
-      .tooltip {
-        position: relative;
-        display: inline-block;
-      }
-
-      /* Tooltip text */
-      .tooltip .tooltiptext {
-        visibility: hidden;
-        width: 80vw;
-        background-color: #555;
-        color: #fff;
-        text-align: center;
-        padding: 5px 0;
-        border-radius: 6px;
-
-        /* Position the tooltip text */
-        position: absolute;
-        z-index: 1;
-        top: 135%;
-        left: 50%;
-        margin-left: -60px;
-
-        /* Fade in tooltip */
-        opacity: 0;
-        transition: opacity 0.3s;
-      }
-
-      /* Tooltip arrow */
-      .tooltip .tooltiptext::after {
-        content: "";
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        margin-left: -5px;
-        border-width: 5px;
-        border-style: solid;
-        border-color: transparent transparent #555 transparent;
-      }
-
-      /* Show the tooltip text when you mouse over the tooltip container */
-      .tooltip:hover .tooltiptext {
-        visibility: visible;
-        opacity: 1;
-      } 
-    </style>
-  </head>
-  <body>
-    <form method="post" action="/round-registration/{{ .GameSessionId }}/add-round">
-      <label for="dealNo">Nr rozdania</label><br>
-      <input type="number" name="dealNo" id="dealNo" value="" min="1" max="33"/><br>
-      <label for="versusTeamName">Przeciwko drużynie nr</label><br>
-      <input type="number" name="versusTeamName" id="versusTeamName" value="" min="1" max="12"/><br>
-      <label for="contract">Kontrakt <div class="tooltip" style="color: red">?
-        <span class="tooltiptext">
-          Lewy: 1-7<br>
-          Kolory: Trefl=(C), Karo=(D), Kier=(H), Pik=(S), bez atu=(N)<br>
-          Kontra: x, rekontra: xx<br>
-          W przypadku 4 pasów: Pass<br>
-          np. 2Cxx = 2 Trefl z rekontrą<br>
-          </span>
-      </div>
-      </label><br>
-      <input type="text" name="contract" id="contract" value="" pattern="[1-7][CDHSN]x{0,2}|Pass"
-        title="&#10;&#13;Lewy: 1-7&#10;&#13;Kolory: Trefl=(C), Karo=(D), Kier=(H), Pik=(S), bez atu=(N)&#10;&#13;Kontra: x, rekontra: xx&#10;&#13;W przypadku 4 pasów: Pass&#10;&#13;np. 2Cxx = 2 Trefl z rekontrą"/><br>
-      <label for="tricks">Ugrano lew (0-13)</label><br>
-      <input type="number" name="tricks" id="tricks" value="" min="0" max="13"/><br>
-      <label for="declarer">Rozgrywający (N,S,E,W)</label><br>
-      <input type="text" name="declarer" id="declarer" value="" pattern="[NSEW]{1}"/><br>
-      <label for="openingLead">Wist</label><br>
-      <input type="text" name="openingLead" id="openingLead" value="" pattern="([2-9]|10|[AKQJ])[CDHS]"/><br>
-      <button type="submit">Dodaj</button>
-    </form>
-  </body>
-</html>
+<h3>Drużyna {{ .PlayerTeam }}</h3>
+<form hx-post="/round-registration/{{ .GameSessionId }}/add-round" hx-swap="afterbegin" hx-target="#content">
+  <label for="dealNo">Nr rozdania</label><br>
+  <input type="number" name="dealNo" id="dealNo" value="" min="1" max="33"/><br>
+  <label for="versusTeamName">Przeciwko drużynie nr</label><br>
+  <input type="number" name="versusTeamName" id="versusTeamName" value="" min="1" max="12"/><br>
+  <label for="contract">Kontrakt <div class="tooltip" style="color: red">?
+    <span class="tooltiptext">
+      Lewy: 1-7<br>
+      Kolory: Trefl=(C), Karo=(D), Kier=(H), Pik=(S), bez atu=(N)<br>
+      Kontra: x, rekontra: xx<br>
+      W przypadku 4 pasów: Pass<br>
+      np. 2Cxx = 2 Trefl z rekontrą<br>
+    </span>
+  </div>
+  </label><br>
+  <input type="text" name="contract" id="contract" value="" pattern="[1-7][CDHSN]x{0,2}|Pass"
+    title="&#10;&#13;Lewy: 1-7&#10;&#13;Kolory: Trefl=(C), Karo=(D), Kier=(H), Pik=(S), bez atu=(N)&#10;&#13;Kontra: x, rekontra: xx&#10;&#13;W przypadku 4 pasów: Pass&#10;&#13;np. 2Cxx = 2 Trefl z rekontrą"/><br>
+  <label for="tricks">Ugrano lew (0-13)</label><br>
+  <input type="number" name="tricks" id="tricks" value="" min="0" max="13"/><br>
+  <label for="declarer">Rozgrywający</label><br>
+  <select name="declarer" id="declarer">
+    <option value="N">N</option>
+    <option value="S">S</option>
+    <option value="E">E</option>
+    <option value="W">W</option>
+  </select><br>
+  <label for="openingLead">Wist</label><br>
+  <input type="text" name="openingLead" id="openingLead" value="" pattern="([2-9]|10|[AKQJ])[CDHS]"/><br>
+  <button type="submit">Dodaj</button>
+</form>

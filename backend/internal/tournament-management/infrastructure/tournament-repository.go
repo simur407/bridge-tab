@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"time"
 
 	domain "bridge-tab/internal/tournament-management/domain"
 )
@@ -19,8 +20,9 @@ var ErrTournamentNotFound = errors.New("tournament not found")
 
 func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.Tournament, error) {
 	var Tournament domain.Tournament
-	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name FROM tournament_management.tournament WHERE id = $1", Id)
-	err := row.Scan(&Tournament.State.Id, &Tournament.State.Name)
+	var StartedAt sql.NullString
+	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name, started_at FROM tournament_management.tournament WHERE id = $1", Id)
+	err := row.Scan(&Tournament.State.Id, &Tournament.State.Name, &StartedAt)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -157,6 +159,13 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 	Tournament.State.Contestants = Contestants
 	Tournament.State.Teams = Teams
 	Tournament.State.BoardProtocols = BoardProtocols
+	if StartedAt.Valid {
+		startedAtTime, err := time.Parse(time.RFC3339Nano, StartedAt.String)
+
+		if err == nil {
+			Tournament.State.StartedAt = &startedAtTime
+		}
+	}
 
 	return &Tournament, nil
 }

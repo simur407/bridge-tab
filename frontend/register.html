@@ -1,14 +1,5 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bridge-tab: Rejestracja</title>
-  </head>
-  <body>
-    <form method="post" action="/register?redirect={{ .Redirect }}">
-      <label for="name">Podaj imię</label>
-      <input type="text" name="name" value=""/>
-      <button type="submit">Zarejestruj</button>
-    </form>
-  </body>
-</html>
+<form method="post" action="/register?redirect={{ .Redirect }}">
+  <label for="name">Podaj imię</label>
+  <input type="text" name="name" value=""/>
+  <button type="submit">Zarejestruj</button>
+</form>

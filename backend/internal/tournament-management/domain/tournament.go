@@ -384,8 +384,9 @@ type TournamentRepository interface {
 }
 
 type TournamentDto struct {
-	Id   string
-	Name string
+	Id        string
+	Name      string
+	StartedAt string
 }
 
 type TournamentReadRepository interface {

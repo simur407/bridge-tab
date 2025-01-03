@@ -86,8 +86,9 @@ func main() {
 
 func GetRegister(c *fiber.Ctx) error {
 	return c.Render("register", fiber.Map{
+		"Title":    "Rejestracja",
 		"Redirect": c.Query("redirect"),
-	})
+	}, "layout")
 }
 
 type RegisterUserRequestDto struct {
@@ -166,9 +167,10 @@ func GetTournament(c *fiber.Ctx) error {
 	}
 
 	return c.Render("tournament", fiber.Map{
+		"Title":          tournament.Name,
 		"TournamentName": tournament.Name,
 		"TournamentId":   tournament.Id,
-	})
+	}, "layout")
 }
 
 func JoinTournament(c *fiber.Ctx) error {
@@ -208,12 +210,12 @@ func GetTournamentTeams(c *fiber.Ctx) error {
 
 	if tournamentId == "" {
 		log.Debug("tournamentId is empty")
-		return c.Render("404", nil)
+		return notFound(c, "Nie znaleziono turnieju")
 	}
 
 	if err := uuid.Validate(tournamentId); err != nil {
 		log.Debug(err)
-		return c.Render("404", nil)
+		return notFound(c, "Niepoprawny identyfikator turnieju")
 	}
 
 	getTournament := tournament_management_query.GetTournamentById{
@@ -226,12 +228,12 @@ func GetTournamentTeams(c *fiber.Ctx) error {
 
 	if err != nil {
 		log.Debug(err)
-		return c.Render("404", nil)
+		return notFound(c, "Błąd przy pobieraniu turnieju")
 	}
 
 	if tournament == nil {
 		log.Debug("tournament not found")
-		return c.Render("404", nil)
+		return notFound(c, "Nie znaleziono turnieju")
 	}
 
 	joinedTeamId := c.Cookies("teamId", "")
@@ -246,15 +248,16 @@ func GetTournamentTeams(c *fiber.Ctx) error {
 
 	if err != nil {
 		log.Debug(err)
-		return c.Render("404", nil)
+		return notFound(c, "Błąd przy pobieraniu drużyn")
 	}
 
 	return c.Render("teams", fiber.Map{
+		"Title":          tournament.Name,
 		"TournamentId":   tournament.Id,
 		"TournamentName": tournament.Name,
 		"Teams":          teams,
 		"JoinedTeamId":   joinedTeamId,
-	})
+	}, "layout")
 }
 
 func JoinTeam(c *fiber.Ctx) error {
@@ -357,18 +360,39 @@ func LeaveTeam(c *fiber.Ctx) error {
 }
 
 func GetAddRoundForm(c *fiber.Ctx) error {
-	if c.Params("gameSessionId") == "" {
+	gameSessionId := c.Params("gameSessionId")
+	if gameSessionId == "" {
 		log.Debug("gameSessionId is empty")
-		return c.Render("404", nil)
+		return notFound(c, "Nie znaleziono rozgrywki")
 	}
-	if err := uuid.Validate(c.Params("gameSessionId")); err != nil {
+	if err := uuid.Validate(gameSessionId); err != nil {
 		log.Debug(err)
-		return c.Render("404", nil)
+		return notFound(c, "Niepoprawny identyfikator rozgrywki")
+	}
+
+	playerId := c.Locals("user").(middleware.UserMetadata).Id
+	getPlayerTeam := tournament_management_query.GetTeamByMemberQuery{TournamentId: gameSessionId, MemberId: playerId}
+	playerTeam, err := getPlayerTeam.Execute(&tournament_management_infra.PostgresTeamReadRepository{
+		Ctx: c.UserContext(),
+		Tx:  middleware.GetTransaction(c),
+	})
+
+	if err != nil {
+		log.Debug(err)
+		return notFound(c, "Nie dołączono do żadnego zespołu")
+	}
+
+	var success string
+	if c.Query("success") != "" {
+		success = "Pomyślnie dodano rundę"
 	}
 
 	return c.Render("add-round", fiber.Map{
+		"Success":       success,
+		"Title":         "Dodaj rundę",
 		"GameSessionId": c.Params("gameSessionId"),
-	})
+		"PlayerTeam":    playerTeam.Name,
+	}, "layout")
 }
 
 type Round struct {
@@ -385,17 +409,17 @@ func SubmitRound(c *fiber.Ctx) error {
 
 	if gameSessionId == "" {
 		log.Debug("gameSessionId is empty")
-		return c.Render("404", nil)
+		return notFound(c, "Nie znaleziono rozgrywki")
 	}
 	if err := uuid.Validate(gameSessionId); err != nil {
 		log.Debug(err)
-		return c.Render("404", nil)
+		return notFound(c, "Niepoprawny identyfikator rozgrywki")
 	}
 
 	body := new(Round)
 	if err := c.BodyParser(body); err != nil {
 		log.Debug(err)
-		return c.Render("404", nil)
+		return notFound(c, "Błąd przy przetwarzaniu formularza")
 	}
 
 	contestantId := c.Locals("user").(middleware.UserMetadata).Id
@@ -420,8 +444,18 @@ func SubmitRound(c *fiber.Ctx) error {
 
 	if err != nil {
 		log.Debug(err)
-		return c.Render("404", nil)
+		return c.Render("error", fiber.Map{
+			"Error": err.Error(),
+		})
 	}
 
-	return c.Redirect("/round-registration/" + gameSessionId + "/add-round")
+	c.Append("HX-Redirect", "/round-registration/"+gameSessionId+"/add-round?success=true")
+	return c.SendStatus(302)
+}
+
+func notFound(c *fiber.Ctx, message string) error {
+	return c.Render("404", fiber.Map{
+		"Title":   "Błąd",
+		"Message": message,
+	}, "layout")
 }
