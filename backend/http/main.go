@@ -46,6 +46,9 @@ func main() {
 	users_infra.Migrate(db)
 	rounds_registration_infra.Migrate(db)
 
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.Render("index", nil)
+	})
 	app.Get("/register", GetRegister)
 	app.Post("/register", middleware.Transaction(db, nil), PostRegister)
 	app.Get("/tournaments/:tournamentId",
@@ -84,7 +87,12 @@ func main() {
 		SubmitRound,
 	)
 
-	app.Listen(":3000")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+
+	app.Listen(":" + port)
 }
 
 func GetRegister(c *fiber.Ctx) error {
