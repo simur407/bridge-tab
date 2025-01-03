@@ -20,7 +20,7 @@
     {{ else }}
       {{ if not $.JoinedTeam.Id }}
         {{ if lt (len .Members) 2 }}
-            <div>
+            <div style="padding-top: 8px">
               <form method="post" action="/tournaments/{{ $.TournamentId }}/teams/{{ .Id }}/join">
                 {{ .Name }}
                 <button type="submit">Dołącz do drużyny</button>

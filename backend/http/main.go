@@ -167,7 +167,7 @@ func GetTournament(c *fiber.Ctx) error {
 
 	joinedTournament := c.Cookies("tournamentId")
 
-	if joinedTournament != "" {
+	if joinedTournament != "" && joinedTournament == tournamentId {
 		return c.Redirect("/tournaments/" + joinedTournament + "/teams")
 	}
 
@@ -288,6 +288,12 @@ func GetTournamentTeams(c *fiber.Ctx) error {
 	var joinedTeam tournament_management_domain.TeamDto
 	if joinedTeamIndex != -1 {
 		joinedTeam = teams[joinedTeamIndex]
+	} else {
+		c.Cookie(&fiber.Cookie{
+			Name:     "teamId",
+			Expires:  time.Now(),
+			HTTPOnly: true,
+		})
 	}
 
 	if err != nil {
