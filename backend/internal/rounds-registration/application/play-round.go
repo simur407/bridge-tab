@@ -71,13 +71,13 @@ func validate(c *PlayRoundCommand) error {
 	if c.Contract == "" {
 		return errors.New("contract is empty")
 	}
-	if c.Tricks == 0 {
+	if c.Contract != "Pass" && c.Tricks == 0 {
 		return errors.New("tricks is empty")
 	}
-	if c.Declarer == "" {
+	if c.Contract != "Pass" && c.Declarer == "" {
 		return errors.New("declarer is empty")
 	}
-	if c.OpeningLead == "" {
+	if c.Contract != "Pass" && c.OpeningLead == "" {
 		return errors.New("opening lead is empty")
 	}
 
@@ -89,20 +89,22 @@ func validate(c *PlayRoundCommand) error {
 		return errors.New("invalid contract")
 	}
 
-	if c.Tricks < 0 || c.Tricks > 13 {
+	if c.Contract != "Pass" && (c.Tricks < 0 || c.Tricks > 13) {
 		return errors.New("invalid tricks")
 	}
 
-	if c.Declarer != "N" && c.Declarer != "E" && c.Declarer != "S" && c.Declarer != "W" {
+	if c.Contract != "Pass" && c.Declarer != "N" && c.Declarer != "E" && c.Declarer != "S" && c.Declarer != "W" {
 		return errors.New("invalid declarer")
 	}
 
-	match, err = regexp.MatchString("[2-9]|10|[AKQJ][CDHSN]", c.OpeningLead)
-	if err != nil {
-		return err
-	}
-	if !match {
-		return errors.New("invalid opening lead")
+	if c.Contract != "Pass" {
+		match, err = regexp.MatchString("[2-9]|10|[AKQJ][CDHSN]", c.OpeningLead)
+		if err != nil {
+			return err
+		}
+		if !match {
+			return errors.New("invalid opening lead")
+		}
 	}
 
 	return nil

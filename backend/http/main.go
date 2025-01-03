@@ -4,6 +4,7 @@ import (
 	"bridge-tab/http/middleware"
 	auth "bridge-tab/internal/auth"
 	rounds_registration_cmd "bridge-tab/internal/rounds-registration/application"
+	rounds_registration_domain "bridge-tab/internal/rounds-registration/domain"
 	rounds_registration_infra "bridge-tab/internal/rounds-registration/infrastructure"
 	tournament_management_cmd "bridge-tab/internal/tournament-management/application/command"
 	tournament_management_query "bridge-tab/internal/tournament-management/application/query"
@@ -80,6 +81,11 @@ func main() {
 		middleware.JwtGuard(),
 		middleware.Transaction(db, nil),
 		GetAddRoundForm,
+	)
+	app.Post("/round-registration/:gameSessionId/verify-round",
+		middleware.JwtGuard(),
+		middleware.Transaction(db, nil),
+		VerifyRound,
 	)
 	app.Post("/round-registration/:gameSessionId/add-round",
 		middleware.JwtGuard(),
@@ -444,6 +450,67 @@ type Round struct {
 	OpeningLead    string `json:"openingLead"`
 }
 
+func VerifyRound(c *fiber.Ctx) error {
+	gameSessionId := c.Params("gameSessionId")
+
+	if gameSessionId == "" {
+		log.Debug("gameSessionId is empty")
+		return notFound(c, "Nie znaleziono rozgrywki")
+	}
+	if err := uuid.Validate(gameSessionId); err != nil {
+		log.Debug(err)
+		return notFound(c, "Niepoprawny identyfikator rozgrywki")
+	}
+
+	body := new(Round)
+	if err := c.BodyParser(body); err != nil {
+		log.Debug(err)
+		return notFound(c, "Błąd przy przetwarzaniu formularza")
+	}
+
+	contestantId := c.Locals("user").(middleware.UserMetadata).Id
+
+	getRound := rounds_registration_cmd.GetRoundQuery{
+		GameSessionId:  gameSessionId,
+		PlayerId:       contestantId,
+		DealNo:         body.DealNo,
+		VersusTeamName: body.VersusTeamName,
+	}
+	round, err := getRound.Execute(&rounds_registration_infra.PostgresGameSessionReadRepository{
+		Ctx: c.UserContext(),
+		Tx:  middleware.GetTransaction(c),
+	}, &tournament_management_infra.PostgresTeamReadRepository{
+		Ctx: c.UserContext(),
+		Tx:  middleware.GetTransaction(c),
+	})
+
+	if err != nil {
+		log.Debug(err)
+		return c.Render("error", fiber.Map{
+			"Error": translateError(err),
+		})
+	}
+
+	if round == nil {
+		log.Debug(err)
+		return c.Render("error", fiber.Map{
+			"Error": "Nie znaleziono takiego pojedynku",
+		})
+	}
+
+	return c.Render("confirm-round-dialog", fiber.Map{
+		"GameSessionId":  gameSessionId,
+		"DealNo":         body.DealNo,
+		"VersusTeamName": body.VersusTeamName,
+		"Contract":       body.Contract,
+		"Tricks":         body.Tricks,
+		"Declarer":       body.Declarer,
+		"OpeningLead":    body.OpeningLead,
+		"NSTeamName":     round.NsTeamName,
+		"EWTeamName":     round.EwTeamName,
+	})
+}
+
 func SubmitRound(c *fiber.Ctx) error {
 	gameSessionId := c.Params("gameSessionId")
 
@@ -485,7 +552,7 @@ func SubmitRound(c *fiber.Ctx) error {
 	if err != nil {
 		log.Debug(err)
 		return c.Render("error", fiber.Map{
-			"Error": err.Error(),
+			"Error": translateError(err),
 		})
 	}
 
@@ -498,4 +565,19 @@ func notFound(c *fiber.Ctx, message string) error {
 		"Title":   "Błąd",
 		"Message": message,
 	}, "layout")
+}
+
+func translateError(e error) string {
+	switch e {
+	case rounds_registration_domain.ErrRoundNotFound:
+		return "Nie ma takiej rundy. Sprawdź czy nr rozdania i zespół jest prawidłowy."
+	case rounds_registration_domain.ErrRoundAlreadyPlayed:
+		return "Runda juz została wpisana"
+	case rounds_registration_domain.ErrTeamsAreEmpty:
+		return "Brak drużyn w rozgrywce"
+	case rounds_registration_domain.ErrRoundsAreEmpty:
+		return "Brak rund w rozgrywce"
+	default:
+		return e.Error()
+	}
 }

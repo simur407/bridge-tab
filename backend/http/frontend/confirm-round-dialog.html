@@ -1,0 +1,38 @@
+<dialog style="z-index: 100; width: 95vw; height: 85vh;" open>
+  <div>
+    <h3 style="color: red"><i>To okno obsługuje drużyna przeciwna.</i></h3>
+    <p>Potwierdź czy wynik rozdania się zgadza:</p>
+    <p>Rozdanie: <b>{{ .DealNo }}</b></p>
+    <table>
+      <tr>
+        <th>NS</th>
+        <th>EW</th>
+        <th>Kontrakt</th>
+        <th>Rozgrywa</th>
+        <th>Lew</th>
+        <th>Wist</th>
+      </tr>
+      <tr>
+        <td>{{ .NSTeamName }}</td>
+        <td>{{ .EWTeamName }}</td>
+        <td>{{ .Contract }}</td>
+        <td>{{ .Declarer }}</td>
+        <td>{{ .Tricks }}</td>
+        <td>{{ .OpeningLead }}</td>
+    </tr>
+    </table>
+  </div>
+  <br>
+  <form method="dialog">
+    <button>Nie zgadza się/Anuluj</button>
+  </form><br>
+  <form hx-post="/round-registration/{{ .GameSessionId }}/add-round" hx-swap="afterbegin" hx-target="#content">
+    <input type="text" name="dealNo" value="{{ .DealNo }}" hidden/>
+    <input type="text" name="versusTeamName" value="{{ .VersusTeamName }}" hidden/>
+    <input type="text" name="contract" value="{{ .Contract }}" hidden/>
+    <input type="text" name="tricks" value="{{ .Tricks }}" hidden/>
+    <input type="text" name="declarer" value="{{ .Declarer }}" hidden/>
+    <input type="text" name="openingLead" value="{{ .OpeningLead }}" hidden/>
+    <button type="submit">Zgadza się</button>
+  </form>
+</dialog>

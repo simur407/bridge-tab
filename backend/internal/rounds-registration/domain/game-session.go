@@ -107,3 +107,13 @@ type GameSessionRepository interface {
 	Save(gameSession *GameSession) error
 	Load(id *GameSessionId) (*GameSession, error)
 }
+
+type RoundDto struct {
+	DealNo     int
+	NsTeamName string
+	EwTeamName string
+}
+
+type GameSessionReadRepository interface {
+	FindRound(gameSessionId *string, dealNo int, playerTeamId string, versusTeamId string) (*RoundDto, error)
+}
