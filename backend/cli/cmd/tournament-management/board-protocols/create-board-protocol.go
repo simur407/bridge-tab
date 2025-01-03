@@ -84,6 +84,8 @@ var createBoardProtocolCmd = func(
 				return err
 			}
 
+			fmt.Println("Board Protocol { BoardNo:", command.BoardNo, ", Vulnerable:", vulnerable, ", args:", args, "} created in Tournament { Id:", command.TournamentId, "}")
+
 			return nil
 		},
 	}

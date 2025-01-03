@@ -7,10 +7,13 @@ import (
 	rounds_registration_infra "bridge-tab/internal/rounds-registration/infrastructure"
 	tournament_management_cmd "bridge-tab/internal/tournament-management/application/command"
 	tournament_management_query "bridge-tab/internal/tournament-management/application/query"
+	tournament_management_domain "bridge-tab/internal/tournament-management/domain"
 	tournament_management_infra "bridge-tab/internal/tournament-management/infrastructure"
 	users "bridge-tab/internal/user/application"
 	users_infra "bridge-tab/internal/user/infrastructure"
 	"database/sql"
+	"os"
+	"slices"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -24,12 +27,12 @@ import (
 
 func main() {
 	app := fiber.New(fiber.Config{
-		Views: html.New("../frontend", ".html"),
+		Views: html.New("http/frontend", ".html"),
 	})
 	app.Use(logger.New())
 	app.Use(recover.New())
 
-	dbString := "postgres://bridge-tab:bridge-tab@localhost/bridge-tab?sslmode=disable"
+	dbString := os.Getenv("DATABASE_STRING")
 	db, err := sql.Open("postgres", dbString)
 
 	if err != nil {
@@ -148,6 +151,12 @@ func GetTournament(c *fiber.Ctx) error {
 		return c.Render("404", nil)
 	}
 
+	joinedTournament := c.Cookies("tournamentId")
+
+	if joinedTournament != "" {
+		return c.Redirect("/tournaments/" + joinedTournament + "/teams")
+	}
+
 	getTournament := tournament_management_query.GetTournamentById{
 		Id: tournamentId,
 	}
@@ -158,12 +167,17 @@ func GetTournament(c *fiber.Ctx) error {
 
 	if err != nil {
 		log.Debug(err)
-		return c.Render("404", nil)
+		return notFound(c, "Błąd przy pobieraniu turnieju")
 	}
 
 	if tournament == nil {
 		log.Debug("tournament not found")
-		return c.Render("404", nil)
+		return notFound(c, "Nie znaleziono turnieju")
+	}
+
+	if tournament.StartedAt != "" {
+		log.Debug("tournament is already started")
+		return notFound(c, "Nie można już dołączać do turnieju")
 	}
 
 	return c.Render("tournament", fiber.Map{
@@ -201,6 +215,13 @@ func JoinTournament(c *fiber.Ctx) error {
 		log.Debug(err)
 		return c.Render("404", nil)
 	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "tournamentId",
+		Value:    tournamentId,
+		Expires:  time.Now().Add(time.Hour * 24),
+		HTTPOnly: true,
+	})
 
 	return c.Redirect("/tournaments/" + tournamentId + "/teams")
 }
@@ -246,6 +267,15 @@ func GetTournamentTeams(c *fiber.Ctx) error {
 		Tx:  middleware.GetTransaction(c),
 	})
 
+	joinedTeamIndex := slices.IndexFunc(teams, func(team tournament_management_domain.TeamDto) bool {
+		return team.Id == joinedTeamId
+	})
+
+	var joinedTeam tournament_management_domain.TeamDto
+	if joinedTeamIndex != -1 {
+		joinedTeam = teams[joinedTeamIndex]
+	}
+
 	if err != nil {
 		log.Debug(err)
 		return notFound(c, "Błąd przy pobieraniu drużyn")
@@ -256,7 +286,9 @@ func GetTournamentTeams(c *fiber.Ctx) error {
 		"TournamentId":   tournament.Id,
 		"TournamentName": tournament.Name,
 		"Teams":          teams,
-		"JoinedTeamId":   joinedTeamId,
+		"JoinedTeam":     joinedTeam,
+		"Started":        tournament.StartedAt != "",
+		"UserId":         c.Locals("user").(middleware.UserMetadata).Id,
 	}, "layout")
 }
 
@@ -392,6 +424,7 @@ func GetAddRoundForm(c *fiber.Ctx) error {
 		"Title":         "Dodaj rundę",
 		"GameSessionId": c.Params("gameSessionId"),
 		"PlayerTeam":    playerTeam.Name,
+		"UserId":        playerId,
 	}, "layout")
 }
 

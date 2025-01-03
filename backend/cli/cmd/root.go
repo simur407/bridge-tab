@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"database/sql"
+	"os"
 	"time"
 
 	rounds "bridge-tab/cli/cmd/rounds-registration"
@@ -40,7 +41,7 @@ var BoardProtocolReadRepository tournament.BoardProtocolReadRepository
 var UserReadRepository user.UserReadRepository
 
 func Execute() error {
-	dbString := "postgres://bridge-tab:bridge-tab@localhost/bridge-tab?sslmode=disable"
+	dbString := os.Getenv("DATABASE_STRING")
 	db, err := sql.Open("postgres", dbString)
 	if err != nil {
 		panic(err)

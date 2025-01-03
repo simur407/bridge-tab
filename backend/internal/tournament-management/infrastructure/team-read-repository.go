@@ -24,7 +24,7 @@ func (r *PostgresTeamReadRepository) FindAll(tournamentId *string) ([]domain.Tea
 	LEFT JOIN tournament_management.team_contestant 
 		ON team.id = team_contestant.team_id
 	WHERE team.tournament_id = $1
-	ORDER BY team.name ASC`, tournamentId)
+	ORDER BY name::integer ASC`, tournamentId)
 	if err != nil {
 		return nil, err
 	}
