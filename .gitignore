@@ -67,3 +67,4 @@ node_modules/
 
 backend/data
 backeng/servers.json
+*.csv

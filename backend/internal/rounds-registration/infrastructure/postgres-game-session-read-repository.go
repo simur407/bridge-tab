@@ -43,7 +43,7 @@ func (p *PostgresGameSessionReadRepository) FindAllRounds(gameSessionId *string)
 		LEFT JOIN tournament_management.team AS ew_team
 			ON ew_team_id = ew_team.id
 		WHERE game_session_id = $1
-		ORDER BY deal_no, round.created_at`, gameSessionId)
+		ORDER BY deal_no, round.updated_at`, gameSessionId)
 
 	if err != nil {
 		return nil, err
