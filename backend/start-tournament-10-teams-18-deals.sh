@@ -1,7 +1,7 @@
 alias bridge-tab='go run ./cli/main.go'
 
 # Create tournament
-message=$(bridge-tab tournament create -n "Wrocławskie Manewry Brydżowe")
+message=$(bridge-tab tournament create -n "Demo")
 echo $message
 tournament_id=$(echo $message | grep -oE '[0-9a-f-]{36}')
 
@@ -35,9 +35,9 @@ bridge-tab tournament board-protocol create -i $tournament_id -n "17" -v "None" 
 bridge-tab tournament board-protocol create -i $tournament_id -n "18" -v "NS" "5;2" "4;8" "3;1" "7;6" "10;9"
 
 # Create contestants (testing purposes)
-# for team_id in "${team_ids[@]}"; do
-#     uuid=$(uuidgen)
-#     bridge-tab tournament join -i $tournament_id -c $uuid
-#     echo $team_id
-#     bridge-tab tournament team join -t $tournament_id -c $uuid -i $team_id
-# done
+for team_id in "${team_ids[@]}"; do
+    uuid=$(uuidgen)
+    bridge-tab tournament join -i $tournament_id -c $uuid
+    echo $team_id
+    bridge-tab tournament team join -t $tournament_id -c $uuid -i $team_id
+done

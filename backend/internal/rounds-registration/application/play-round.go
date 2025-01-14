@@ -6,6 +6,7 @@ import (
 	tournament_management_domain "bridge-tab/internal/tournament-management/domain"
 	"errors"
 	"regexp"
+	"strings"
 )
 
 type PlayRoundCommand struct {
@@ -46,6 +47,9 @@ func (c *PlayRoundCommand) Execute(repository domain.GameSessionRepository, team
 		return err
 	}
 
+	// replace NT to N in contract
+	c.Contract = strings.Replace(c.Contract, "NT", "N", -1)
+
 	err = t.AddRoundScore(c.DealNo, domain.TeamId(playerTeam.Id), domain.TeamId(versusTeam.Id), c.Contract, c.Tricks, c.Declarer, c.OpeningLead)
 
 	if err != nil {
@@ -81,7 +85,7 @@ func validate(c *PlayRoundCommand) error {
 		return errors.New("opening lead is empty")
 	}
 
-	match, err := regexp.MatchString("[1-7][CDHSN]x{0,2}|Pass", c.Contract)
+	match, err := regexp.MatchString("[1-7]([CDHS]|NT?)x{0,2}|Pass", c.Contract)
 	if err != nil {
 		return err
 	}
@@ -98,7 +102,7 @@ func validate(c *PlayRoundCommand) error {
 	}
 
 	if c.Contract != "Pass" {
-		match, err = regexp.MatchString("[2-9]|10|[AKQJ][CDHSN]", c.OpeningLead)
+		match, err = regexp.MatchString("([2-9]|10|[AKQJ])[CDHS]", c.OpeningLead)
 		if err != nil {
 			return err
 		}
