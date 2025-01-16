@@ -8,6 +8,7 @@ import (
 
 func Migrate(db *sql.DB) {
 	m0001_initial(db)
+	m0002_remove_primary_key_constraint_contestant(db)
 }
 
 func m0001_initial(db *sql.DB) {
@@ -64,6 +65,18 @@ func m0001_initial(db *sql.DB) {
 
 			PRIMARY KEY (board_no, tournament_id, team_ns_id, team_ew_id)
 		)
+	`)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func m0002_remove_primary_key_constraint_contestant(db *sql.DB) {
+	_, err := db.Exec(`
+		ALTER TABLE tournament_management.team_contestant
+		DROP CONSTRAINT IF EXISTS team_contestant_contestant_id_fkey;
+		ALTER TABLE tournament_management.contestant
+		DROP CONSTRAINT IF EXISTS contestant_pkey;
 	`)
 	if err != nil {
 		panic(err)
