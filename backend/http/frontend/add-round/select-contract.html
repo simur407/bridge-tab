@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Duplicate Bridge Contract</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    /* Add some basic styling to make it look decent */
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .contract-display {
+      display: inline-flex;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 20px;
+      align-items: baseline;
+      justify-content: center;
+    }
+
+    .contract-field {
+      width: 50px;
+      height: 30px;
+      font-size: 24px;
+      border: none;
+    }
+
+    .tricks {
+      display: grid;
+      grid-template-columns: repeat(3, 40px);
+      gap: 10px;
+    }
+
+    .button-row {
+      margin-bottom: 10px;
+    }
+
+    .button-row button {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 5px;
+      background-color: #f0f0f0;
+      cursor: pointer;
+    }
+
+    .button-row button:hover {
+      background-color: #ccc;
+    }
+
+    .card-colors {
+      display: grid;
+      grid-template-columns: repeat(2, 40px);
+      gap: 10px;
+    }
+
+    .double {
+      display: grid;
+      grid-template-columns: repeat(1, 40px);
+      gap: 10px;
+    }
+
+    .club-color {
+      color: #006000; /* green */
+    }
+
+    .diamond-color {
+      color: #ff8c00; /* orange */
+    }
+
+    .heart-color {
+      color: #FF4500; /* red */
+    }
+
+    .spade-color {
+      color: #000000; /* black */
+    }
+
+  </style>
+</head>
+<body>
+  <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+    <div class="contract-display">
+      <input type="text" id="tricks-field" class="contract-field" style="text-align: end;" readonly>
+      <input type="text" id="color-field" class="contract-field" style="text-align: center; width: 35px;" readonly>
+      <input type="text" id="double-field" class="contract-field" style="text-align: start; width: 35px;" readonly>
+    </div>
+    <button id="clear" style="margin-bottom: 10px;">⌫</button>
+  </div>
+ 
+
+  <div class="buttons">
+    <div id="trick-buttons" class="button-row tricks">
+      <button id="trick-1-button">1</button>
+      <button id="trick-2-button">2</button>
+      <button id="trick-3-button">3</button>
+      <button id="trick-4-button">4</button>
+      <button id="trick-5-button">5</button>
+      <button id="trick-6-button">6</button>
+      <button id="trick-7-button">7</button>
+      <button id="pass-button" style="width: 85px;">Pass</button>
+    </div>
+  
+    <div id="color-buttons" class="button-row card-colors">
+      <button id="club-button" class="club-color"><span>&clubs;</span></button>
+      <button id="diamond-button" class="diamond-color"><span>&diams;</span></button>
+      <button id="heart-button" class="heart-color"><span>&hearts;</span></button>
+      <button id="spade-button" class="spade-color"><span>&spades;</span></button>
+      <button id="nt-button">NT</button>
+    </div>
+
+    <div id="double-buttons" class="button-row double">
+      <button id="double-button">x</button>
+      <button id="redouble-button">xx</button>
+    </div>
+  </div>
+  
+
+  <script>
+    // Add event listeners to the trick buttons
+    document.querySelectorAll('#trick-buttons button').forEach(button => {
+      button.addEventListener('click', () => {
+        const tricksField = document.getElementById('tricks-field');
+        const colorField = document.getElementById('color-field');
+        tricksField.value = button.textContent;
+        // enable the color buttons
+        document.querySelectorAll('.card-colors button').forEach(button => {
+          button.disabled = false;
+        });
+      });
+    });
+
+    // Add event listeners to the card color buttons
+    document.querySelectorAll('#color-buttons button').forEach(button => {
+      button.addEventListener('click', () => {
+        const tricksField = document.getElementById('tricks-field');
+        const colorField = document.getElementById('color-field');
+        if (tricksField.value === 'Pass') {
+          tricksField.value = '';
+        }
+        colorField.value = button.textContent;
+        // remove previous CSS class from the color field
+        colorField.classList.remove('club-color', 'diamond-color', 'heart-color', 'spade-color');
+        // add the corresponding CSS class to the color field
+        colorField.classList.add(button.classList.value);
+      });
+    });
+
+    // Add event listener to the Pass button
+    document.getElementById('pass-button').addEventListener('click', () => {
+      const tricksField = document.getElementById('tricks-field');
+      const colorField = document.getElementById('color-field');
+      const doubleField = document.getElementById('double-field');
+      tricksField.value = 'Pass';
+      colorField.value = '';
+      doubleField.value = '';
+    });
+
+    // Add event listener to the double buttons
+    document.querySelectorAll('#double-buttons button').forEach(button => {
+      button.addEventListener('click', () => {
+        const doubleField = document.getElementById('double-field');
+        doubleField.value = button.textContent;
+      });
+    });
+
+    // Add event listener to the clear button
+    document.getElementById('clear').addEventListener('click', () => {
+      const tricksField = document.getElementById('tricks-field');
+      const colorField = document.getElementById('color-field');
+      const doubleField = document.getElementById('double-field');
+      tricksField.value = '';
+      colorField.value = '';
+      doubleField.value = '';
+    });
+  </script>
+</body>
+</html>
