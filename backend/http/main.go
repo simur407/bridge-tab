@@ -14,7 +14,10 @@ import (
 	users "bridge-tab/internal/user/application"
 	users_infra "bridge-tab/internal/user/infrastructure"
 	"database/sql"
+	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 	"slices"
 	"time"
 
@@ -28,13 +31,20 @@ import (
 )
 
 func main() {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("could not get current filename")
+	}
+	frontendDirectory := filepath.Join(filepath.Dir(filename), "frontend")
+
 	app := fiber.New(fiber.Config{
-		Views: html.New("http/frontend", ".html"),
+		Views: html.New(frontendDirectory, ".html"),
 	})
 	app.Use(logger.New())
 	app.Use(recover.New())
 
 	dbString := os.Getenv("DATABASE_STRING")
+	fmt.Printf("DATABASE_STRING: %s\n", os.Getenv("DATABASE_STRING"))
 	db, err := sql.Open("postgres", dbString)
 
 	if err != nil {

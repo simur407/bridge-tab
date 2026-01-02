@@ -5,13 +5,19 @@
 Bridge Tab is a tool designed to manage duplicate bridge tournaments. It provides functionalities for organizers or umpires to prepare and manage tournaments, check scores, and manage users.
 It also provides a http server that allows contestants to record scores for rounds they play in.
 
-**Notice** This is work in progress project.
+**Notice** This project is still work in progress.
 
 ## Features
 
 - Manage duplicate bridge tournaments
-- Round registration by players
+- Round registration by contestants
 - Rounds summary in CSV
+
+## Current roadmap
+
+- [ ] More tests, especially integration/e2e
+- [ ] Adding better frontend for contestants
+- [ ] Tournament scoring
 
 ## Getting Started
 
@@ -41,26 +47,31 @@ EXPORT DATABASE_STRING=<your string here>
 
 #### HTTP
 
-Build the HTTP server with the following command:
+To build and run HTTP server use this command:
 ```bash
-go build -C backend/http -tags netgo -ldflags '-s -w' -o ../../build/http
+make http
+```
+
+To only build the HTTP server, go with the following command:
+```bash
+make build-http
 ```
 
 Then you can run it with the following command:
 ```bash
-./build/http
+make run-http
 ```
 
 #### CLI
 
 Run the CLI tool with the following command:
 ```bash
-go build -C backend/cli -tags netgo -ldflags '-s -w' -o ../../build/cli
+make build-cli
 ```
 
 Then you can run it with the following command:
 ```bash
-./build/cli --help
+./build/bridge-tab --help
 ```
 
 ## Contributing
