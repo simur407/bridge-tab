@@ -35,6 +35,7 @@ func main() {
 	if !ok {
 		panic("could not get current filename")
 	}
+
 	frontendDirectory := filepath.Join(filepath.Dir(filename), "frontend")
 
 	app := fiber.New(fiber.Config{
@@ -42,6 +43,12 @@ func main() {
 	})
 	app.Use(logger.New())
 	app.Use(recover.New())
+
+	scriptDirectory := filepath.Join(filepath.Dir(filename), "frontend/script")
+	app.Static("/script", scriptDirectory)
+
+	cssDirectory := filepath.Join(filepath.Dir(filename), "frontend/css")
+	app.Static("/css", cssDirectory)
 
 	dbString := os.Getenv("DATABASE_STRING")
 	fmt.Printf("DATABASE_STRING: %s\n", os.Getenv("DATABASE_STRING"))
@@ -51,6 +58,7 @@ func main() {
 		panic(err)
 	}
 	if err = db.Ping(); err != nil {
+		log.Debug(err)
 		panic("failed to connect to database")
 	}
 
@@ -459,12 +467,15 @@ func GetAddRoundForm(c *fiber.Ctx) error {
 }
 
 type Round struct {
-	DealNo         int    `json:"dealNo"`
-	VersusTeamName string `json:"versusTeamName"`
-	Contract       string `json:"contract"`
-	Tricks         int    `json:"tricks"`
-	Declarer       string `json:"declarer"`
-	OpeningLead    string `json:"openingLead"`
+	DealNo            int    `json:"dealNo"`
+	VersusTeamName    string `json:"versusTeamName"`
+	ContractLevel     string `json:"contractLevel"`
+	ContractSuit      string `json:"contractSuit"`
+	ContractModifier  string `json:"contractModifier"`
+	Tricks            int    `json:"tricks"`
+	Declarer          string `json:"declarer"`
+	OpeningLeadSuit   string `json:"openingLeadSuit"`
+	OpeningLeadFigure string `json:"openingLeadFigure"`
 }
 
 func VerifyRound(c *fiber.Ctx) error {
@@ -515,14 +526,16 @@ func VerifyRound(c *fiber.Ctx) error {
 		})
 	}
 
+	contract := body.ContractLevel + body.ContractSuit + body.ContractModifier
+
 	return c.Render("confirm-round-dialog", fiber.Map{
 		"GameSessionId":  gameSessionId,
 		"DealNo":         body.DealNo,
 		"VersusTeamName": body.VersusTeamName,
-		"Contract":       body.Contract,
+		"Contract":       contract,
 		"Tricks":         body.Tricks,
 		"Declarer":       body.Declarer,
-		"OpeningLead":    body.OpeningLead,
+		"OpeningLead":    body.OpeningLeadFigure + body.OpeningLeadSuit,
 		"NSTeamName":     round.NsTeamName,
 		"EWTeamName":     round.EwTeamName,
 	})
@@ -547,16 +560,17 @@ func SubmitRound(c *fiber.Ctx) error {
 	}
 
 	contestantId := c.Locals("user").(middleware.UserMetadata).Id
+	contract := body.ContractLevel + body.ContractSuit + body.ContractModifier
 
 	submitRound := rounds_registration_cmd.PlayRoundCommand{
 		GameSessionId:  gameSessionId,
 		PlayerId:       contestantId,
 		DealNo:         body.DealNo,
 		VersusTeamName: body.VersusTeamName,
-		Contract:       body.Contract,
+		Contract:       contract,
 		Tricks:         body.Tricks,
 		Declarer:       body.Declarer,
-		OpeningLead:    body.OpeningLead,
+		OpeningLead:    body.OpeningLeadFigure + body.OpeningLeadSuit,
 	}
 	err := submitRound.Execute(&rounds_registration_infra.PostgresGameSessionRepository{
 		Ctx: c.UserContext(),

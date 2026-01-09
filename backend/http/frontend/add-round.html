@@ -1,38 +1,155 @@
 <h3>Drużyna {{ .PlayerTeam }}</h3>
 <form hx-post="/round-registration/{{ .GameSessionId }}/verify-round" hx-swap="afterbegin" hx-target="#content">
   <label for="dealNo">Nr rozdania</label><br>
-  <input type="number" name="dealNo" id="dealNo" value="" min="1" max="33" required/><br>
+  <input-integer id="dealNo" name="dealNo" value="" min="1" max="33" required></input-integer><br>
   <label for="versusTeamName">Przeciwko drużynie nr</label><br>
-  <input type="number" name="versusTeamName" id="versusTeamName" value="" min="1" max="12" required/><br>
-  <label for="contract">Kontrakt <div class="tooltip" style="color: red">?
-    <span class="tooltiptext">
-      Lewy: 1-7<br>
-      Kolory: Trefl=(C), Karo=(D), Kier=(H), Pik=(S), bez atu=(NT)<br>
-      Kontra: x, rekontra: xx<br>
-      W przypadku 4 pasów: Pass<br>
-      np. 2Cxx = 2 Trefl z rekontrą<br>
-    </span>
-  </div>
-  </label><br>
-  <input required type="text" name="contract" id="contract" value="" pattern="[1-7]([CDHS]|NT?)x{0,2}|Pass"
-    title="&#10;&#13;Lewy: 1-7&#10;&#13;Kolory: Trefl=(C), Karo=(D), Kier=(H), Pik=(S), bez atu=(NT)&#10;&#13;Kontra: x, rekontra: xx&#10;&#13;W przypadku 4 pasów: Pass&#10;&#13;np. 2Cxx = 2 Trefl z rekontrą"/><br>
+  <input-integer id="versusTeamName" name="versusTeamName" value="" min="1" max="12" required></input-integer><br>
+  <fieldset>
+    <legend>Kontrakt</legend>
+    <div class="switch-field">
+      <input type="radio" id="contractLevel-1" name="contractLevel" value="1" required/>
+      <label for="contractLevel-1">1</label>
+      <input type="radio" id="contractLevel-2" name="contractLevel" value="2" required/>
+      <label for="contractLevel-2">2</label>
+      <input type="radio" id="contractLevel-3" name="contractLevel" value="3" required/>
+      <label for="contractLevel-3">3</label>
+      <input type="radio" id="contractLevel-4" name="contractLevel" value="4" required/>
+      <label for="contractLevel-4">4</label>
+    </div>
+    <div class="switch-field">
+      <input type="radio" id="contractLevel-5" name="contractLevel" value="5" required/>
+      <label for="contractLevel-5">5</label>
+      <input type="radio" id="contractLevel-6" name="contractLevel" value="6" required/>
+      <label for="contractLevel-6">6</label>
+      <input type="radio" id="contractLevel-7" name="contractLevel" value="7" required/>
+      <label for="contractLevel-7">7</label>
+    </div>
+    <div class="switch-field narrow">
+      <input type="radio" id="contractSuit-C" name="contractSuit" value="C" required/>
+      <label for="contractSuit-C" style="color: black;">♣</label>
+      <input type="radio" id="contractSuit-D" name="contractSuit" value="D" required/>
+      <label for="contractSuit-D" style="color: red;">♦</label>
+      <input type="radio" id="contractSuit-H" name="contractSuit" value="H" required/>
+      <label for="contractSuit-H" style="color: red;">♥</label>
+      <input type="radio" id="contractSuit-S" name="contractSuit" value="S" required/>
+      <label for="contractSuit-S" style="color: black;">♠</label>
+      <input type="radio" id="contractSuit-NT" name="contractSuit" value="NT" required/>
+      <label for="contractSuit-NT">NT</label>
+    </div>
+    <div class="switch-field">
+      <input type="checkbox" id="contractModifier-X" name="contractModifier" value="X" onchange="onXChanged();"/>
+      <label for="contractModifier-X">X</label>
+      <input type="checkbox" id="contractModifier-XX" name="contractModifier" value="XX" onchange="onXXChanged();"/>
+      <label for="contractModifier-XX">XX</label>
+      <input type="checkbox" id="contractModifier-PASS" name="contractModifier" value="Pass" onchange="onPassChanged();"/>
+      <label for="contractModifier-PASS">4 x PAS</label>
+    </div>
+  </fieldset><br>
+  <fieldset>
+    <legend>Rozgrywający</legend>
+    <div class="switch-field">
+      <input type="radio" id="declarer-n" name="declarer" value="N" required/>
+      <label for="declarer-n">N</label>
+      <input type="radio" id="declarer-s" name="declarer" value="S"/>
+      <label for="declarer-s">S</label>
+      <input type="radio" id="declarer-e" name="declarer" value="E"/>
+      <label for="declarer-e">E</label>
+      <input type="radio" id="declarer-w" name="declarer" value="W"/>
+      <label for="declarer-w">W</label>
+    </div>
+  </fieldset><br>
+  <fieldset>
+    <legend>Wist</legend>
+    <div class="switch-field">
+      <input type="radio" id="openingLead-A" name="openingLeadFigure" value="A" required/>
+      <label for="openingLead-A">A</label>
+      <input type="radio" id="openingLead-K" name="openingLeadFigure" value="K" required/>
+      <label for="openingLead-K">K</label>
+      <input type="radio" id="openingLead-Q" name="openingLeadFigure" value="Q" required/>
+      <label for="openingLead-Q">Q</label>
+      <input type="radio" id="openingLead-J" name="openingLeadFigure" value="J" required/>
+      <label for="openingLead-J">J</label>
+    </div>
+    <div class="switch-field">
+      <input type="radio" id="openingLead-10" name="openingLeadFigure" value="10" required/>
+      <label for="openingLead-10">10</label>
+      <input type="radio" id="openingLead-9" name="openingLeadFigure" value="9" required/>
+      <label for="openingLead-9">9</label>
+      <input type="radio" id="openingLead-8" name="openingLeadFigure" value="8" required/>
+      <label for="openingLead-8">8</label>
+      <input type="radio" id="openingLead-7" name="openingLeadFigure" value="7" required/>
+      <label for="openingLead-7">7</label>
+    </div>
+    <div class="switch-field">
+      <input type="radio" id="openingLead-6" name="openingLeadFigure" value="6" required/>
+      <label for="openingLead-6">6</label>
+      <input type="radio" id="openingLead-5" name="openingLeadFigure" value="5" required/>
+      <label for="openingLead-5">5</label>
+      <input type="radio" id="openingLead-4" name="openingLeadFigure" value="4" required/>
+      <label for="openingLead-4">4</label>
+      <input type="radio" id="openingLead-3" name="openingLeadFigure" value="3" required/>
+      <label for="openingLead-3">3</label>
+    </div>
+    <div class="switch-field">
+      <input type="radio" id="openingLead-2" name="openingLeadFigure" value="2" required/>
+      <label for="openingLead-2">2</label>
+    </div>
+    <div class="switch-field">
+      <input type="radio" id="openingLead-C" name="openingLeadSuit" value="C" required/>
+      <label for="openingLead-C" style="color: black;">♣</label>
+      <input type="radio" id="openingLead-D" name="openingLeadSuit" value="D" required/>
+      <label for="openingLead-D" style="color: red;">♦</label>
+      <input type="radio" id="openingLead-H" name="openingLeadSuit" value="H" required/>
+      <label for="openingLead-H" style="color: red;">♥</label>
+      <input type="radio" id="openingLead-S" name="openingLeadSuit" value="S" required/>
+      <label for="openingLead-S" style="color: black;">♠</label>
+    </div>
+  </fieldset><br>
   <label for="tricks">Ugrano lew (0-13)</label><br>
-  <input type="number" name="tricks" id="tricks" value="" min="0" max="13" required/><br>
-  <label for="declarer">Rozgrywający</label><br>
-  <select name="declarer" id="declarer" required>
-    <option hidden value="">-</option>
-    <option value="N">N</option>
-    <option value="S">S</option>
-    <option value="E">E</option>
-    <option value="W">W</option>
-  </select><br>
-  <label for="openingLead">Wist <div class="tooltip" style="color: red">?
-    <span class="tooltiptext">
-      2-10, A - As, K - Król, Q - Dama, J - Walet<br>
-      Kolory: Trefl=(C), Karo=(D), Kier=(H), Pik=(S)<br>
-    </span>
-  </div></label><br>
-  <input type="text" name="openingLead" id="openingLead" value="" pattern="([2-9]|10|[AKQJ])[CDHS]" 
-  title="&#10;&#13;2-10, A - As, K - Król, Q - Dama, J - Walet&#10;&#13;Kolory: Trefl=(C), Karo=(D), Kier=(H), Pik=(S)"/><br><br>
-  <button type="submit">Dodaj</button>
+  <input-integer type="number" name="tricks" id="tricks" value="" min="0" max="13" required></input-integer><br>
+  <button type="submit" class="accept">Dodaj</button>
 </form>
+
+<script>
+  function onXChanged() {
+    document.getElementById('contractModifier-XX').checked = false;
+    document.getElementById('contractModifier-PASS').checked = false;
+    setContractRequired(true);
+  };
+
+  function onXXChanged() {
+    document.getElementById('contractModifier-X').checked = false;
+    document.getElementById('contractModifier-PASS').checked = false;
+    setContractRequired(true);
+  };
+
+  function onPassChanged() {
+    document.getElementById('contractModifier-X').checked = false; 
+    document.getElementById('contractModifier-XX').checked = false;
+    if (document.getElementById('contractModifier-PASS').checked) {
+      document.querySelectorAll('input[name="contractLevel"]').forEach((element) => {
+        element.checked = false;
+        element.required = false;
+      });
+      document.querySelectorAll('input[name="contractSuit"]').forEach((element) => {
+        element.checked = false;
+        element.required = false;
+      });
+    } else {
+      setContractRequired(true);
+    }
+  }
+
+  function setContractRequired(state){
+      document.querySelectorAll('input[name="contractLevel"]').forEach((element) => {
+        element.required = state;
+        console.log("Required enabled for");
+        console.log(element);
+      });
+      document.querySelectorAll('input[name="contractSuit"]').forEach((element) => {
+        element.required = state;
+        console.log("Required enabled for");
+        console.log(element);
+      });
+  }
+</script>
