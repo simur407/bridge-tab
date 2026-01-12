@@ -527,6 +527,7 @@ func VerifyRound(c *fiber.Ctx) error {
 	}
 
 	contract := body.ContractLevel + body.ContractSuit + body.ContractModifier
+	openingLead := body.OpeningLeadFigure + body.OpeningLeadSuit
 
 	return c.Render("confirm-round-dialog", fiber.Map{
 		"GameSessionId":  gameSessionId,
@@ -535,7 +536,7 @@ func VerifyRound(c *fiber.Ctx) error {
 		"Contract":       contract,
 		"Tricks":         body.Tricks,
 		"Declarer":       body.Declarer,
-		"OpeningLead":    body.OpeningLeadFigure + body.OpeningLeadSuit,
+		"OpeningLead":    openingLead,
 		"NSTeamName":     round.NsTeamName,
 		"EWTeamName":     round.EwTeamName,
 	})
@@ -561,6 +562,7 @@ func SubmitRound(c *fiber.Ctx) error {
 
 	contestantId := c.Locals("user").(middleware.UserMetadata).Id
 	contract := body.ContractLevel + body.ContractSuit + body.ContractModifier
+	openingLead := body.OpeningLeadFigure + body.OpeningLeadSuit
 
 	submitRound := rounds_registration_cmd.PlayRoundCommand{
 		GameSessionId:  gameSessionId,
@@ -570,7 +572,7 @@ func SubmitRound(c *fiber.Ctx) error {
 		Contract:       contract,
 		Tricks:         body.Tricks,
 		Declarer:       body.Declarer,
-		OpeningLead:    body.OpeningLeadFigure + body.OpeningLeadSuit,
+		OpeningLead:    openingLead,
 	}
 	err := submitRound.Execute(&rounds_registration_infra.PostgresGameSessionRepository{
 		Ctx: c.UserContext(),
