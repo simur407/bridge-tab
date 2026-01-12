@@ -526,19 +526,19 @@ func VerifyRound(c *fiber.Ctx) error {
 		})
 	}
 
-	contract := body.ContractLevel + body.ContractSuit + body.ContractModifier
-	openingLead := body.OpeningLeadFigure + body.OpeningLeadSuit
-
 	return c.Render("confirm-round-dialog", fiber.Map{
-		"GameSessionId":  gameSessionId,
-		"DealNo":         body.DealNo,
-		"VersusTeamName": body.VersusTeamName,
-		"Contract":       contract,
-		"Tricks":         body.Tricks,
-		"Declarer":       body.Declarer,
-		"OpeningLead":    openingLead,
-		"NSTeamName":     round.NsTeamName,
-		"EWTeamName":     round.EwTeamName,
+		"GameSessionId":     gameSessionId,
+		"DealNo":            body.DealNo,
+		"VersusTeamName":    body.VersusTeamName,
+		"ContractLevel":     body.ContractLevel,
+		"ContractSuit":      body.ContractSuit,
+		"ContractModifier":  body.ContractModifier,
+		"Tricks":            body.Tricks,
+		"Declarer":          body.Declarer,
+		"OpeningLeadFigure": body.OpeningLeadFigure,
+		"OpeningLeadSuit":   body.OpeningLeadSuit,
+		"NSTeamName":        round.NsTeamName,
+		"EWTeamName":        round.EwTeamName,
 	})
 }
 
