@@ -1,4 +1,4 @@
-<dialog style="z-index: 100; width: 95vw; height: 85vh;" open>
+ <dialog style="z-index: 100; width: 95vw; height: 85vh;" open>
   <div>
     <h3 style="color: red"><i>To okno obsługuje drużyna przeciwna.</i></h3>
     <p>Potwierdź czy wynik rozdania się zgadza:</p>
@@ -15,10 +15,10 @@
       <tr>
         <td>{{ .NSTeamName }}</td>
         <td>{{ .EWTeamName }}</td>
-        <td>{{ .Contract }}</td>
+        <td>{{ .ContractLevel }}{{ .ContractSuit }}{{ .ContractModifier }}</td>
         <td>{{ .Declarer }}</td>
         <td>{{ .Tricks }}</td>
-        <td>{{ .OpeningLead }}</td>
+        <td>{{ .OpeningLeadFigure }}{{ .OpeningLeadSuit }}</td>
     </tr>
     </table>
   </div>
@@ -29,10 +29,13 @@
   <form hx-post="/round-registration/{{ .GameSessionId }}/add-round" hx-swap="afterbegin" hx-target="#content">
     <input type="text" name="dealNo" value="{{ .DealNo }}" hidden/>
     <input type="text" name="versusTeamName" value="{{ .VersusTeamName }}" hidden/>
-    <input type="text" name="contract" value="{{ .Contract }}" hidden/>
+    <input type="text" name="contractLevel" value="{{ .ContractLevel }}" hidden/>
+    <input type="text" name="contractSuit" value="{{ .ContractSuit }}" hidden/>
+    <input type="text" name="contractModifier" value="{{ .ContractModifier }}" hidden/>
     <input type="text" name="tricks" value="{{ .Tricks }}" hidden/>
     <input type="text" name="declarer" value="{{ .Declarer }}" hidden/>
-    <input type="text" name="openingLead" value="{{ .OpeningLead }}" hidden/>
+    <input type="text" name="openingLeadFigure" value="{{ .OpeningLeadFigure }}" hidden/>
+    <input type="text" name="openingLeadSuit" value="{{ .OpeningLeadSuit }}" hidden/>
     <button type="submit">Zgadza się</button>
   </form>
 </dialog>
