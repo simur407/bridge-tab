@@ -1,8 +1,15 @@
+/**
+ * Custom element <input-integer> that provides an integer input field with increase and decrease buttons.
+ */
 if(!customElements.get('input-integer'))
 customElements.define(
   "input-integer",
   class extends HTMLElement {
     static formAssociated = true;
+    /**
+     * Gets the list of attributes to observe for changes.
+     * @returns {string[]} Array of attribute names to observe
+     */
     static get observedAttributes() {
       return ["required", "value", "min", "max", "name"];
     }
@@ -11,6 +18,10 @@ customElements.define(
     _internals;
     _defaultValue = "";
 
+    /**
+     * Constructs a new input-integer custom element.
+     * Initializes internals and sets up the element as a form-associated custom element.
+     */
     constructor() {
       super();
       this._internals = this.attachInternals();
@@ -18,6 +29,10 @@ customElements.define(
       this.tabindex = 0;
     }
 
+    /**
+     * Lifecycle callback invoked when the element is connected to the DOM.
+     * Creates the shadow DOM, sets up event listeners, and initializes the form element.
+     */
     connectedCallback() {
       const shadowRoot = this.attachShadow({
         mode: "open",
@@ -74,34 +89,68 @@ customElements.define(
       });
     }
 
+    /**
+     * Lifecycle callback invoked when an observed attribute changes.
+     * @param {string} name - The name of the attribute that changed
+     * @param {string} prev - The previous value of the attribute
+     * @param {string} next - The new value of the attribute
+     */
     attributeChangedCallback(name, prev, next) {
       this._attrs[name] = next;
     }
 
+    /**
+     * Lifecycle callback invoked when the form's disabled state changes.
+     * @param {boolean} disabled - Whether the form is disabled
+     */
     formDisabledCallback(disabled) {
       this.$input.disabled = disabled;
     }
 
+    /**
+     * Lifecycle callback invoked when the form is reset.
+     * Restores the input to its default value.
+     */
     formResetCallback() {
       this.$input.value = this._defaultValue;
     }
 
+    /**
+     * Checks whether the element meets its validation constraints.
+     * @returns {boolean} True if the element is valid, false otherwise
+     */
     checkValidity() {
       return this._internals.checkValidity();
     }
 
+    /**
+     * Checks validity and reports validation errors to the user.
+     * @returns {boolean} True if the element is valid, false otherwise
+     */
     reportValidity() {
       return this._internals.reportValidity();
     }
 
+    /**
+     * Gets the validity state of the element.
+     * @returns {ValidityState} The validity state object
+     */
     get validity() {
       return this._internals.validity;
     }
 
+    /**
+     * Gets the validation message for the element.
+     * @returns {string} The validation message
+     */
     get validationMessage() {
       return this._internals.validationMessage;
     }
 
+    /**
+     * Applies the cached attributes to the input element.
+     * Handles name, min, max, value, and required attributes.
+     */
     setProps() {
       // prevent any errors in case the input isn't set
       if (!this.$input) {
@@ -135,6 +184,9 @@ customElements.define(
       this._attrs = {};
     }
 
+    /**
+     * Handles input changes by updating the element's validity state and form value.
+     */
     handleInput() {
       this._internals.setValidity(
         this.$input.validity,
@@ -144,10 +196,18 @@ customElements.define(
       this._internals.setFormValue(this.value);
     }
 
+  /**
+   * Gets the current integer value of the input.
+   * @returns {number} The parsed integer value, or 0 if the value is not a valid number
+   */
   currentValue() { 
     return  (parseInt(this.$input.value) || 0);
   };
 
+  /**
+   * Increases the input value by 1, respecting the maximum constraint.
+   * If the value is already at maximum, it remains unchanged.
+   */
   increase() {
     let currentValue = this.currentValue(0);
     if (currentValue + 1 <= this.$input.getAttribute("max")) {
@@ -159,6 +219,11 @@ customElements.define(
     this.handleInput();
   }
 
+  /**
+   * Decreases the input value by 1, respecting the minimum constraint.
+   * If the value is empty, sets it to the maximum value.
+   * If the value is already at minimum, it remains unchanged.
+   */
   decrease() {
     let currentValue = this.currentValue();
     if (this.$input.value == "") {
