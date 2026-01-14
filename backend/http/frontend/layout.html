@@ -20,8 +20,10 @@
       {{ end }}
       {{embed}}
     </div>
+    {{ if .UserId }}
     <div class="footer" id="footer">
       {{ .UserId }}
     </div>
+    {{ end }}
   </body>
 </html>

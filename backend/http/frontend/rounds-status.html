@@ -1,0 +1,85 @@
+<div class="title">Turniej "{{ .TournamentName }}"</div>
+<div class="dashboard">
+  {{ range $key, $value := .RoundMap }}
+  <div class="row">
+    <div class="board">
+      Rozdanie 
+      <br>
+      {{ $key }}
+    </div>
+    {{ range $value }}
+    <div class="round">
+      {{ .NsTeamName }} - {{ .EwTeamName }}
+      <br> 
+      {{ if eq .Status "in-progress" }}⌛{{ else if eq .Status "completed" }}✅{{ else }}-{{end}}
+    </div>
+    {{ end }}
+  </div>
+  {{ end }}
+</div>
+
+<style>
+  body {
+    display: grid;
+    grid-template-rows: 40px 1fr;
+    overflow: hidden;
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  .title {
+    color: black;
+    font-size: 24px;
+    padding: 5px 10px;
+    text-align: center;
+  }
+  .dashboard {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    height: calc(100vh - 40px);
+    overflow: clip;
+    padding: 2px;
+  }
+  .row {
+    display: flex;
+    gap: 1px;
+    height: 60px;
+    overflow: hidden;
+    margin: 2px;
+  } 
+  .board {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: lightgray;
+    margin-right: 3px;
+    padding: 2px;
+    font-size: 12px;
+    line-height: 17px;;
+    text-align: center;
+  }
+  .round {
+    font-size: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-grow: 1;
+    margin-right: 3px;
+    padding: 3px;
+    background-color: aliceblue;
+  }
+  .round-title {
+    font-size: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .round-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+  }
+</style>
