@@ -19,6 +19,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
+	"sort"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -91,6 +93,10 @@ func main() {
 		middleware.JwtGuard(),
 		middleware.Transaction(db, nil),
 		GetTournamentTeams,
+	)
+	app.Get("/tournaments/:tournamentId/status",
+				middleware.Transaction(db, nil),
+		GetTournamentStatus,
 	)
 	app.Post("/tournaments/:tournamentId/teams/:teamId/join",
 		middleware.JwtGuard(),
@@ -334,6 +340,108 @@ func GetTournamentTeams(c *fiber.Ctx) error {
 		"Started":        tournament.StartedAt != "",
 		"UserId":         c.Locals("user").(middleware.UserMetadata).Id,
 	}, "layout")
+}
+
+func GetTournamentStatus(c *fiber.Ctx) error {
+	tournamentId := c.Params("tournamentId")
+
+	if tournamentId == "" {
+		log.Debug("tournamentId is empty")
+		return notFound(c, "Nie znaleziono turnieju")
+	}
+
+	if err := uuid.Validate(tournamentId); err != nil {
+		log.Debug(err)
+		return notFound(c, "Niepoprawny identyfikator turnieju")
+	}
+
+	getTournament := tournament_management_query.GetTournamentById{
+		Id: tournamentId,
+	}
+	tournament, err := getTournament.Execute(&tournament_management_infra.PostgresTournamentReadRepository{
+		Ctx: c.UserContext(),
+		Tx:  middleware.GetTransaction(c),
+	})
+
+	if err != nil {
+		log.Debug(err)
+		return notFound(c, "Błąd przy pobieraniu turnieju")
+	}
+
+	if tournament == nil {
+		log.Debug("tournament not found")
+		return notFound(c, "Nie znaleziono turnieju")
+	}
+
+	getRounds := rounds_registration_query.ListRoundsQuery{
+		GameSessionId: tournamentId,
+	}
+
+	rounds, err := getRounds.Execute(&rounds_registration_infra.PostgresGameSessionReadRepository{
+		Ctx: c.UserContext(),
+		Tx:  middleware.GetTransaction(c),
+	})
+
+	sort.Slice(rounds, func(i, j int) bool {
+		left, err := strconv.ParseInt(rounds[i].NsTeamName, 10, 64)
+		if err != nil {
+			return false
+		}
+		right, err := strconv.ParseInt(rounds[j].NsTeamName, 10, 64)
+		if err != nil {
+			return false
+		}
+		return left < right
+	})
+
+	type BoardModel struct {
+		NsTeamName  string
+		EwTeamName  string
+		Contract    string
+		Tricks      int
+		Declarer    string
+		OpeningLead string
+		Status      string
+	}
+
+	startedDeals := map[string]bool{}
+	for _, round := range rounds {
+		if round.Declarer != "" {
+			startedDeals[round.NsTeamName+"-"+round.EwTeamName] = true
+		}
+	}
+
+	roundMap := make(map[int][]BoardModel)
+	for i, round := range rounds {
+		board := BoardModel{
+			NsTeamName:  round.NsTeamName,
+			EwTeamName:  round.EwTeamName,
+			Contract:    round.Contract,
+			Tricks:      round.Tricks,
+			Status:      "pending",
+			Declarer:    round.Declarer,
+			OpeningLead: round.OpeningLead,
+		}
+		if round.Declarer != "" {
+			board.Status = "completed"
+		} else {
+			_, ok := startedDeals[round.NsTeamName+"-"+round.EwTeamName]
+			if ok {
+				board.Status = "in-progress"
+			}
+		}
+		roundMap[rounds[i].DealNo] = append(roundMap[round.DealNo], board)
+	}
+
+	return c.Render("status", fiber.Map{
+		"Title":          tournament.Name,
+		"TournamentId":   tournament.Id,
+		"TournamentName": tournament.Name,
+		"Started":        tournament.StartedAt != "",
+		"Rounds":         rounds,
+		"RoundMap":       roundMap,
+		"UserId":         c.Locals("user").(middleware.UserMetadata).Id,
+	})
 }
 
 func JoinTeam(c *fiber.Ctx) error {
