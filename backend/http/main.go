@@ -23,6 +23,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/template/html/v2"
@@ -49,6 +50,11 @@ func main() {
 
 	cssDirectory := filepath.Join(filepath.Dir(filename), "frontend/css")
 	app.Static("/css", cssDirectory)
+
+	app.Use(favicon.New(favicon.Config{
+		File: filepath.Join(filepath.Dir(filename), "frontend/static/favicon.ico"),
+		URL:  "/favicon.ico",
+	}))
 
 	dbString := os.Getenv("DATABASE_STRING")
 	fmt.Printf("DATABASE_STRING: %s\n", os.Getenv("DATABASE_STRING"))
