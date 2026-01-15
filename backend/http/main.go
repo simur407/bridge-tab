@@ -89,8 +89,7 @@ func main() {
 		GetTournamentTeams,
 	)
 	app.Get("/tournaments/:tournamentId/status",
-		middleware.JwtGuard(),
-		middleware.Transaction(db, nil),
+				middleware.Transaction(db, nil),
 		GetTournamentStatus,
 	)
 	app.Post("/tournaments/:tournamentId/teams/:teamId/join",
