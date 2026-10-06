@@ -1,4 +1,4 @@
-.PHONY: all build-http build-cli run-http http
+.PHONY: all build-http build-cli run-http http test test-e2e
 
 all: build-http build-cli
 
@@ -15,3 +15,10 @@ run-http:
 	./build/http
 
 http: build-http run-http
+
+test:
+	cd backend && go test ./...
+
+# Requires TEST_DATABASE_STRING pointing at a Postgres test database.
+test-e2e:
+	cd backend && go test ./e2e/ -v -count=1

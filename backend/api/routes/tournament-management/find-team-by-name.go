@@ -34,8 +34,9 @@ func findTeamByName() func(c *fiber.Ctx) error {
 
 func findTeamByNameResponse(c *fiber.Ctx, team domain.TeamDto) error {
 	response := fiber.Map{
-		"id":   team.Id,
-		"name": team.Name,
+		"id":     team.Id,
+		"name":   team.Name,
+		"number": team.Number,
 	}
 	return c.JSON(response)
 }

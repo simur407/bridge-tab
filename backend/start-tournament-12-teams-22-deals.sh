@@ -8,7 +8,7 @@ tournament_id=$(echo $message | grep -oE '[0-9a-f-]{36}')
 # Create teams
 team_ids=()
 for i in {1..12}; do
-    message=$(bridge-tab tournament team create -t $tournament_id -n "$i")
+    message=$(bridge-tab tournament team create -t $tournament_id --number "$i")
     echo $message
     team_id=$(echo $message | grep -oE '[0-9a-f-]{36}' | head -1)
     team_ids+=($team_id)

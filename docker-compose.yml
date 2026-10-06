@@ -3,14 +3,17 @@ networks:
     name: bridge-tab
 services:
   db:
-    image: postgres
+    # Pin major version: postgres:latest is 18+, which stores data under
+    # versioned paths and rejects the classic ./data:/var/lib/postgresql/data mount.
+    image: postgres:16
     # set shared memory limit when using docker-compose
     shm_size: 128mb
     environment:
       POSTGRES_USER: bridge-tab
       POSTGRES_PASSWORD: bridge-tab
     ports:
-      - '5432:5432'
+      # Host 5444 avoids clashing with another local Postgres on 5432
+      - '5444:5432'
     volumes:
       - ./data:/var/lib/postgresql/data
   pgadmin:

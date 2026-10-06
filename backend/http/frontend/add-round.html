@@ -2,8 +2,8 @@
 <form hx-post="/round-registration/{{ .GameSessionId }}/verify-round" hx-swap="afterbegin" hx-target="#content">
   <label for="dealNo">Nr rozdania</label><br>
   <input-integer id="dealNo" name="dealNo" value="" min="1" max="33" required></input-integer><br>
-  <label for="versusTeamName">Przeciwko drużynie nr</label><br>
-  <input-integer id="versusTeamName" name="versusTeamName" value="" min="1" max="12" required></input-integer><br>
+  <label for="versusTeamNumber">Przeciwko drużynie nr</label><br>
+  <input-integer id="versusTeamNumber" name="versusTeamNumber" value="" min="1" max="12" required></input-integer><br>
   <fieldset>
     <legend>Kontrakt</legend>
     <div class="switch-field">

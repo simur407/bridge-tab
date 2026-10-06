@@ -13,8 +13,8 @@
         <th>Wist</th>
       </tr>
       <tr>
-        <td>{{ .NSTeamName }}</td>
-        <td>{{ .EWTeamName }}</td>
+        <td>{{ .NSTeamNumber }}</td>
+        <td>{{ .EWTeamNumber }}</td>
         <td>{{ .ContractLevel }}{{ .ContractSuit }}{{ .ContractModifier }}</td>
         <td>{{ .Declarer }}</td>
         <td>{{ .Tricks }}</td>
@@ -28,7 +28,7 @@
   </form><br>
   <form hx-post="/round-registration/{{ .GameSessionId }}/add-round" hx-swap="afterbegin" hx-target="#content">
     <input type="text" name="dealNo" value="{{ .DealNo }}" hidden/>
-    <input type="text" name="versusTeamName" value="{{ .VersusTeamName }}" hidden/>
+    <input type="text" name="versusTeamNumber" value="{{ .VersusTeamNumber }}" hidden/>
     <input type="text" name="contractLevel" value="{{ .ContractLevel }}" hidden/>
     <input type="text" name="contractSuit" value="{{ .ContractSuit }}" hidden/>
     <input type="text" name="contractModifier" value="{{ .ContractModifier }}" hidden/>

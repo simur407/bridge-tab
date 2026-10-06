@@ -5,9 +5,10 @@ import (
 )
 
 type CreateTeamCommand struct {
-	TournamentId   	string
-	TeamId					string
-	Name				 		string
+	TournamentId string
+	TeamId       string
+	Name         string
+	Number       int
 }
 
 // Execute executes the command
@@ -20,7 +21,7 @@ func (c *CreateTeamCommand) Execute(repo domain.TournamentRepository) error {
 		return err
 	}
 
-	if err := t.CreateTeam(&teamId, c.Name); err != nil {
+	if err := t.CreateTeam(&teamId, c.Name, c.Number); err != nil {
 		return err
 	}
 

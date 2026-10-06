@@ -24,15 +24,15 @@ var listTeamsCmd = func(TeamReadRepository *tournament_domain.TeamReadRepository
 				return err
 			}
 
-			fmt.Printf("%-36v | %-15v | %-36v\n", "Id", "Name", "Members")
-			fmt.Println(strings.Repeat("-", 95))
+			fmt.Printf("%-36v | %-8v | %-15v | %-36v\n", "Id", "Number", "Name", "Members")
+			fmt.Println(strings.Repeat("-", 104))
 			for _, Team := range results {
-				row := fmt.Sprintf("%-36v | %-15v | ", Team.Id, Team.Name)
+				row := fmt.Sprintf("%-36v | %-8v | %-15v | ", Team.Id, Team.Number, Team.Name)
 				for i, Member := range Team.Members {
 					if i == 0 {
 						row += fmt.Sprintf("%-36v\n", Member.Id)
 					} else {
-						row += fmt.Sprintf("%-36v   %-15v   %-36v\n", "", "", Member.Id)
+						row += fmt.Sprintf("%-36v   %-8v   %-15v   %-36v\n", "", "", "", Member.Id)
 					}
 				}
 
@@ -41,7 +41,7 @@ var listTeamsCmd = func(TeamReadRepository *tournament_domain.TeamReadRepository
 					row += "\n"
 				}
 				fmt.Print(row)
-				fmt.Println(strings.Repeat("-", 95))
+				fmt.Println(strings.Repeat("-", 104))
 			}
 			return nil
 		},

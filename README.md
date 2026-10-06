@@ -74,6 +74,18 @@ Then you can run it with the following command:
 ./build/bridge-tab --help
 ```
 
+### Running tests
+
+Run all Go tests with:
+```bash
+make test
+```
+
+Or equivalently:
+```bash
+cd backend && go test ./...
+```
+
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request for any changes.

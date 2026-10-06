@@ -18,7 +18,7 @@ var TeamsCmd = func(TournamentRepository *tournament_domain.TournamentRepository
 	command.PersistentFlags().StringVarP(&teamsTournamentId, "tournamentId", "t", "", "tournament id")
 	command.MarkPersistentFlagRequired("tournamentId")
 	command.AddCommand(
-		createTeamCmd(TournamentRepository),
+		createTeamCmd(TournamentRepository, TeamRepository),
 		removeTeamCmd(TournamentRepository),
 		joinTeamCmd(TournamentRepository),
 		leaveTeamCmd(TournamentRepository),

@@ -11,6 +11,7 @@ type TeamState struct {
 	Id           TeamId
 	TournamentId TournamentId
 	Name         string
+	Number       int
 	Members      []*Contestant
 	removed      bool
 }
@@ -35,10 +36,10 @@ type ContestantLeftTeam struct {
 var ErrTeamFull = errors.New("team is full")
 var ErrTeamRemoved = errors.New("team is removed")
 
-func CreateTeam(id TeamId, tournamentId TournamentId, name string) *Team {
+func CreateTeam(id TeamId, tournamentId TournamentId, name string, number int) *Team {
 	return &Team{
-		State:  TeamState{Id: id, TournamentId: tournamentId, Name: name, Members: []*Contestant{}},
-		events: []any{TeamCreated{TeamId: id, TournamentId: tournamentId, Name: name}},
+		State:  TeamState{Id: id, TournamentId: tournamentId, Name: name, Number: number, Members: []*Contestant{}},
+		events: []any{TeamCreated{TeamId: id, TournamentId: tournamentId, Name: name, Number: number}},
 	}
 }
 
@@ -110,11 +111,14 @@ type TeamDto struct {
 	Id           string
 	TournamentId string
 	Name         string
+	Number       int
 	Members      []ContestantDto
 }
 
 type TeamReadRepository interface {
 	FindAll(tournamentId *string) ([]TeamDto, error)
+	FindById(tournamentId *string, teamId *string) (*TeamDto, error)
 	FindByName(tournamentId *string, name *string) (*TeamDto, error)
+	FindByNumber(tournamentId *string, number int) (*TeamDto, error)
 	FindByMemberId(tournamentId *string, memberId *string) (*TeamDto, error)
 }
