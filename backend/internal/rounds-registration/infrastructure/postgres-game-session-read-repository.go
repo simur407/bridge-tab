@@ -13,7 +13,7 @@ type PostgresGameSessionReadRepository struct {
 
 func (p *PostgresGameSessionReadRepository) FindRound(gameSessionId *string, dealNo int, playerTeamId string, versusTeamId string) (*domain.RoundDto, error) {
 	row := p.Tx.QueryRowContext(p.Ctx, `
-	SELECT deal_no, ns_team.number::text AS ns_team_name, ew_team.number::text AS ew_team_name 
+	SELECT deal_no, ns_team.number AS ns_team_number, ew_team.number AS ew_team_number 
 	FROM rounds_registration.round 
 	LEFT JOIN tournament_management.team AS ns_team 
 		ON ns_team_id = ns_team.id
@@ -23,7 +23,7 @@ func (p *PostgresGameSessionReadRepository) FindRound(gameSessionId *string, dea
 	AND ((ns_team_id = $3 AND ew_team_id = $4) OR (ns_team_id = $4 AND ew_team_id = $3))`, gameSessionId, dealNo, playerTeamId, versusTeamId)
 
 	var round domain.RoundDto
-	if err := row.Scan(&round.DealNo, &round.NsTeamName, &round.EwTeamName); err != nil {
+	if err := row.Scan(&round.DealNo, &round.NsTeamNumber, &round.EwTeamNumber); err != nil {
 		return nil, err
 	}
 
@@ -36,7 +36,7 @@ func (p *PostgresGameSessionReadRepository) FindRound(gameSessionId *string, dea
 
 func (p *PostgresGameSessionReadRepository) FindAllRounds(gameSessionId *string) ([]domain.PlayedRoundDto, error) {
 	rows, err := p.Tx.QueryContext(p.Ctx, `
-		SELECT deal_no, ns_team.number::text AS ns_team_name, ew_team.number::text AS ew_team_name, contract, tricks, declarer, opening_lead
+		SELECT deal_no, ns_team.number AS ns_team_number, ew_team.number AS ew_team_number, contract, tricks, declarer, opening_lead
 		FROM rounds_registration.round 
 		LEFT JOIN tournament_management.team AS ns_team 
 			ON ns_team_id = ns_team.id
@@ -56,7 +56,7 @@ func (p *PostgresGameSessionReadRepository) FindAllRounds(gameSessionId *string)
 		var openingLead sql.NullString
 		var declarer sql.NullString
 		var tricks sql.NullInt64
-		if err := rows.Scan(&round.DealNo, &round.NsTeamName, &round.EwTeamName, &contract, &tricks, &declarer, &openingLead); err != nil {
+		if err := rows.Scan(&round.DealNo, &round.NsTeamNumber, &round.EwTeamNumber, &contract, &tricks, &declarer, &openingLead); err != nil {
 			return nil, err
 		}
 

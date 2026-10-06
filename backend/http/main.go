@@ -14,12 +14,12 @@ import (
 	users "bridge-tab/internal/user/application"
 	users_infra "bridge-tab/internal/user/infrastructure"
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"slices"
 	"sort"
-	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -381,49 +381,41 @@ func GetTournamentStatus(c *fiber.Ctx) error {
 	})
 
 	sort.Slice(rounds, func(i, j int) bool {
-		left, err := strconv.ParseInt(rounds[i].NsTeamName, 10, 64)
-		if err != nil {
-			return false
-		}
-		right, err := strconv.ParseInt(rounds[j].NsTeamName, 10, 64)
-		if err != nil {
-			return false
-		}
-		return left < right
+		return rounds[i].NsTeamNumber < rounds[j].NsTeamNumber
 	})
 
 	type BoardModel struct {
-		NsTeamName  string
-		EwTeamName  string
-		Contract    string
-		Tricks      int
-		Declarer    string
-		OpeningLead string
-		Status      string
+		NsTeamNumber int
+		EwTeamNumber int
+		Contract     string
+		Tricks       int
+		Declarer     string
+		OpeningLead  string
+		Status       string
 	}
 
 	startedDeals := map[string]bool{}
 	for _, round := range rounds {
 		if round.Declarer != "" {
-			startedDeals[round.NsTeamName+"-"+round.EwTeamName] = true
+			startedDeals[fmt.Sprintf("%d-%d", round.NsTeamNumber, round.EwTeamNumber)] = true
 		}
 	}
 
 	roundMap := make(map[int][]BoardModel)
 	for i, round := range rounds {
 		board := BoardModel{
-			NsTeamName:  round.NsTeamName,
-			EwTeamName:  round.EwTeamName,
-			Contract:    round.Contract,
-			Tricks:      round.Tricks,
-			Status:      "pending",
-			Declarer:    round.Declarer,
-			OpeningLead: round.OpeningLead,
+			NsTeamNumber: round.NsTeamNumber,
+			EwTeamNumber: round.EwTeamNumber,
+			Contract:     round.Contract,
+			Tricks:       round.Tricks,
+			Status:       "pending",
+			Declarer:     round.Declarer,
+			OpeningLead:  round.OpeningLead,
 		}
 		if round.Declarer != "" {
 			board.Status = "completed"
 		} else {
-			_, ok := startedDeals[round.NsTeamName+"-"+round.EwTeamName]
+			_, ok := startedDeals[fmt.Sprintf("%d-%d", round.NsTeamNumber, round.EwTeamNumber)]
 			if ok {
 				board.Status = "in-progress"
 			}
@@ -648,8 +640,8 @@ func VerifyRound(c *fiber.Ctx) error {
 		"Declarer":          body.Declarer,
 		"OpeningLeadFigure": body.OpeningLeadFigure,
 		"OpeningLeadSuit":   body.OpeningLeadSuit,
-		"NSTeamName":        round.NsTeamName,
-		"EWTeamName":        round.EwTeamName,
+		"NSTeamNumber":      round.NsTeamNumber,
+		"EWTeamNumber":      round.EwTeamNumber,
 	})
 }
 

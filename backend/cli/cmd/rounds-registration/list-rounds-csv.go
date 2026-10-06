@@ -26,7 +26,7 @@ var listRoundsCsvCmd = func(gameSessionReadRepository *rounds_registration_domai
 
 			fmt.Println("Deal No;NS;EW;Contract;Declarer;Tricks;Opening Lead")
 			for _, Round := range results {
-				fmt.Printf("%d;%s;%s;%s;%s;%d;%s\n", Round.DealNo, Round.NsTeamName, Round.EwTeamName, Round.Contract, Round.Declarer, Round.Tricks, Round.OpeningLead)
+				fmt.Printf("%d;%d;%d;%s;%s;%d;%s\n", Round.DealNo, Round.NsTeamNumber, Round.EwTeamNumber, Round.Contract, Round.Declarer, Round.Tricks, Round.OpeningLead)
 			}
 
 			return nil

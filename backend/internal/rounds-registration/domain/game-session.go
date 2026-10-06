@@ -109,19 +109,19 @@ type GameSessionRepository interface {
 }
 
 type RoundDto struct {
-	DealNo     int
-	NsTeamName string
-	EwTeamName string
+	DealNo       int
+	NsTeamNumber int
+	EwTeamNumber int
 }
 
 type PlayedRoundDto struct {
-	DealNo      int
-	NsTeamName  string
-	EwTeamName  string
-	Contract    string
-	Tricks      int
-	Declarer    string
-	OpeningLead string
+	DealNo       int
+	NsTeamNumber int
+	EwTeamNumber int
+	Contract     string
+	Tricks       int
+	Declarer     string
+	OpeningLead  string
 }
 
 type GameSessionReadRepository interface {

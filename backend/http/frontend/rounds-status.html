@@ -9,7 +9,7 @@
     </div>
     {{ range $value }}
     <div class="round">
-      {{ .NsTeamName }} - {{ .EwTeamName }}
+      {{ .NsTeamNumber }} - {{ .EwTeamNumber }}
       <br> 
       {{ if eq .Status "in-progress" }}⌛{{ else if eq .Status "completed" }}✅{{ else }}-{{end}}
     </div>
