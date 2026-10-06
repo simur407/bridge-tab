@@ -7,10 +7,10 @@ import (
 )
 
 type GetRoundQuery struct {
-	GameSessionId  string
-	PlayerId       string
-	VersusTeamName string
-	DealNo         int
+	GameSessionId    string
+	PlayerId         string
+	VersusTeamNumber int
+	DealNo           int
 }
 
 func (q *GetRoundQuery) Execute(repository domain.GameSessionReadRepository, teamRepository tournament_management_domain.TeamReadRepository) (*domain.RoundDto, error) {
@@ -22,9 +22,8 @@ func (q *GetRoundQuery) Execute(repository domain.GameSessionReadRepository, tea
 		return nil, err
 	}
 
-	// find other team by name
-	getTeamByName := tournament_management.GetTeamByNameQuery{TournamentId: q.GameSessionId, Name: q.VersusTeamName}
-	versusTeam, err := getTeamByName.Execute(teamRepository)
+	getTeamByNumber := tournament_management.GetTeamByNumberQuery{TournamentId: q.GameSessionId, Number: q.VersusTeamNumber}
+	versusTeam, err := getTeamByNumber.Execute(teamRepository)
 
 	if err != nil {
 		return nil, err

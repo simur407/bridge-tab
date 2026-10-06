@@ -11,7 +11,7 @@ import (
 
 var gameSessionId string
 var playerId string
-var teamName string
+var versusTeamNumber int
 var dealNo int
 var contract string
 var tricks int
@@ -27,14 +27,14 @@ var playRoundCmd = func(GameSessionRepository *rounds_registration_domain.GameSe
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			command := &rounds_registration.PlayRoundCommand{
-				GameSessionId:  gameSessionId,
-				PlayerId:       playerId,
-				VersusTeamName: teamName,
-				DealNo:         dealNo,
-				Contract:       contract,
-				Tricks:         tricks,
-				Declarer:       declarer,
-				OpeningLead:    openingLead,
+				GameSessionId:    gameSessionId,
+				PlayerId:         playerId,
+				VersusTeamNumber: versusTeamNumber,
+				DealNo:           dealNo,
+				Contract:         contract,
+				Tricks:           tricks,
+				Declarer:         declarer,
+				OpeningLead:      openingLead,
 			}
 
 			if err := command.Execute(*GameSessionRepository, *TeamRepository); err != nil {
@@ -50,8 +50,8 @@ var playRoundCmd = func(GameSessionRepository *rounds_registration_domain.GameSe
 	command.MarkFlagRequired("id")
 	command.Flags().StringVarP(&playerId, "playerId", "p", "", "player id")
 	command.MarkFlagRequired("playerId")
-	command.Flags().StringVarP(&teamName, "teamName", "t", "", "team name")
-	command.MarkFlagRequired("teamName")
+	command.Flags().IntVarP(&versusTeamNumber, "teamNumber", "t", 0, "versus team number")
+	command.MarkFlagRequired("teamNumber")
 	command.Flags().IntVarP(&dealNo, "dealNo", "n", 0, "deal no")
 	command.MarkFlagRequired("dealNo")
 	command.Flags().StringVarP(&contract, "contract", "c", "", "contract")

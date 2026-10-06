@@ -572,14 +572,14 @@ func GetAddRoundForm(c *fiber.Ctx) error {
 		"Success":       success,
 		"Title":         "Dodaj rundę",
 		"GameSessionId": c.Params("gameSessionId"),
-		"PlayerTeam":    playerTeam.Name,
+		"PlayerTeam":    playerTeam.Number,
 		"UserId":        playerId,
 	}, "layout")
 }
 
 type Round struct {
 	DealNo            int    `json:"dealNo"`
-	VersusTeamName    string `json:"versusTeamName"`
+	VersusTeamNumber  int    `json:"versusTeamNumber"`
 	ContractLevel     string `json:"contractLevel"`
 	ContractSuit      string `json:"contractSuit"`
 	ContractModifier  string `json:"contractModifier"`
@@ -610,10 +610,10 @@ func VerifyRound(c *fiber.Ctx) error {
 	contestantId := c.Locals("user").(middleware.UserMetadata).Id
 
 	getRound := rounds_registration_query.GetRoundQuery{
-		GameSessionId:  gameSessionId,
-		PlayerId:       contestantId,
-		DealNo:         body.DealNo,
-		VersusTeamName: body.VersusTeamName,
+		GameSessionId:    gameSessionId,
+		PlayerId:         contestantId,
+		DealNo:           body.DealNo,
+		VersusTeamNumber: body.VersusTeamNumber,
 	}
 	round, err := getRound.Execute(&rounds_registration_infra.PostgresGameSessionReadRepository{
 		Ctx: c.UserContext(),
@@ -640,7 +640,7 @@ func VerifyRound(c *fiber.Ctx) error {
 	return c.Render("confirm-round-dialog", fiber.Map{
 		"GameSessionId":     gameSessionId,
 		"DealNo":            body.DealNo,
-		"VersusTeamName":    body.VersusTeamName,
+		"VersusTeamNumber":  body.VersusTeamNumber,
 		"ContractLevel":     body.ContractLevel,
 		"ContractSuit":      body.ContractSuit,
 		"ContractModifier":  body.ContractModifier,
@@ -676,14 +676,14 @@ func SubmitRound(c *fiber.Ctx) error {
 	openingLead := body.OpeningLeadFigure + body.OpeningLeadSuit
 
 	submitRound := rounds_registration_cmd.PlayRoundCommand{
-		GameSessionId:  gameSessionId,
-		PlayerId:       contestantId,
-		DealNo:         body.DealNo,
-		VersusTeamName: body.VersusTeamName,
-		Contract:       contract,
-		Tricks:         body.Tricks,
-		Declarer:       body.Declarer,
-		OpeningLead:    openingLead,
+		GameSessionId:    gameSessionId,
+		PlayerId:         contestantId,
+		DealNo:           body.DealNo,
+		VersusTeamNumber: body.VersusTeamNumber,
+		Contract:         contract,
+		Tricks:           body.Tricks,
+		Declarer:         body.Declarer,
+		OpeningLead:      openingLead,
 	}
 	err := submitRound.Execute(&rounds_registration_infra.PostgresGameSessionRepository{
 		Ctx: c.UserContext(),

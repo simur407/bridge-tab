@@ -28,7 +28,7 @@
   </form><br>
   <form hx-post="/round-registration/{{ .GameSessionId }}/add-round" hx-swap="afterbegin" hx-target="#content">
     <input type="text" name="dealNo" value="{{ .DealNo }}" hidden/>
-    <input type="text" name="versusTeamName" value="{{ .VersusTeamName }}" hidden/>
+    <input type="text" name="versusTeamNumber" value="{{ .VersusTeamNumber }}" hidden/>
     <input type="text" name="contractLevel" value="{{ .ContractLevel }}" hidden/>
     <input type="text" name="contractSuit" value="{{ .ContractSuit }}" hidden/>
     <input type="text" name="contractModifier" value="{{ .ContractModifier }}" hidden/>

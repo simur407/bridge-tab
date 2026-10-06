@@ -48,7 +48,7 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 		Contestants = append(Contestants, &contestant)
 	}
 
-	teamRows, err := r.Tx.QueryContext(r.Ctx, "SELECT id, name FROM tournament_management.team WHERE Tournament_id = $1", Id)
+	teamRows, err := r.Tx.QueryContext(r.Ctx, "SELECT id, name, number FROM tournament_management.team WHERE Tournament_id = $1", Id)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -58,7 +58,7 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 	var Teams []*domain.Team
 	for teamRows.Next() {
 		var team domain.Team
-		err = teamRows.Scan(&team.State.Id, &team.State.Name)
+		err = teamRows.Scan(&team.State.Id, &team.State.Name, &team.State.Number)
 		if err != nil {
 			return nil, err
 		}
@@ -235,7 +235,7 @@ func (r *PostgresTournamentRepository) contestantLeftTournament(event domain.Con
 }
 
 func (r *PostgresTournamentRepository) teamCreated(event domain.TeamCreated) error {
-	_, err := r.Tx.ExecContext(r.Ctx, "INSERT INTO tournament_management.team (id, Tournament_id, name) VALUES ($1, $2, $3)", event.TeamId, event.TournamentId, event.Name)
+	_, err := r.Tx.ExecContext(r.Ctx, "INSERT INTO tournament_management.team (id, Tournament_id, name, number) VALUES ($1, $2, $3, $4)", event.TeamId, event.TournamentId, event.Name, event.Number)
 
 	return err
 }

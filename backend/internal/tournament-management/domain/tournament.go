@@ -53,6 +53,7 @@ type TeamCreated struct {
 	TournamentId TournamentId
 	TeamId       TeamId
 	Name         string
+	Number       int
 }
 
 type TeamRemoved struct {
@@ -80,6 +81,8 @@ var ErrSomeTeamHasNoMembers = errors.New("one of the teams has no members")
 var ErrContestantNotJoinedTournament = errors.New("contestant not joined Tournament")
 var ErrNoSuchTeamInTournament = errors.New("no such team in Tournament")
 var ErrTeamAlreadyExists = errors.New("team already exists")
+var ErrTeamNumberAlreadyExists = errors.New("team number already exists")
+var ErrInvalidTeamNumber = errors.New("team number must be positive")
 var ErrContestantAlreadyInOtherTeam = errors.New("contestant already in other team")
 var ErrBoardProtocolAlreadyExists = errors.New("board protocol already exists")
 var ErrNoSuchBoardProtocol = errors.New("no such board protocol")
@@ -191,7 +194,7 @@ func (t *Tournament) LeaveTournament(contestantId *ContestantId) error {
 	return nil
 }
 
-func (t *Tournament) CreateTeam(teamId *TeamId, name string) error {
+func (t *Tournament) CreateTeam(teamId *TeamId, name string, number int) error {
 	if t.State.removed {
 		return ErrTournamentRemoved
 	}
@@ -206,11 +209,33 @@ func (t *Tournament) CreateTeam(teamId *TeamId, name string) error {
 		return ErrTeamAlreadyExists
 	}
 
-	team := CreateTeam(*teamId, t.State.Id, name)
+	if number == 0 {
+		number = t.nextTeamNumber()
+	} else if number < 1 {
+		return ErrInvalidTeamNumber
+	}
+
+	if slices.ContainsFunc(t.State.Teams, func(tt *Team) bool {
+		return tt.State.Number == number
+	}) {
+		return ErrTeamNumberAlreadyExists
+	}
+
+	team := CreateTeam(*teamId, t.State.Id, name, number)
 
 	t.State.Teams = append(t.State.Teams, team)
-	t.events = append(t.events, TeamCreated{TournamentId: t.State.Id, TeamId: *teamId, Name: name})
+	t.events = append(t.events, TeamCreated{TournamentId: t.State.Id, TeamId: *teamId, Name: name, Number: number})
 	return nil
+}
+
+func (t *Tournament) nextTeamNumber() int {
+	next := 1
+	for _, team := range t.State.Teams {
+		if team.State.Number >= next {
+			next = team.State.Number + 1
+		}
+	}
+	return next
 }
 
 func (t *Tournament) DeleteTeam(teamId *TeamId) error {

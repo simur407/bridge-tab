@@ -1,4 +1,4 @@
-.PHONY: all build-http build-cli run-http http
+.PHONY: all build-http build-cli run-http http test
 
 all: build-http build-cli
 
@@ -15,3 +15,6 @@ run-http:
 	./build/http
 
 http: build-http run-http
+
+test:
+	cd backend && go test ./...

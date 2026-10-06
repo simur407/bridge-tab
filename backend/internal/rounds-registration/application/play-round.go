@@ -10,14 +10,14 @@ import (
 )
 
 type PlayRoundCommand struct {
-	GameSessionId  string
-	PlayerId       string
-	VersusTeamName string
-	DealNo         int
-	Contract       string
-	Tricks         int
-	Declarer       string
-	OpeningLead    string
+	GameSessionId    string
+	PlayerId         string
+	VersusTeamNumber int
+	DealNo           int
+	Contract         string
+	Tricks           int
+	Declarer         string
+	OpeningLead      string
 }
 
 func (c *PlayRoundCommand) Execute(repository domain.GameSessionRepository, teamRepository tournament_management_domain.TeamReadRepository) error {
@@ -39,9 +39,8 @@ func (c *PlayRoundCommand) Execute(repository domain.GameSessionRepository, team
 		return err
 	}
 
-	// find other team by name
-	getTeamByName := tournament_management.GetTeamByNameQuery{TournamentId: c.GameSessionId, Name: c.VersusTeamName}
-	versusTeam, err := getTeamByName.Execute(teamRepository)
+	getTeamByNumber := tournament_management.GetTeamByNumberQuery{TournamentId: c.GameSessionId, Number: c.VersusTeamNumber}
+	versusTeam, err := getTeamByNumber.Execute(teamRepository)
 
 	if err != nil {
 		return err
@@ -66,8 +65,8 @@ func validate(c *PlayRoundCommand) error {
 	if c.PlayerId == "" {
 		return errors.New("player id is empty")
 	}
-	if c.VersusTeamName == "" {
-		return errors.New("versus team name is empty")
+	if c.VersusTeamNumber < 1 {
+		return errors.New("versus team number is empty")
 	}
 	if c.DealNo == 0 {
 		return errors.New("deal no is empty")

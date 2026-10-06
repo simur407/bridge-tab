@@ -1,8 +1,8 @@
 <h1>Turniej "{{ .TournamentName }}"</h1>
 {{ if .Started }}
   <h2>Turniej wystartował!</h2>
-  {{ if .JoinedTeam.Name }}
-  <h3>Drużyna {{ .JoinedTeam.Name }}</h3>
+  {{ if .JoinedTeam.Number }}
+  <h3>Drużyna {{ .JoinedTeam.Number }}{{ if .JoinedTeam.Name }} - {{ .JoinedTeam.Name }}{{ end }}</h3>
   <form method="get" action="/round-registration/{{ .TournamentId }}/add-round">
     <input type="submit" value="Wpisz rozdanie"/>
   </form>
@@ -13,7 +13,7 @@
     {{ if eq .Id $.JoinedTeam.Id }}
     <div>
       <form method="post" action="/tournaments/{{ $.TournamentId }}/teams/{{ .Id }}/leave">
-        <b>{{ .Name }}</b>
+        <b>{{ .Number }}{{ if .Name }} - {{ .Name }}{{ end }}</b>
         <button type="submit">Opuść</button>
       </form>
     </div>
@@ -22,18 +22,18 @@
         {{ if lt (len .Members) 2 }}
             <div style="padding-top: 8px">
               <form method="post" action="/tournaments/{{ $.TournamentId }}/teams/{{ .Id }}/join">
-                {{ .Name }}
+                {{ .Number }}{{ if .Name }} - {{ .Name }}{{ end }}
                 <button type="submit">Dołącz do drużyny</button>
               </form>
             </div>
         {{else}}
             <div>
-                {{ .Name }} - Pełna
+                {{ .Number }}{{ if .Name }} - {{ .Name }}{{ end }} - Pełna
             </div>
         {{end}}
       {{ else }}
         <div>
-          {{ .Name }}
+          {{ .Number }}{{ if .Name }} - {{ .Name }}{{ end }}
         </div>
       {{ end }}
     {{ end }}

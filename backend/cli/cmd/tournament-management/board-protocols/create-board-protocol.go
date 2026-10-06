@@ -5,6 +5,7 @@ import (
 	application_query "bridge-tab/internal/tournament-management/application/query"
 	domain "bridge-tab/internal/tournament-management/domain"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -46,27 +47,36 @@ var createBoardProtocolCmd = func(
 				EW string
 			}
 			for _, arg := range args {
-				teamNames := strings.SplitN(arg, ";", 2)
-				if len(teamNames) != 2 {
-					return fmt.Errorf("invalid argument, expected format: {NS Team Name};{EW Team Name}")
+				teamNumbers := strings.SplitN(arg, ";", 2)
+				if len(teamNumbers) != 2 {
+					return fmt.Errorf("invalid argument, expected format: {NS team number};{EW team number}")
 				}
 
-				nsTeamByNameQuery := application_query.GetTeamByNameQuery{
-					TournamentId: boardProtocolsTournamentId,
-					Name:         teamNames[0],
-				}
-				nsTeam, err := nsTeamByNameQuery.Execute(*TeamReadRepository)
+				nsNumber, err := strconv.Atoi(teamNumbers[0])
 				if err != nil {
-					return err
+					return fmt.Errorf("invalid NS team number %q", teamNumbers[0])
+				}
+				ewNumber, err := strconv.Atoi(teamNumbers[1])
+				if err != nil {
+					return fmt.Errorf("invalid EW team number %q", teamNumbers[1])
 				}
 
-				ewTeamByNameQuery := application_query.GetTeamByNameQuery{
+				nsTeamByNumberQuery := application_query.GetTeamByNumberQuery{
 					TournamentId: boardProtocolsTournamentId,
-					Name:         teamNames[1],
+					Number:       nsNumber,
 				}
-				ewTeam, err := ewTeamByNameQuery.Execute(*TeamReadRepository)
+				nsTeam, err := nsTeamByNumberQuery.Execute(*TeamReadRepository)
 				if err != nil {
-					return err
+					return fmt.Errorf("NS team %d: %w", nsNumber, err)
+				}
+
+				ewTeamByNumberQuery := application_query.GetTeamByNumberQuery{
+					TournamentId: boardProtocolsTournamentId,
+					Number:       ewNumber,
+				}
+				ewTeam, err := ewTeamByNumberQuery.Execute(*TeamReadRepository)
+				if err != nil {
+					return fmt.Errorf("EW team %d: %w", ewNumber, err)
 				}
 
 				teamPairs = append(teamPairs, struct {
