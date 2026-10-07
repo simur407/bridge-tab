@@ -13,6 +13,7 @@ type TournamentState struct {
 	Name           string
 	StartedAt      *time.Time
 	Teams          []*Team
+	Tables         []*Table
 	Contestants    []*Contestant
 	BoardProtocols []*BoardProtocol
 	removed        bool
@@ -61,6 +62,17 @@ type TeamRemoved struct {
 	TeamId       TeamId
 }
 
+type TableCreated struct {
+	TournamentId TournamentId
+	TableId      TableId
+	Number       int
+}
+
+type TableRemoved struct {
+	TournamentId TournamentId
+	TableId      TableId
+}
+
 type BoardProtocolCreated struct {
 	TournamentId TournamentId
 	BoardNo      int
@@ -84,13 +96,19 @@ var ErrTeamAlreadyExists = errors.New("team already exists")
 var ErrTeamNumberAlreadyExists = errors.New("team number already exists")
 var ErrInvalidTeamNumber = errors.New("team number must be positive")
 var ErrContestantAlreadyInOtherTeam = errors.New("contestant already in other team")
+var ErrTableAlreadyExists = errors.New("table already exists")
+var ErrTableNumberAlreadyExists = errors.New("table number already exists")
+var ErrInvalidTableNumber = errors.New("table number must be positive")
+var ErrNoSuchTableInTournament = errors.New("no such table in Tournament")
+var ErrTableReferencedByBoardProtocol = errors.New("table is referenced by a board protocol")
 var ErrBoardProtocolAlreadyExists = errors.New("board protocol already exists")
 var ErrNoSuchBoardProtocol = errors.New("no such board protocol")
 var ErrBoardProtocolHasTheSameTeamMultipleTimes = errors.New("board protocol has the same team multiple times")
+var ErrBoardProtocolHasTheSameTableMultipleTimes = errors.New("board protocol has the same table multiple times")
 
 func CreateTournament(id TournamentId, name string) *Tournament {
 	return &Tournament{
-		State:  TournamentState{Id: id, Name: name, removed: false, Teams: []*Team{}, Contestants: []*Contestant{}},
+		State:  TournamentState{Id: id, Name: name, removed: false, Teams: []*Team{}, Tables: []*Table{}, Contestants: []*Contestant{}},
 		events: []any{TournamentCreated{TournamentId: id, Name: name}},
 	}
 }
@@ -104,12 +122,22 @@ func (t *Tournament) Remove() error {
 		return ErrTournamentAlreadyStarted
 	}
 
-	for _, team := range t.State.Teams {
+	for _, boardProtocol := range slices.Clone(t.State.BoardProtocols) {
+		if err := t.RemoveBoardProtocol(boardProtocol.BoardNo); err != nil {
+			return err
+		}
+	}
+	for _, team := range slices.Clone(t.State.Teams) {
 		if err := t.DeleteTeam(&team.State.Id); err != nil {
 			return err
 		}
 	}
-	for _, contestant := range t.State.Contestants {
+	for _, table := range slices.Clone(t.State.Tables) {
+		if err := t.DeleteTable(&table.State.Id); err != nil {
+			return err
+		}
+	}
+	for _, contestant := range slices.Clone(t.State.Contestants) {
 		if err := t.LeaveTournament(&contestant.Id); err != nil {
 			return err
 		}
@@ -238,6 +266,79 @@ func (t *Tournament) nextTeamNumber() int {
 	return next
 }
 
+func (t *Tournament) CreateTable(tableId *TableId, number int) error {
+	if t.State.removed {
+		return ErrTournamentRemoved
+	}
+
+	if t.State.StartedAt != nil {
+		return ErrTournamentAlreadyStarted
+	}
+
+	if slices.ContainsFunc(t.State.Tables, func(tt *Table) bool {
+		return tt.State.Id == *tableId
+	}) {
+		return ErrTableAlreadyExists
+	}
+
+	if number == 0 {
+		number = t.nextTableNumber()
+	} else if number < 1 {
+		return ErrInvalidTableNumber
+	}
+
+	if slices.ContainsFunc(t.State.Tables, func(tt *Table) bool {
+		return tt.State.Number == number
+	}) {
+		return ErrTableNumberAlreadyExists
+	}
+
+	table := CreateTable(*tableId, t.State.Id, number)
+
+	t.State.Tables = append(t.State.Tables, table)
+	t.events = append(t.events, TableCreated{TournamentId: t.State.Id, TableId: *tableId, Number: number})
+	return nil
+}
+
+func (t *Tournament) nextTableNumber() int {
+	next := 1
+	for _, table := range t.State.Tables {
+		if table.State.Number >= next {
+			next = table.State.Number + 1
+		}
+	}
+	return next
+}
+
+func (t *Tournament) DeleteTable(tableId *TableId) error {
+	if t.State.removed {
+		return ErrTournamentRemoved
+	}
+
+	if t.State.StartedAt != nil {
+		return ErrTournamentAlreadyStarted
+	}
+
+	tableIndex := slices.IndexFunc(t.State.Tables, func(tt *Table) bool {
+		return tt.State.Id == *tableId
+	})
+	if tableIndex == -1 {
+		return ErrNoSuchTableInTournament
+	}
+
+	for _, boardProtocol := range t.State.BoardProtocols {
+		for _, pair := range boardProtocol.TeamPairs {
+			if pair.Table != nil && *pair.Table == *tableId {
+				return ErrTableReferencedByBoardProtocol
+			}
+		}
+	}
+
+	t.State.Tables = slices.Delete(t.State.Tables, tableIndex, tableIndex+1)
+	t.events = append(t.events, TableRemoved{TournamentId: t.State.Id, TableId: *tableId})
+	return nil
+}
+
 func (t *Tournament) DeleteTeam(teamId *TeamId) error {
 	if t.State.removed {
 		return ErrTournamentRemoved
@@ -354,8 +455,16 @@ func (t *Tournament) CreateBoardProtocol(boardNo int, vulnerable Vulnerable, tea
 		return ErrBoardProtocolAlreadyExists
 	}
 
-	// teams cannot play against themselves and cannot play twice
+	// teams cannot play against themselves and cannot play twice;
+	// optional tables must exist and cannot appear twice on one board
 	for i := 0; i < len(teamPairs); i++ {
+		if teamPairs[i].Table != nil {
+			if !slices.ContainsFunc(t.State.Tables, func(tt *Table) bool {
+				return tt.State.Id == *teamPairs[i].Table
+			}) {
+				return ErrNoSuchTableInTournament
+			}
+		}
 		if teamPairs[i].NS == teamPairs[i].EW {
 			return ErrBoardProtocolHasTheSameTeamMultipleTimes
 		}
@@ -363,6 +472,9 @@ func (t *Tournament) CreateBoardProtocol(boardNo int, vulnerable Vulnerable, tea
 			if teamPairs[i].NS == teamPairs[j].NS || teamPairs[i].NS == teamPairs[j].EW ||
 				teamPairs[i].EW == teamPairs[j].EW || teamPairs[i].EW == teamPairs[j].NS {
 				return ErrBoardProtocolHasTheSameTeamMultipleTimes
+			}
+			if teamPairs[i].Table != nil && teamPairs[j].Table != nil && *teamPairs[i].Table == *teamPairs[j].Table {
+				return ErrBoardProtocolHasTheSameTableMultipleTimes
 			}
 		}
 	}

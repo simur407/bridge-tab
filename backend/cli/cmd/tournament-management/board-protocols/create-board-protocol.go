@@ -17,6 +17,7 @@ var vulnerable string
 var createBoardProtocolCmd = func(
 	TournamentRepository *domain.TournamentRepository,
 	TeamReadRepository *domain.TeamReadRepository,
+	TableReadRepository *domain.TableReadRepository,
 ) *cobra.Command {
 	command := &cobra.Command{
 		Use:          "create",
@@ -43,13 +44,35 @@ var createBoardProtocolCmd = func(
 			}
 
 			var teamPairs []struct {
-				NS string
-				EW string
+				Table *string
+				NS    string
+				EW    string
 			}
 			for _, arg := range args {
-				teamNumbers := strings.SplitN(arg, ";", 2)
+				pairArg := arg
+				var tableId *string
+
+				if tablePart, rest, ok := strings.Cut(arg, ":"); ok {
+					tableNumber, err := strconv.Atoi(tablePart)
+					if err != nil {
+						return fmt.Errorf("invalid argument, expected format: [{table number}:]{NS team number};{EW team number}")
+					}
+
+					tableByNumberQuery := application_query.GetTableByNumberQuery{
+						TournamentId: boardProtocolsTournamentId,
+						Number:       tableNumber,
+					}
+					table, err := tableByNumberQuery.Execute(*TableReadRepository)
+					if err != nil {
+						return fmt.Errorf("table %d: %w", tableNumber, err)
+					}
+					tableId = &table.Id
+					pairArg = rest
+				}
+
+				teamNumbers := strings.SplitN(pairArg, ";", 2)
 				if len(teamNumbers) != 2 {
-					return fmt.Errorf("invalid argument, expected format: {NS team number};{EW team number}")
+					return fmt.Errorf("invalid argument, expected format: [{table number}:]{NS team number};{EW team number}")
 				}
 
 				nsNumber, err := strconv.Atoi(teamNumbers[0])
@@ -80,11 +103,13 @@ var createBoardProtocolCmd = func(
 				}
 
 				teamPairs = append(teamPairs, struct {
-					NS string
-					EW string
+					Table *string
+					NS    string
+					EW    string
 				}{
-					NS: nsTeam.Id,
-					EW: ewTeam.Id,
+					Table: tableId,
+					NS:    nsTeam.Id,
+					EW:    ewTeam.Id,
 				})
 			}
 

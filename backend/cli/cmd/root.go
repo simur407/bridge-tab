@@ -36,6 +36,7 @@ var GameSessionReadRepository rounds_registration.GameSessionReadRepository
 var TournamentRepository tournament.TournamentRepository
 var TournamentReadRepository tournament.TournamentReadRepository
 var TeamReadRepository tournament.TeamReadRepository
+var TableReadRepository tournament.TableReadRepository
 var BoardProtocolReadRepository tournament.BoardProtocolReadRepository
 
 // Users
@@ -85,6 +86,10 @@ func Execute() error {
 		Ctx: ctx,
 		Tx:  tx,
 	}
+	TableReadRepository = &tournament_infra.PostgresTableReadRepository{
+		Ctx: ctx,
+		Tx:  tx,
+	}
 	BoardProtocolReadRepository = &tournament_infra.PostgresBoardProtocolReadRepository{
 		Ctx: ctx,
 		Tx:  tx,
@@ -113,6 +118,7 @@ func init() {
 		&TournamentRepository,
 		&TournamentReadRepository,
 		&TeamReadRepository,
+		&TableReadRepository,
 		&BoardProtocolReadRepository,
 		&GameSessionRepository,
 	))

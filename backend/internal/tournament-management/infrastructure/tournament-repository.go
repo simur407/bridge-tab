@@ -66,6 +66,24 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 		Teams = append(Teams, &team)
 	}
 
+	tableRows, err := r.Tx.QueryContext(r.Ctx, "SELECT id, number FROM tournament_management.tournament_table WHERE tournament_id = $1", Id)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+	}
+
+	var Tables []*domain.Table
+	for tableRows.Next() {
+		var table domain.Table
+		err = tableRows.Scan(&table.State.Id, &table.State.Number)
+		if err != nil {
+			return nil, err
+		}
+		table.State.TournamentId = *Id
+		Tables = append(Tables, &table)
+	}
+
 	teamContestantRows, err := r.Tx.QueryContext(r.Ctx, `
 	SELECT team_id, contestant_id FROM tournament_management.team_contestant 
 	INNER JOIN tournament_management.team ON team_contestant.team_id = team.id 
@@ -118,7 +136,7 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 	}
 
 	teamBoardProtocolRows, err := r.Tx.QueryContext(r.Ctx, `
-	SELECT team_ns_id, team_ew_id, board_no FROM tournament_management.board_protocol_team_pairs 
+	SELECT team_ns_id, team_ew_id, board_no, table_id FROM tournament_management.board_protocol_team_pairs 
 	WHERE tournament_id = $1`, Id)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -131,8 +149,9 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 			TeamNsId string
 			TeamEwId string
 			BoardNo  int
+			TableId  sql.NullString
 		}
-		err = teamBoardProtocolRows.Scan(&teamBoardProtocol.TeamNsId, &teamBoardProtocol.TeamEwId, &teamBoardProtocol.BoardNo)
+		err = teamBoardProtocolRows.Scan(&teamBoardProtocol.TeamNsId, &teamBoardProtocol.TeamEwId, &teamBoardProtocol.BoardNo, &teamBoardProtocol.TableId)
 		if err != nil {
 			return nil, err
 		}
@@ -147,10 +166,15 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 		if teamNsExists && teamEwExists {
 			for _, boardProtocol := range BoardProtocols {
 				if boardProtocol.BoardNo == teamBoardProtocol.BoardNo {
-					boardProtocol.TeamPairs = append(boardProtocol.TeamPairs, domain.TeamPairs{
+					pair := domain.TeamPairs{
 						NS: domain.TeamId(teamBoardProtocol.TeamNsId),
 						EW: domain.TeamId(teamBoardProtocol.TeamEwId),
-					})
+					}
+					if teamBoardProtocol.TableId.Valid {
+						tableId := domain.TableId(teamBoardProtocol.TableId.String)
+						pair.Table = &tableId
+					}
+					boardProtocol.TeamPairs = append(boardProtocol.TeamPairs, pair)
 				}
 			}
 		}
@@ -158,6 +182,7 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 
 	Tournament.State.Contestants = Contestants
 	Tournament.State.Teams = Teams
+	Tournament.State.Tables = Tables
 	Tournament.State.BoardProtocols = BoardProtocols
 	if StartedAt.Valid {
 		startedAtTime, err := time.Parse(time.RFC3339Nano, StartedAt.String)
@@ -172,32 +197,40 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 
 func (r *PostgresTournamentRepository) Save(t *domain.Tournament) error {
 	for _, event := range t.GetEvents() {
+		var err error
 		switch event := event.(type) {
 		case domain.TournamentCreated:
-			return r.TournamentCreated(event)
+			err = r.TournamentCreated(event)
 		case domain.TournamentRemoved:
-			return r.TournamentRemoved(event)
+			err = r.TournamentRemoved(event)
 		case domain.TournamentStarted:
-			return r.TournamentStarted(event)
+			err = r.TournamentStarted(event)
 		case domain.ContestantJoinedTournament:
-			return r.contestantJoinedTournament(event)
+			err = r.contestantJoinedTournament(event)
 		case domain.ContestantLeftTournament:
-			return r.contestantLeftTournament(event)
+			err = r.contestantLeftTournament(event)
 		case domain.TeamCreated:
-			return r.teamCreated(event)
+			err = r.teamCreated(event)
 		case domain.TeamRemoved:
-			return r.teamRemoved(event)
+			err = r.teamRemoved(event)
+		case domain.TableCreated:
+			err = r.tableCreated(event)
+		case domain.TableRemoved:
+			err = r.tableRemoved(event)
 		case domain.ContestantJoinedTeam:
-			return r.contestantJoinedTeam(event)
+			err = r.contestantJoinedTeam(event)
 		case domain.ContestantLeftTeam:
-			return r.contestantLeftTeam(event)
+			err = r.contestantLeftTeam(event)
 		case domain.BoardProtocolCreated:
-			return r.boardProtocolCreated(event)
+			err = r.boardProtocolCreated(event)
 		case domain.BoardProtocolRemoved:
-			return r.boardProtocolRemoved(event)
+			err = r.boardProtocolRemoved(event)
 
 		default:
 			return errors.New("unknown event")
+		}
+		if err != nil {
+			return err
 		}
 	}
 	t.Commit()
@@ -246,6 +279,18 @@ func (r *PostgresTournamentRepository) teamRemoved(event domain.TeamRemoved) err
 	return err
 }
 
+func (r *PostgresTournamentRepository) tableCreated(event domain.TableCreated) error {
+	_, err := r.Tx.ExecContext(r.Ctx, "INSERT INTO tournament_management.tournament_table (id, tournament_id, number) VALUES ($1, $2, $3)", event.TableId, event.TournamentId, event.Number)
+
+	return err
+}
+
+func (r *PostgresTournamentRepository) tableRemoved(event domain.TableRemoved) error {
+	_, err := r.Tx.ExecContext(r.Ctx, "DELETE FROM tournament_management.tournament_table WHERE id = $1 AND tournament_id = $2", event.TableId, event.TournamentId)
+
+	return err
+}
+
 func (r *PostgresTournamentRepository) contestantJoinedTeam(event domain.ContestantJoinedTeam) error {
 	_, err := r.Tx.ExecContext(r.Ctx, "INSERT INTO tournament_management.team_contestant (team_id, contestant_id) VALUES ($1, $2)", event.TeamId, event.ContestantId)
 
@@ -265,15 +310,23 @@ func (r *PostgresTournamentRepository) boardProtocolCreated(event domain.BoardPr
 		return err
 	}
 
+	if len(event.TeamPairs) == 0 {
+		return nil
+	}
+
 	var valuesQuery string
 	var values []interface{}
 	for i, teamPair := range event.TeamPairs {
-		values = append(values, event.TournamentId, event.BoardNo, teamPair.NS, teamPair.EW)
-		valuesQuery += fmt.Sprintf("($%d, $%d, $%d, $%d), ", i*4+1, i*4+2, i*4+3, i*4+4)
+		var tableId interface{}
+		if teamPair.Table != nil {
+			tableId = *teamPair.Table
+		}
+		values = append(values, event.TournamentId, event.BoardNo, teamPair.NS, teamPair.EW, tableId)
+		valuesQuery += fmt.Sprintf("($%d, $%d, $%d, $%d, $%d), ", i*5+1, i*5+2, i*5+3, i*5+4, i*5+5)
 	}
 	valuesQuery = valuesQuery[:len(valuesQuery)-2]
 
-	_, err = r.Tx.ExecContext(r.Ctx, fmt.Sprintf("INSERT INTO tournament_management.board_protocol_team_pairs (tournament_id, board_no, team_ns_id, team_ew_id) VALUES %s", valuesQuery), values...)
+	_, err = r.Tx.ExecContext(r.Ctx, fmt.Sprintf("INSERT INTO tournament_management.board_protocol_team_pairs (tournament_id, board_no, team_ns_id, team_ew_id, table_id) VALUES %s", valuesQuery), values...)
 
 	return err
 }

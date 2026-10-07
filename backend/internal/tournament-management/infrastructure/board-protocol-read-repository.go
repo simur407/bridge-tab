@@ -44,7 +44,15 @@ func (r *PostgresBoardProtocolReadRepository) FindAll(tournamentId *string) ([]d
 		boardProtocols = append(boardProtocols, boardProtocol)
 	}
 
-	teamPairRows, err := r.Tx.QueryContext(r.Ctx, "SELECT board_no, team_ns_id, team_ew_id FROM tournament_management.board_protocol_team_pairs WHERE tournament_id = $1", tournamentId)
+	teamPairRows, err := r.Tx.QueryContext(r.Ctx, `
+	SELECT board_protocol_team_pairs.board_no,
+		board_protocol_team_pairs.team_ns_id,
+		board_protocol_team_pairs.team_ew_id,
+		tournament_table.number
+	FROM tournament_management.board_protocol_team_pairs
+	LEFT JOIN tournament_management.tournament_table
+		ON board_protocol_team_pairs.table_id = tournament_table.id
+	WHERE board_protocol_team_pairs.tournament_id = $1`, tournamentId)
 	if err != nil {
 		return nil, err
 	}
@@ -52,9 +60,14 @@ func (r *PostgresBoardProtocolReadRepository) FindAll(tournamentId *string) ([]d
 	for teamPairRows.Next() {
 		var boardNo int
 		var teamPair domain.TeamPairsDto
-		err := teamPairRows.Scan(&boardNo, &teamPair.NS, &teamPair.EW)
+		var tableNumber sql.NullInt64
+		err := teamPairRows.Scan(&boardNo, &teamPair.NS, &teamPair.EW, &tableNumber)
 		if err != nil {
 			return nil, err
+		}
+		if tableNumber.Valid {
+			n := int(tableNumber.Int64)
+			teamPair.TableNumber = &n
 		}
 
 		for i := range boardProtocols {

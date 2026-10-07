@@ -28,9 +28,10 @@ func TestTournamentHappyPath(t *testing.T) {
 	flow.createTournament()
 	flow.createTeam(1)
 	flow.createTeam(2)
+	flow.createTable(1)
 
 	flow.createBoardProtocol(1, tournament_domain.None, 1, 2)
-	flow.createBoardProtocol(2, tournament_domain.NS, 1, 2)
+	flow.createBoardProtocolWithTable(2, tournament_domain.NS, 1, 1, 2)
 	flow.createBoardProtocol(3, tournament_domain.EW, 1, 2)
 	flow.createBoardProtocol(4, tournament_domain.Both, 1, 2)
 
@@ -61,6 +62,7 @@ type tournamentFlow struct {
 	t                     *testing.T
 	tournamentId          string
 	teamIds               map[int]string
+	tableIds              map[int]string
 	tournamentRepo        tournament_domain.TournamentRepository
 	tournamentReadRepo    tournament_domain.TournamentReadRepository
 	teamReadRepo          tournament_domain.TeamReadRepository
@@ -105,6 +107,7 @@ func newTournamentFlow(t *testing.T) *tournamentFlow {
 		t:            t,
 		tournamentId: uuid.New().String(),
 		teamIds:      map[int]string{},
+		tableIds:     map[int]string{},
 		tournamentRepo: &tournament_infra.PostgresTournamentRepository{
 			Ctx: ctx,
 			Tx:  tx,
@@ -172,7 +175,32 @@ func (f *tournamentFlow) createTeam(number int) {
 	f.teamIds[number] = teamId
 }
 
+func (f *tournamentFlow) createTable(number int) {
+	f.t.Helper()
+
+	tableId := uuid.New().String()
+	cmd := &tournament_command.CreateTableCommand{
+		TournamentId: f.tournamentId,
+		TableId:      tableId,
+		Number:       number,
+	}
+	if err := cmd.Execute(f.tournamentRepo); err != nil {
+		f.t.Fatalf("create table %d: %v", number, err)
+	}
+	f.tableIds[number] = tableId
+}
+
 func (f *tournamentFlow) createBoardProtocol(boardNo int, vulnerable tournament_domain.Vulnerable, nsTeamNumber, ewTeamNumber int) {
+	f.t.Helper()
+	f.createBoardProtocolWithOptionalTable(boardNo, vulnerable, 0, nsTeamNumber, ewTeamNumber)
+}
+
+func (f *tournamentFlow) createBoardProtocolWithTable(boardNo int, vulnerable tournament_domain.Vulnerable, tableNumber, nsTeamNumber, ewTeamNumber int) {
+	f.t.Helper()
+	f.createBoardProtocolWithOptionalTable(boardNo, vulnerable, tableNumber, nsTeamNumber, ewTeamNumber)
+}
+
+func (f *tournamentFlow) createBoardProtocolWithOptionalTable(boardNo int, vulnerable tournament_domain.Vulnerable, tableNumber, nsTeamNumber, ewTeamNumber int) {
 	f.t.Helper()
 
 	nsTeamId, ok := f.teamIds[nsTeamNumber]
@@ -184,16 +212,31 @@ func (f *tournamentFlow) createBoardProtocol(boardNo int, vulnerable tournament_
 		f.t.Fatalf("unknown EW team number %d", ewTeamNumber)
 	}
 
+	pair := struct {
+		Table *string
+		NS    string
+		EW    string
+	}{
+		NS: nsTeamId,
+		EW: ewTeamId,
+	}
+	if tableNumber != 0 {
+		tableId, ok := f.tableIds[tableNumber]
+		if !ok {
+			f.t.Fatalf("unknown table number %d", tableNumber)
+		}
+		pair.Table = &tableId
+	}
+
 	cmd := &tournament_command.CreateBoardProtocol{
 		TournamentId: f.tournamentId,
 		BoardNo:      boardNo,
 		Vulnerable:   int(vulnerable),
-		TeamPairs: []struct {
-			NS string
-			EW string
-		}{
-			{NS: nsTeamId, EW: ewTeamId},
-		},
+		TeamPairs:    []struct {
+			Table *string
+			NS    string
+			EW    string
+		}{pair},
 	}
 	if err := cmd.Execute(f.tournamentRepo); err != nil {
 		f.t.Fatalf("create board protocol %d: %v", boardNo, err)

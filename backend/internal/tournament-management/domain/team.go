@@ -49,7 +49,7 @@ func (t *Team) Remove() error {
 	}
 
 	// throw all members out
-	for _, c := range t.State.Members {
+	for _, c := range slices.Clone(t.State.Members) {
 		if err := t.Leave(&c.Id); err != nil {
 			return err
 		}

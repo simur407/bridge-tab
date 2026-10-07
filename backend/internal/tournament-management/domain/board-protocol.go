@@ -1,8 +1,9 @@
 package tournament_management
 
 type TeamPairs struct {
-	NS TeamId
-	EW TeamId
+	Table *TableId // nil = no table assigned
+	NS    TeamId
+	EW    TeamId
 }
 
 type Vulnerable int
@@ -33,8 +34,9 @@ func CreateBoardProtocol(tournamentId TournamentId, boardNo int, vulnerable Vuln
 }
 
 type TeamPairsDto struct {
-	NS string
-	EW string
+	TableNumber *int
+	NS          string
+	EW          string
 }
 
 type BoardProtocolDto struct {
