@@ -9,8 +9,9 @@ type CreateBoardProtocol struct {
 	BoardNo      int
 	Vulnerable   int
 	TeamPairs    [](struct {
-		NS string
-		EW string
+		Table *string
+		NS    string
+		EW    string
 	})
 }
 
@@ -24,8 +25,11 @@ func (c *CreateBoardProtocol) Execute(repo domain.TournamentRepository) error {
 			NS: NS,
 			EW: EW,
 		}
+		if pair.Table != nil {
+			tableId := domain.TableId(*pair.Table)
+			teamPairs[i].Table = &tableId
+		}
 	}
-	// Load the Tournament from the repository
 	t, err := repo.Load(&id)
 	if err != nil {
 		return err
@@ -35,6 +39,5 @@ func (c *CreateBoardProtocol) Execute(repo domain.TournamentRepository) error {
 		return err
 	}
 
-	// Save the Tournament to the repository
 	return repo.Save(t)
 }

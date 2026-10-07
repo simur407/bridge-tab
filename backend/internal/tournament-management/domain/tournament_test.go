@@ -2,6 +2,7 @@ package tournament_management_test
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	. "bridge-tab/internal/tournament-management/domain"
@@ -408,6 +409,160 @@ func TestLeaveTeamInStartedTournament(t *testing.T) {
 	assertError(t, err, ErrTournamentAlreadyStarted)
 }
 
+// ------ Create Table ------
+func TestCreateTableAutoIncrementsNumberFromOne(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var first TableId = "first"
+	var second TableId = "second"
+
+	assertNoError(t, Tournament.CreateTable(&first, 0))
+	assertNoError(t, Tournament.CreateTable(&second, 0))
+
+	if Tournament.State.Tables[0].State.Number != 1 || Tournament.State.Tables[1].State.Number != 2 {
+		t.Errorf("expected numbers 1 and 2, got %d and %d", Tournament.State.Tables[0].State.Number, Tournament.State.Tables[1].State.Number)
+	}
+}
+
+func TestCreateTableUsesGivenNumber(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var tableId TableId = "table"
+	var next TableId = "next"
+
+	assertNoError(t, Tournament.CreateTable(&tableId, 4))
+	assertNoError(t, Tournament.CreateTable(&next, 0))
+
+	if Tournament.State.Tables[0].State.Number != 4 || Tournament.State.Tables[1].State.Number != 5 {
+		t.Errorf("expected numbers 4 and 5, got %d and %d", Tournament.State.Tables[0].State.Number, Tournament.State.Tables[1].State.Number)
+	}
+}
+
+func TestCreateTableRejectsDuplicateNumber(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var first TableId = "first"
+	var second TableId = "second"
+
+	assertNoError(t, Tournament.CreateTable(&first, 2))
+	err := Tournament.CreateTable(&second, 2)
+
+	assertError(t, err, ErrTableNumberAlreadyExists)
+}
+
+func TestCreateTableRejectsNegativeNumber(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var tableId TableId = "table"
+
+	err := Tournament.CreateTable(&tableId, -1)
+
+	assertError(t, err, ErrInvalidTableNumber)
+}
+
+func TestDeleteTable(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var tableId TableId = "table"
+	assertNoError(t, Tournament.CreateTable(&tableId, 1))
+	Tournament.Commit()
+
+	assertNoError(t, Tournament.DeleteTable(&tableId))
+	assertEvent(t, Tournament.GetEvents(), TableRemoved{TournamentId: id, TableId: tableId})
+}
+
+func TestDeleteTableReferencedByBoardProtocol(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var tableId TableId = "table"
+	var ns TeamId = "ns"
+	var ew TeamId = "ew"
+	assertNoError(t, Tournament.CreateTable(&tableId, 1))
+	assertNoError(t, Tournament.CreateTeam(&ns, "ns", 1))
+	assertNoError(t, Tournament.CreateTeam(&ew, "ew", 2))
+	assertNoError(t, Tournament.CreateBoardProtocol(1, None, []TeamPairs{{Table: &tableId, NS: ns, EW: ew}}))
+	Tournament.Commit()
+
+	err := Tournament.DeleteTable(&tableId)
+	assertError(t, err, ErrTableReferencedByBoardProtocol)
+}
+
+// ------ Board Protocol with optional table ------
+func TestCreateBoardProtocolWithoutTable(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var ns TeamId = "ns"
+	var ew TeamId = "ew"
+	assertNoError(t, Tournament.CreateTeam(&ns, "ns", 1))
+	assertNoError(t, Tournament.CreateTeam(&ew, "ew", 2))
+	Tournament.Commit()
+
+	assertNoError(t, Tournament.CreateBoardProtocol(1, None, []TeamPairs{{NS: ns, EW: ew}}))
+	assertEvent(t, Tournament.GetEvents(), BoardProtocolCreated{
+		TournamentId: id,
+		BoardNo:      1,
+		Vulnerable:   None,
+		TeamPairs:    []TeamPairs{{NS: ns, EW: ew}},
+	})
+}
+
+func TestCreateBoardProtocolWithTable(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var tableId TableId = "table"
+	var ns TeamId = "ns"
+	var ew TeamId = "ew"
+	assertNoError(t, Tournament.CreateTable(&tableId, 1))
+	assertNoError(t, Tournament.CreateTeam(&ns, "ns", 1))
+	assertNoError(t, Tournament.CreateTeam(&ew, "ew", 2))
+	Tournament.Commit()
+
+	assertNoError(t, Tournament.CreateBoardProtocol(1, None, []TeamPairs{{Table: &tableId, NS: ns, EW: ew}}))
+	assertEvent(t, Tournament.GetEvents(), BoardProtocolCreated{
+		TournamentId: id,
+		BoardNo:      1,
+		Vulnerable:   None,
+		TeamPairs:    []TeamPairs{{Table: &tableId, NS: ns, EW: ew}},
+	})
+}
+
+func TestCreateBoardProtocolRejectsUnknownTable(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var missing TableId = "missing"
+	var ns TeamId = "ns"
+	var ew TeamId = "ew"
+	assertNoError(t, Tournament.CreateTeam(&ns, "ns", 1))
+	assertNoError(t, Tournament.CreateTeam(&ew, "ew", 2))
+
+	err := Tournament.CreateBoardProtocol(1, None, []TeamPairs{{Table: &missing, NS: ns, EW: ew}})
+	assertError(t, err, ErrNoSuchTableInTournament)
+}
+
+func TestCreateBoardProtocolRejectsDuplicateTable(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var tableId TableId = "table"
+	var ns1 TeamId = "ns1"
+	var ew1 TeamId = "ew1"
+	var ns2 TeamId = "ns2"
+	var ew2 TeamId = "ew2"
+	assertNoError(t, Tournament.CreateTable(&tableId, 1))
+	assertNoError(t, Tournament.CreateTeam(&ns1, "ns1", 1))
+	assertNoError(t, Tournament.CreateTeam(&ew1, "ew1", 2))
+	assertNoError(t, Tournament.CreateTeam(&ns2, "ns2", 3))
+	assertNoError(t, Tournament.CreateTeam(&ew2, "ew2", 4))
+
+	err := Tournament.CreateBoardProtocol(1, None, []TeamPairs{
+		{Table: &tableId, NS: ns1, EW: ew1},
+		{Table: &tableId, NS: ns2, EW: ew2},
+	})
+	assertError(t, err, ErrBoardProtocolHasTheSameTableMultipleTimes)
+}
+
+func TestRemoveTournamentWithTables(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var tableId TableId = "table"
+	assertNoError(t, Tournament.CreateTable(&tableId, 1))
+	Tournament.Commit()
+
+	assertNoError(t, Tournament.Remove())
+	assertEvents(t, Tournament.GetEvents(), []any{
+		TableRemoved{TournamentId: id, TableId: tableId},
+		TournamentRemoved{TournamentId: id},
+	})
+}
+
 // ------ Helpers ------
 
 func assertEvents(t *testing.T, events []any, expectedEvents []any) {
@@ -419,7 +574,7 @@ func assertEvents(t *testing.T, events []any, expectedEvents []any) {
 func assertEvent(t *testing.T, events []any, expectedEvent any) {
 	var eventsString string
 	for _, e := range events {
-		if e == expectedEvent {
+		if reflect.DeepEqual(e, expectedEvent) {
 			return
 		}
 		eventsString += fmt.Sprintf("%[1]T: %+[1]v\n", e)

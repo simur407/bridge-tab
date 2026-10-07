@@ -11,6 +11,7 @@ func Migrate(db *sql.DB) {
 	m0002_remove_primary_key_constraint_contestant(db)
 	m0003_add_team_number(db)
 	m0004_optional_team_name(db)
+	m0005_add_tables(db)
 }
 
 func m0001_initial(db *sql.DB) {
@@ -138,6 +139,25 @@ func m0004_optional_team_name(db *sql.DB) {
 		CREATE UNIQUE INDEX IF NOT EXISTS team_name_unique
 		ON tournament_management.team (tournament_id, name)
 		WHERE name <> '';
+	`)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func m0005_add_tables(db *sql.DB) {
+	_, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS tournament_management.tournament_table (
+			id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+			tournament_id UUID NOT NULL REFERENCES tournament_management.tournament (id),
+			number INTEGER NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+			CONSTRAINT tournament_table_number_unique UNIQUE (tournament_id, number)
+		);
+
+		ALTER TABLE tournament_management.board_protocol_team_pairs
+		ADD COLUMN IF NOT EXISTS table_id UUID REFERENCES tournament_management.tournament_table (id);
 	`)
 	if err != nil {
 		panic(err)

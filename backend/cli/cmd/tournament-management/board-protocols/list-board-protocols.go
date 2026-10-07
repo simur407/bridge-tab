@@ -25,16 +25,20 @@ var listBoardProtocolsCmd = func(boardProtocolReadRepository *domain.BoardProtoc
 				return err
 			}
 
-			fmt.Printf("%-10v | %-15v | %-36v | %-36v\n", "Board No", "Vulnerability", "NS", "EW")
-			fmt.Println(strings.Repeat("-", 106))
+			fmt.Printf("%-10v | %-15v | %-8v | %-36v | %-36v\n", "Board No", "Vulnerability", "Table", "NS", "EW")
+			fmt.Println(strings.Repeat("-", 117))
 			for _, BoardProtocol := range results {
 				row := fmt.Sprintf("%-10v | %-15v | ", BoardProtocol.BoardNo, BoardProtocol.Vulnerable)
 
 				for i, TeamPair := range BoardProtocol.TeamPairs {
+					table := "-"
+					if TeamPair.TableNumber != nil {
+						table = fmt.Sprintf("%d", *TeamPair.TableNumber)
+					}
 					if i == 0 {
-						row += fmt.Sprintf("%-36v | %-36v\n", TeamPair.NS, TeamPair.EW)
+						row += fmt.Sprintf("%-8v | %-36v | %-36v\n", table, TeamPair.NS, TeamPair.EW)
 					} else {
-						row += fmt.Sprintf("%-10v   %-15v | %-36v | %-36v\n", "", "", TeamPair.NS, TeamPair.EW)
+						row += fmt.Sprintf("%-10v   %-15v | %-8v | %-36v | %-36v\n", "", "", table, TeamPair.NS, TeamPair.EW)
 					}
 				}
 
@@ -43,7 +47,7 @@ var listBoardProtocolsCmd = func(boardProtocolReadRepository *domain.BoardProtoc
 					row += "\n"
 				}
 				fmt.Print(row)
-				fmt.Println(strings.Repeat("-", 106))
+				fmt.Println(strings.Repeat("-", 117))
 
 			}
 
