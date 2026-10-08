@@ -3,10 +3,12 @@ package main
 import (
 	"bridge-tab/http/middleware"
 	auth "bridge-tab/internal/auth"
+	"bridge-tab/internal/idutil"
 	rounds_registration_cmd "bridge-tab/internal/rounds-registration/application"
 	rounds_registration_query "bridge-tab/internal/rounds-registration/application/query"
 	rounds_registration_domain "bridge-tab/internal/rounds-registration/domain"
 	rounds_registration_infra "bridge-tab/internal/rounds-registration/infrastructure"
+	score_registration_infra "bridge-tab/internal/score-registration/infrastructure"
 	tournament_management_cmd "bridge-tab/internal/tournament-management/application/command"
 	tournament_management_query "bridge-tab/internal/tournament-management/application/query"
 	tournament_management_domain "bridge-tab/internal/tournament-management/domain"
@@ -71,6 +73,7 @@ func main() {
 	tournament_management_infra.Migrate(db)
 	users_infra.Migrate(db)
 	rounds_registration_infra.Migrate(db)
+	score_registration_infra.Migrate(db)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Render("index", nil, "layout")
@@ -195,7 +198,7 @@ func GetTournament(c *fiber.Ctx) error {
 
 	joinedTournament := c.Cookies("tournamentId")
 
-	if joinedTournament != "" && joinedTournament == tournamentId {
+	if joinedTournament != "" && idutil.SameId(joinedTournament, tournamentId) {
 		return c.Redirect("/tournaments/" + joinedTournament + "/teams")
 	}
 
@@ -310,7 +313,7 @@ func GetTournamentTeams(c *fiber.Ctx) error {
 	})
 
 	joinedTeamIndex := slices.IndexFunc(teams, func(team tournament_management_domain.TeamDto) bool {
-		return team.Id == joinedTeamId
+		return idutil.SameId(team.Id, joinedTeamId)
 	})
 
 	var joinedTeam tournament_management_domain.TeamDto

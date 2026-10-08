@@ -1,6 +1,7 @@
 package tournament_management
 
 import (
+	"bridge-tab/internal/idutil"
 	domain "bridge-tab/internal/tournament-management/domain"
 	"context"
 	"database/sql"
@@ -44,7 +45,7 @@ func (r *PostgresTeamReadRepository) FindAll(tournamentId *string) ([]domain.Tea
 	for _, team := range teams {
 		id := team.id
 		teamIdx := slices.IndexFunc(teamDtos, func(t domain.TeamDto) bool {
-			return t.Id == id
+			return idutil.SameId(t.Id, id)
 		})
 
 		if teamIdx != -1 {

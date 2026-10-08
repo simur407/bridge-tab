@@ -1,6 +1,7 @@
 package rounds_registration
 
 import (
+	"bridge-tab/internal/idutil"
 	domain "bridge-tab/internal/rounds-registration/domain"
 	infra "bridge-tab/internal/rounds-registration/infrastructure"
 	"errors"
@@ -51,11 +52,11 @@ func (c *StartGameSessionCommand) Execute(repository domain.GameSessionRepositor
 	var rounds []*domain.Round
 	for _, round := range c.Rounds {
 		nsTeamIndex := slices.IndexFunc(teams, func(t *domain.Team) bool {
-			return t.Id == domain.TeamId(round.NsTeam)
+			return idutil.SameId(t.Id, domain.TeamId(round.NsTeam))
 		})
 
 		ewTeamIndex := slices.IndexFunc(teams, func(t *domain.Team) bool {
-			return t.Id == domain.TeamId(round.EwTeam)
+			return idutil.SameId(t.Id, domain.TeamId(round.EwTeam))
 		})
 
 		if nsTeamIndex == -1 || ewTeamIndex == -1 {

@@ -1,6 +1,7 @@
 package tournament_management
 
 import (
+	"bridge-tab/internal/idutil"
 	"errors"
 	"slices"
 )
@@ -64,7 +65,7 @@ func (t *Team) Join(contestant *Contestant) error {
 	}
 
 	if slices.ContainsFunc(t.State.Members, func(c *Contestant) bool {
-		return c.Id == contestant.Id
+		return idutil.SameId(c.Id, contestant.Id)
 	}) {
 		return nil
 	}
@@ -86,7 +87,7 @@ func (t *Team) Leave(contenstantId *ContestantId) error {
 	}
 
 	memberIndex := slices.IndexFunc(t.State.Members, func(c *Contestant) bool {
-		return c.Id == *contenstantId
+		return idutil.SameId(c.Id, *contenstantId)
 	})
 
 	if memberIndex != -1 {

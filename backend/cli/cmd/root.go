@@ -7,11 +7,14 @@ import (
 	"time"
 
 	rounds "bridge-tab/cli/cmd/rounds-registration"
+	score "bridge-tab/cli/cmd/score-registration"
 	tournament_management "bridge-tab/cli/cmd/tournament-management"
 	users "bridge-tab/cli/cmd/users"
 
 	rounds_registration "bridge-tab/internal/rounds-registration/domain"
 	rounds_registration_infra "bridge-tab/internal/rounds-registration/infrastructure"
+	score_registration "bridge-tab/internal/score-registration/domain"
+	score_registration_infra "bridge-tab/internal/score-registration/infrastructure"
 	tournament "bridge-tab/internal/tournament-management/domain"
 	tournament_infra "bridge-tab/internal/tournament-management/infrastructure"
 	user "bridge-tab/internal/user/domain"
@@ -38,6 +41,12 @@ var TournamentReadRepository tournament.TournamentReadRepository
 var TeamReadRepository tournament.TeamReadRepository
 var TableReadRepository tournament.TableReadRepository
 var BoardProtocolReadRepository tournament.BoardProtocolReadRepository
+var SetReadRepository tournament.SetReadRepository
+
+// Score Registration
+var PlayedResultRepository score_registration.PlayedResultRepository
+var TournamentScoreRepository score_registration.TournamentScoreRepository
+var TournamentScoreReadRepository score_registration.TournamentScoreReadRepository
 
 // Users
 var UserReadRepository user.UserReadRepository
@@ -55,6 +64,7 @@ func Execute() error {
 	user_infra.Migrate(db)
 	tournament_infra.Migrate(db)
 	rounds_registration_infra.Migrate(db)
+	score_registration_infra.Migrate(db)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
@@ -94,6 +104,23 @@ func Execute() error {
 		Ctx: ctx,
 		Tx:  tx,
 	}
+	SetReadRepository = &tournament_infra.PostgresSetReadRepository{
+		Ctx: ctx,
+		Tx:  tx,
+	}
+
+	PlayedResultRepository = &score_registration_infra.PostgresPlayedResultRepository{
+		Ctx: ctx,
+		Tx:  tx,
+	}
+	TournamentScoreRepository = &score_registration_infra.PostgresTournamentScoreRepository{
+		Ctx: ctx,
+		Tx:  tx,
+	}
+	TournamentScoreReadRepository = &score_registration_infra.PostgresTournamentScoreReadRepository{
+		Ctx: ctx,
+		Tx:  tx,
+	}
 
 	UserReadRepository = &user_infra.PostgresUserRepository{
 		Ctx: ctx,
@@ -120,8 +147,11 @@ func init() {
 		&TeamReadRepository,
 		&TableReadRepository,
 		&BoardProtocolReadRepository,
+		&SetReadRepository,
 		&GameSessionRepository,
+		&PlayedResultRepository,
 	))
 	rootCmd.AddCommand(users.UserCmd(&UserReadRepository))
 	rootCmd.AddCommand(rounds.RoundsRegistrationCmd(&GameSessionRepository, &GameSessionReadRepository, &TeamReadRepository))
+	rootCmd.AddCommand(score.ScoreRegistrationCmd(&PlayedResultRepository, &TournamentScoreRepository, &TournamentScoreReadRepository))
 }

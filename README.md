@@ -15,9 +15,10 @@ It also provides a http server that allows contestants to record scores for roun
 
 ## Current roadmap
 
-- [ ] More tests, especially integration/e2e
+- [x] More tests, especially integration/e2e
 - [ ] Adding better frontend for contestants
-- [ ] Tournament scoring
+- [x] Tournament scoring
+- [ ] Admin panel
 
 ## Getting Started
 

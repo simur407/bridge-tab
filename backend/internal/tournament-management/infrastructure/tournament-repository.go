@@ -8,6 +8,7 @@ import (
 	"slices"
 	"time"
 
+	"bridge-tab/internal/idutil"
 	domain "bridge-tab/internal/tournament-management/domain"
 )
 
@@ -21,8 +22,9 @@ var ErrTournamentNotFound = errors.New("tournament not found")
 func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.Tournament, error) {
 	var Tournament domain.Tournament
 	var StartedAt sql.NullString
-	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name, started_at FROM tournament_management.tournament WHERE id = $1", Id)
-	err := row.Scan(&Tournament.State.Id, &Tournament.State.Name, &StartedAt)
+	var FinishedAt sql.NullString
+	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name, started_at, finished_at FROM tournament_management.tournament WHERE id = $1", Id)
+	err := row.Scan(&Tournament.State.Id, &Tournament.State.Name, &StartedAt, &FinishedAt)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -104,9 +106,9 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 			return nil, err
 		}
 		for _, team := range Teams {
-			if team.State.Id == domain.TeamId(teamContestant.TeamId) {
+			if idutil.SameId(team.State.Id, domain.TeamId(teamContestant.TeamId)) {
 				contestantIndex := slices.IndexFunc(Contestants, func(c *domain.Contestant) bool {
-					return c.Id == domain.ContestantId(teamContestant.ContestantId)
+					return idutil.SameId(c.Id, domain.ContestantId(teamContestant.ContestantId))
 				})
 
 				if contestantIndex != -1 {
@@ -117,7 +119,26 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 		}
 	}
 
-	boardProtocolRows, err := r.Tx.QueryContext(r.Ctx, "SELECT board_no, vulnerable FROM tournament_management.board_protocol WHERE tournament_id = $1", Id)
+	setRows, err := r.Tx.QueryContext(r.Ctx, "SELECT id, label FROM tournament_management.tournament_set WHERE tournament_id = $1", Id)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+	}
+
+	var Sets []*domain.Set
+	for setRows.Next() {
+		var set domain.Set
+		err = setRows.Scan(&set.Id, &set.Label)
+		if err != nil {
+			return nil, err
+		}
+		set.BoardNos = make([]int, 0)
+		set.TeamPairs = make([]domain.TeamPairs, 0)
+		Sets = append(Sets, &set)
+	}
+
+	boardProtocolRows, err := r.Tx.QueryContext(r.Ctx, "SELECT board_no, vulnerable, set_id FROM tournament_management.board_protocol WHERE tournament_id = $1", Id)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -127,11 +148,21 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 	var BoardProtocols []*domain.BoardProtocol
 	for boardProtocolRows.Next() {
 		var boardProtocol domain.BoardProtocol
-		err = boardProtocolRows.Scan(&boardProtocol.BoardNo, &boardProtocol.Vulnerable)
+		var setId sql.NullString
+		err = boardProtocolRows.Scan(&boardProtocol.BoardNo, &boardProtocol.Vulnerable, &setId)
 		if err != nil {
 			return nil, err
 		}
 		boardProtocol.TeamPairs = make([]domain.TeamPairs, 0)
+		if setId.Valid {
+			id := domain.SetId(setId.String)
+			boardProtocol.SetId = &id
+			for _, set := range Sets {
+				if idutil.SameId(set.Id, id) {
+					set.BoardNos = append(set.BoardNos, boardProtocol.BoardNo)
+				}
+			}
+		}
 		BoardProtocols = append(BoardProtocols, &boardProtocol)
 	}
 
@@ -157,10 +188,10 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 		}
 		// verify if team ns and team ew exist
 		teamNsExists := slices.ContainsFunc(Teams, func(t *domain.Team) bool {
-			return t.State.Id == domain.TeamId(teamBoardProtocol.TeamNsId)
+			return idutil.SameId(t.State.Id, domain.TeamId(teamBoardProtocol.TeamNsId))
 		})
 		teamEwExists := slices.ContainsFunc(Teams, func(t *domain.Team) bool {
-			return t.State.Id == domain.TeamId(teamBoardProtocol.TeamEwId)
+			return idutil.SameId(t.State.Id, domain.TeamId(teamBoardProtocol.TeamEwId))
 		})
 
 		if teamNsExists && teamEwExists {
@@ -180,15 +211,34 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 		}
 	}
 
+	for _, set := range Sets {
+		for _, boardProtocol := range BoardProtocols {
+			if boardProtocol.SetId != nil && idutil.SameId(*boardProtocol.SetId, set.Id) {
+				if len(set.TeamPairs) == 0 {
+					set.TeamPairs = append([]domain.TeamPairs(nil), boardProtocol.TeamPairs...)
+				}
+				break
+			}
+		}
+	}
+
 	Tournament.State.Contestants = Contestants
 	Tournament.State.Teams = Teams
 	Tournament.State.Tables = Tables
 	Tournament.State.BoardProtocols = BoardProtocols
+	Tournament.State.Sets = Sets
 	if StartedAt.Valid {
 		startedAtTime, err := time.Parse(time.RFC3339Nano, StartedAt.String)
 
 		if err == nil {
 			Tournament.State.StartedAt = &startedAtTime
+		}
+	}
+	if FinishedAt.Valid {
+		finishedAtTime, err := time.Parse(time.RFC3339Nano, FinishedAt.String)
+
+		if err == nil {
+			Tournament.State.FinishedAt = &finishedAtTime
 		}
 	}
 
@@ -205,6 +255,12 @@ func (r *PostgresTournamentRepository) Save(t *domain.Tournament) error {
 			err = r.TournamentRemoved(event)
 		case domain.TournamentStarted:
 			err = r.TournamentStarted(event)
+		case domain.TournamentFinished:
+			err = r.TournamentFinished(event)
+		case domain.SetCreated:
+			err = r.setCreated(event)
+		case domain.SetRemoved:
+			err = r.setRemoved(event)
 		case domain.ContestantJoinedTournament:
 			err = r.contestantJoinedTournament(event)
 		case domain.ContestantLeftTournament:
@@ -252,6 +308,38 @@ func (r *PostgresTournamentRepository) TournamentRemoved(event domain.Tournament
 func (r *PostgresTournamentRepository) TournamentStarted(event domain.TournamentStarted) error {
 	_, err := r.Tx.ExecContext(r.Ctx, "UPDATE tournament_management.tournament SET started_at = $1 WHERE id = $2", event.StartedAt, event.TournamentId)
 
+	return err
+}
+
+func (r *PostgresTournamentRepository) TournamentFinished(event domain.TournamentFinished) error {
+	_, err := r.Tx.ExecContext(r.Ctx, "UPDATE tournament_management.tournament SET finished_at = $1 WHERE id = $2", event.FinishedAt, event.TournamentId)
+
+	return err
+}
+
+func (r *PostgresTournamentRepository) setCreated(event domain.SetCreated) error {
+	_, err := r.Tx.ExecContext(r.Ctx, "INSERT INTO tournament_management.tournament_set (id, tournament_id, label) VALUES ($1, $2, $3)", event.SetId, event.TournamentId, event.Label)
+	if err != nil {
+		return err
+	}
+
+	for _, boardNo := range event.BoardNos {
+		_, err = r.Tx.ExecContext(r.Ctx, "UPDATE tournament_management.board_protocol SET set_id = $1 WHERE tournament_id = $2 AND board_no = $3", event.SetId, event.TournamentId, boardNo)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *PostgresTournamentRepository) setRemoved(event domain.SetRemoved) error {
+	_, err := r.Tx.ExecContext(r.Ctx, "UPDATE tournament_management.board_protocol SET set_id = NULL WHERE tournament_id = $1 AND set_id = $2", event.TournamentId, event.SetId)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.Tx.ExecContext(r.Ctx, "DELETE FROM tournament_management.tournament_set WHERE id = $1 AND tournament_id = $2", event.SetId, event.TournamentId)
 	return err
 }
 

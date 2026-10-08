@@ -1,6 +1,7 @@
 package rounds_registration
 
 import (
+	"bridge-tab/internal/idutil"
 	"errors"
 	"slices"
 )
@@ -66,8 +67,8 @@ func StartGameSession(id GameSessionId, teams []*Team, rounds []*Round) (*GameSe
 func (g *GameSession) AddRoundScore(dealNo int, teamId TeamId, versusTeamId TeamId, contract string, tricks int, declarer string, openingLead string) error {
 	index := slices.IndexFunc(g.State.Rounds, func(r *Round) bool {
 		return r.DealNo == dealNo &&
-			(*r.NsTeam == teamId || *r.EwTeam == teamId) &&
-			(*r.NsTeam == versusTeamId || *r.EwTeam == versusTeamId)
+			(idutil.SameId(*r.NsTeam, teamId) || idutil.SameId(*r.EwTeam, teamId)) &&
+			(idutil.SameId(*r.NsTeam, versusTeamId) || idutil.SameId(*r.EwTeam, versusTeamId))
 	})
 
 	if index == -1 {
