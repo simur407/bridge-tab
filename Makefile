@@ -1,6 +1,6 @@
-.PHONY: all build-http build-cli run-http http test test-e2e
+.PHONY: all build-http build-cli build-admin run-http run-admin http admin test test-e2e
 
-all: build-http build-cli
+all: build-http build-cli build-admin
 
 tidy:
 	cd backend && go mod tidy
@@ -11,10 +11,18 @@ build-http:
 build-cli:
 	go build -C backend/cli -tags netgo -ldflags '-s -w' -o ../../build/bridge-tab
 
+build-admin:
+	go build -C backend/admin -tags netgo -ldflags '-s -w' -o ../../build/admin
+
 run-http:
 	./build/http
 
+run-admin:
+	./build/admin
+
 http: build-http run-http
+
+admin: build-admin run-admin
 
 test:
 	cd backend && go test ./...

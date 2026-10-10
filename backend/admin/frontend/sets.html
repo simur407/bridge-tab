@@ -1,0 +1,45 @@
+<h1>Komplety</h1>
+{{ if not .Started }}
+<form method="post" action="/tournaments/{{ .TournamentId }}/sets" class="noprint">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <label>
+    Etykieta
+    <input name="label" value="{{ .FormLabel }}" required>
+  </label>
+  <label>
+    Rozdania
+    <input name="boards" value="{{ .FormBoards }}" required>
+  </label>
+  <p class="hint">Numery rozdań po przecinku, na przykład 1, 2, 3.</p>
+  <button type="submit">Utwórz</button>
+</form>
+{{ end }}
+{{ if .Sets }}
+<table>
+  <thead>
+    <tr>
+      <th>Etykieta</th>
+      <th>Rozdania</th>
+      {{ if not .Started }}<th class="noprint"></th>{{ end }}
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Sets }}
+    <tr>
+      <td>{{ .Label }}</td>
+      <td>{{ .Boards }}</td>
+      {{ if not $.Started }}
+      <td class="noprint">
+        <form method="post" action="/tournaments/{{ $.TournamentId }}/sets/{{ .Id }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
+          <input type="hidden" name="csrf" value="{{ $.CSRF }}">
+          <button type="submit">Usuń</button>
+        </form>
+      </td>
+      {{ end }}
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+{{ else }}
+<p>Brak setów.</p>
+{{ end }}

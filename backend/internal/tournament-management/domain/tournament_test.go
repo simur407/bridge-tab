@@ -248,6 +248,91 @@ func TestCreateTeamRejectsNegativeNumber(t *testing.T) {
 	assertError(t, err, ErrInvalidTeamNumber)
 }
 
+func TestRenameTeam(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var teamId TeamId = "team"
+	assertNoError(t, Tournament.CreateTeam(&teamId, "Alpha", 1))
+	Tournament.Commit()
+
+	err := Tournament.RenameTeam(&teamId, "  Beta  ")
+
+	assertNoError(t, err)
+	assertEvent(t, Tournament.GetEvents(), TeamRenamed{TeamId: teamId, Name: "Beta"})
+	if Tournament.State.Teams[0].State.Name != "Beta" {
+		t.Errorf("expected name Beta, got %s", Tournament.State.Teams[0].State.Name)
+	}
+}
+
+func TestRenameTeamAfterStart(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var teamId TeamId = "team"
+	var contestantId ContestantId = "player"
+	assertNoError(t, Tournament.CreateTeam(&teamId, "Alpha", 1))
+	assertNoError(t, Tournament.JoinTournament(&contestantId))
+	assertNoError(t, Tournament.JoinTeam(&teamId, &contestantId))
+	assertNoError(t, Tournament.Start())
+	Tournament.Commit()
+
+	err := Tournament.RenameTeam(&teamId, "Beta")
+
+	assertNoError(t, err)
+	assertEvent(t, Tournament.GetEvents(), TeamRenamed{TeamId: teamId, Name: "Beta"})
+}
+
+func TestRenameTeamSameNameHasNoEvent(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var teamId TeamId = "team"
+	assertNoError(t, Tournament.CreateTeam(&teamId, "Alpha", 1))
+	Tournament.Commit()
+
+	err := Tournament.RenameTeam(&teamId, " Alpha ")
+
+	assertNoError(t, err)
+	assertNoEvents(t, Tournament.GetEvents())
+}
+
+func TestRenameTeamRejectsEmptyName(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var teamId TeamId = "team"
+	assertNoError(t, Tournament.CreateTeam(&teamId, "Alpha", 1))
+
+	err := Tournament.RenameTeam(&teamId, "   ")
+
+	assertError(t, err, ErrInvalidTeamName)
+}
+
+func TestRenameTeamRejectsDuplicateName(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var first TeamId = "first"
+	var second TeamId = "second"
+	assertNoError(t, Tournament.CreateTeam(&first, "Alpha", 1))
+	assertNoError(t, Tournament.CreateTeam(&second, "Beta", 2))
+
+	err := Tournament.RenameTeam(&second, "Alpha")
+
+	assertError(t, err, ErrTeamNameAlreadyExists)
+}
+
+func TestRenameTeamRejectsMissingTeam(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var teamId TeamId = "missing"
+
+	err := Tournament.RenameTeam(&teamId, "Alpha")
+
+	assertError(t, err, ErrNoSuchTeamInTournament)
+}
+
+func TestRenameTeamRejectsRemovedTournament(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var teamId TeamId = "team"
+	assertNoError(t, Tournament.CreateTeam(&teamId, "Alpha", 1))
+	assertNoError(t, Tournament.Remove())
+
+	err := Tournament.RenameTeam(&teamId, "Beta")
+
+	assertError(t, err, ErrTournamentRemoved)
+}
+
 // ------ Join Team ------
 func TestJoinTeamMatchesContestantIdRegardlessOfCase(t *testing.T) {
 	// given

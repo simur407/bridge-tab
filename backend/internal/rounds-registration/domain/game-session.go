@@ -31,8 +31,20 @@ type RoundPlayed struct {
 	OpeningLead   string
 }
 
+type RoundEdited struct {
+	GameSessionId GameSessionId
+	DealNo        int
+	NsTeamId      TeamId
+	EwTeamId      TeamId
+	Contract      string
+	Tricks        int
+	Declarer      string
+	OpeningLead   string
+}
+
 var ErrRoundNotFound = errors.New("round not found")
 var ErrRoundAlreadyPlayed = errors.New("round already played")
+var ErrRoundNotPlayed = errors.New("round has not been played")
 var ErrTeamsAreEmpty = errors.New("no teams in game session")
 var ErrRoundsAreEmpty = errors.New("no rounds in game session")
 
@@ -65,17 +77,10 @@ func StartGameSession(id GameSessionId, teams []*Team, rounds []*Round) (*GameSe
 }
 
 func (g *GameSession) AddRoundScore(dealNo int, teamId TeamId, versusTeamId TeamId, contract string, tricks int, declarer string, openingLead string) error {
-	index := slices.IndexFunc(g.State.Rounds, func(r *Round) bool {
-		return r.DealNo == dealNo &&
-			(idutil.SameId(*r.NsTeam, teamId) || idutil.SameId(*r.EwTeam, teamId)) &&
-			(idutil.SameId(*r.NsTeam, versusTeamId) || idutil.SameId(*r.EwTeam, versusTeamId))
-	})
-
-	if index == -1 {
-		return ErrRoundNotFound
+	round, err := g.findRound(dealNo, teamId, versusTeamId)
+	if err != nil {
+		return err
 	}
-
-	round := g.State.Rounds[index]
 
 	if round.IsPlayed() {
 		return ErrRoundAlreadyPlayed
@@ -100,8 +105,55 @@ func (g *GameSession) AddRoundScore(dealNo int, teamId TeamId, versusTeamId Team
 	return nil
 }
 
+func (g *GameSession) EditRoundScore(dealNo int, teamId TeamId, versusTeamId TeamId, contract string, tricks int, declarer string, openingLead string) error {
+	round, err := g.findRound(dealNo, teamId, versusTeamId)
+	if err != nil {
+		return err
+	}
+
+	if !round.IsPlayed() {
+		return ErrRoundNotPlayed
+	}
+
+	round.Contract = contract
+	round.Tricks = tricks
+	round.Declarer = declarer
+	round.OpeningLead = openingLead
+
+	g.events = append(g.events, RoundEdited{
+		GameSessionId: g.State.Id,
+		DealNo:        dealNo,
+		NsTeamId:      *round.NsTeam,
+		EwTeamId:      *round.EwTeam,
+		Contract:      contract,
+		Tricks:        tricks,
+		Declarer:      declarer,
+		OpeningLead:   openingLead,
+	})
+
+	return nil
+}
+
+func (g *GameSession) findRound(dealNo int, teamId TeamId, versusTeamId TeamId) (*Round, error) {
+	index := slices.IndexFunc(g.State.Rounds, func(r *Round) bool {
+		return r.DealNo == dealNo &&
+			(idutil.SameId(*r.NsTeam, teamId) || idutil.SameId(*r.EwTeam, teamId)) &&
+			(idutil.SameId(*r.NsTeam, versusTeamId) || idutil.SameId(*r.EwTeam, versusTeamId))
+	})
+
+	if index == -1 {
+		return nil, ErrRoundNotFound
+	}
+
+	return g.State.Rounds[index], nil
+}
+
 func (g *GameSession) GetEvents() []any {
 	return g.events
+}
+
+func (g *GameSession) Commit() {
+	g.events = slices.Delete(g.events, 0, len(g.events))
 }
 
 type GameSessionRepository interface {
@@ -113,6 +165,10 @@ type RoundDto struct {
 	DealNo       int
 	NsTeamNumber int
 	EwTeamNumber int
+	Contract     string
+	Tricks       int
+	Declarer     string
+	OpeningLead  string
 }
 
 type PlayedRoundDto struct {

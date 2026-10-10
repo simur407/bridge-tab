@@ -4,6 +4,7 @@ import (
 	"bridge-tab/internal/idutil"
 	"errors"
 	"slices"
+	"strings"
 )
 
 type TeamId string
@@ -33,6 +34,11 @@ type ContestantLeftTeam struct {
 	ContestantId ContestantId
 }
 
+type TeamRenamed struct {
+	TeamId TeamId
+	Name   string
+}
+
 // errors
 var ErrTeamFull = errors.New("team is full")
 var ErrTeamRemoved = errors.New("team is removed")
@@ -42,6 +48,24 @@ func CreateTeam(id TeamId, tournamentId TournamentId, name string, number int) *
 		State:  TeamState{Id: id, TournamentId: tournamentId, Name: name, Number: number, Members: []*Contestant{}},
 		events: []any{TeamCreated{TeamId: id, TournamentId: tournamentId, Name: name, Number: number}},
 	}
+}
+
+func (t *Team) Rename(name string) error {
+	if t.State.removed {
+		return ErrTeamRemoved
+	}
+
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return ErrInvalidTeamName
+	}
+	if t.State.Name == name {
+		return nil
+	}
+
+	t.State.Name = name
+	t.events = append(t.events, TeamRenamed{TeamId: t.State.Id, Name: name})
+	return nil
 }
 
 func (t *Team) Remove() error {

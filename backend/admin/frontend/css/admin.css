@@ -1,0 +1,129 @@
+body {
+  font-family: system-ui, sans-serif;
+  color: black;
+  background: white;
+  margin: 1.5rem;
+  line-height: 1.4;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+nav form {
+  margin: 0;
+}
+
+h1, h2, h3 {
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 1.4rem;
+}
+
+h2 {
+  font-size: 1.15rem;
+}
+
+h3 {
+  font-size: 1rem;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+th, td {
+  border: 1px solid black;
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+table.sheet th,
+table.sheet td {
+  text-align: right;
+}
+
+table.sheet th:first-child,
+table.sheet th:nth-child(2),
+table.sheet td:first-child,
+table.sheet td.set {
+  text-align: left;
+}
+
+table.sheet td.set {
+  vertical-align: middle;
+}
+
+a {
+  color: black;
+}
+
+label {
+  display: block;
+  margin: 0.5rem 0;
+}
+
+input, select, textarea, button {
+  font: inherit;
+}
+
+textarea {
+  display: block;
+  width: 100%;
+  max-width: 32rem;
+}
+
+.error {
+  border: 1px solid black;
+  padding: 0.5rem;
+}
+
+.hint {
+  margin: 0.5rem 0;
+}
+
+form.inline {
+  display: inline;
+}
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  .nav, .noprint {
+    display: none;
+  }
+
+  .print-only {
+    display: inline;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  .break {
+    break-before: page;
+  }
+
+  .deal {
+    break-inside: avoid;
+  }
+
+  table.sheet {
+    font-size: 0.75rem;
+  }
+
+  a {
+    text-decoration: none;
+  }
+}

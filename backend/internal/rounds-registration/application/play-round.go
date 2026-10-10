@@ -4,9 +4,6 @@ import (
 	domain "bridge-tab/internal/rounds-registration/domain"
 	tournament_management "bridge-tab/internal/tournament-management/application/query"
 	tournament_management_domain "bridge-tab/internal/tournament-management/domain"
-	"errors"
-	"regexp"
-	"strings"
 )
 
 type PlayRoundCommand struct {
@@ -21,7 +18,7 @@ type PlayRoundCommand struct {
 }
 
 func (c *PlayRoundCommand) Execute(repository domain.GameSessionRepository, teamRepository tournament_management_domain.TeamReadRepository) error {
-	if err := validate(c); err != nil {
+	if err := validateRoundInput(c.GameSessionId, c.PlayerId, c.VersusTeamNumber, c.DealNo, c.Contract, c.Tricks, c.Declarer, c.OpeningLead); err != nil {
 		return err
 	}
 
@@ -46,8 +43,7 @@ func (c *PlayRoundCommand) Execute(repository domain.GameSessionRepository, team
 		return err
 	}
 
-	// replace NT to N in contract
-	c.Contract = strings.Replace(c.Contract, "NT", "N", -1)
+	c.Contract = normalizeContract(c.Contract)
 
 	err = t.AddRoundScore(c.DealNo, domain.TeamId(playerTeam.Id), domain.TeamId(versusTeam.Id), c.Contract, c.Tricks, c.Declarer, c.OpeningLead)
 
@@ -56,59 +52,4 @@ func (c *PlayRoundCommand) Execute(repository domain.GameSessionRepository, team
 	}
 
 	return repository.Save(t)
-}
-
-func validate(c *PlayRoundCommand) error {
-	if c.GameSessionId == "" {
-		return errors.New("game session id is empty")
-	}
-	if c.PlayerId == "" {
-		return errors.New("player id is empty")
-	}
-	if c.VersusTeamNumber < 1 {
-		return errors.New("versus team number is empty")
-	}
-	if c.DealNo == 0 {
-		return errors.New("deal no is empty")
-	}
-	if c.Contract == "" {
-		return errors.New("contract is empty")
-	}
-	if c.Contract != "Pass" && c.Tricks == 0 {
-		return errors.New("tricks is empty")
-	}
-	if c.Contract != "Pass" && c.Declarer == "" {
-		return errors.New("declarer is empty")
-	}
-	if c.Contract != "Pass" && c.OpeningLead == "" {
-		return errors.New("opening lead is empty")
-	}
-
-	match, err := regexp.MatchString("[1-7]([CDHS]|NT?)x{0,2}|Pass", c.Contract)
-	if err != nil {
-		return err
-	}
-	if !match {
-		return errors.New("invalid contract")
-	}
-
-	if c.Contract != "Pass" && (c.Tricks < 0 || c.Tricks > 13) {
-		return errors.New("invalid tricks")
-	}
-
-	if c.Contract != "Pass" && c.Declarer != "N" && c.Declarer != "E" && c.Declarer != "S" && c.Declarer != "W" {
-		return errors.New("invalid declarer")
-	}
-
-	if c.Contract != "Pass" {
-		match, err = regexp.MatchString("([2-9]|10|[AKQJ])[CDHS]", c.OpeningLead)
-		if err != nil {
-			return err
-		}
-		if !match {
-			return errors.New("invalid opening lead")
-		}
-	}
-
-	return nil
 }

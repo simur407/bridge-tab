@@ -1,0 +1,50 @@
+<h1>Rozdania</h1>
+{{ if .CanHide }}
+<p class="noprint">
+  {{ if .ShowScores }}
+  Wyniki są odkryte.
+  <a href="/tournaments/{{ .TournamentId }}/rounds">Ukryj wyniki</a>
+  {{ else }}
+  Wyniki rozdań są ukryte, dopóki turniej się nie skończy.
+  <a href="/tournaments/{{ .TournamentId }}/rounds?reveal=1">Pokaż wyniki</a>
+  {{ end }}
+</p>
+{{ end }}
+{{ if .Rounds }}
+<table>
+  <thead>
+    <tr>
+      <th>Rozdanie</th>
+      <th>NS</th>
+      <th>EW</th>
+      <th>Stan</th>
+      {{ if .ShowScores }}
+      <th>Kontrakt</th>
+      <th>Rozgrywający</th>
+      <th>Lewy</th>
+      <th>Wist</th>
+      {{ end }}
+      <th class="noprint"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Rounds }}
+    <tr>
+      <td>{{ .DealNo }}</td>
+      <td>{{ .NS }}</td>
+      <td>{{ .EW }}</td>
+      <td>{{ if .Played }}zapisane{{ else }}brak{{ end }}</td>
+      {{ if $.ShowScores }}
+      <td>{{ .Contract }}</td>
+      <td>{{ .Declarer }}</td>
+      <td>{{ .Tricks }}</td>
+      <td>{{ .OpeningLead }}</td>
+      {{ end }}
+      <td class="noprint"><a href="/tournaments/{{ $.TournamentId }}/rounds/{{ .DealNo }}/{{ .NS }}/{{ .EW }}{{ if and $.CanHide $.ShowScores }}?reveal=1{{ end }}">szczegóły</a></td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+{{ else }}
+<p>Brak rozdań. Rozpocznij turniej, aby utworzyć pary z protokołów.</p>
+{{ end }}
