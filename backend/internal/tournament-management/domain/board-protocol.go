@@ -19,6 +19,7 @@ type BoardProtocol struct {
 	BoardNo    int
 	Vulnerable Vulnerable
 	TeamPairs  []TeamPairs
+	SetId      *SetId
 }
 
 func CreateBoardProtocol(tournamentId TournamentId, boardNo int, vulnerable Vulnerable, teamPairs []TeamPairs) *BoardProtocol {

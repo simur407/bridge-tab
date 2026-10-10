@@ -12,7 +12,7 @@ type PostgresTournamentReadRepository struct {
 }
 
 func (r *PostgresTournamentReadRepository) FindAll() ([]domain.TournamentDto, error) {
-	rows, err := r.Tx.QueryContext(r.Ctx, "SELECT id, name, started_at FROM tournament_management.tournament")
+	rows, err := r.Tx.QueryContext(r.Ctx, "SELECT id, name, started_at, finished_at FROM tournament_management.tournament")
 	if err != nil {
 		return nil, err
 	}
@@ -21,13 +21,17 @@ func (r *PostgresTournamentReadRepository) FindAll() ([]domain.TournamentDto, er
 	for rows.Next() {
 		var Tournament domain.TournamentDto
 		var StartedAt sql.NullString
-		err := rows.Scan(&Tournament.Id, &Tournament.Name, &StartedAt)
+		var FinishedAt sql.NullString
+		err := rows.Scan(&Tournament.Id, &Tournament.Name, &StartedAt, &FinishedAt)
 		if err != nil {
 			return nil, err
 		}
 
 		if StartedAt.Valid {
 			Tournament.StartedAt = StartedAt.String
+		}
+		if FinishedAt.Valid {
+			Tournament.FinishedAt = FinishedAt.String
 		}
 		Tournaments = append(Tournaments, Tournament)
 	}
@@ -53,11 +57,12 @@ func (r *PostgresTournamentReadRepository) FindAllContestants(id *domain.Tournam
 }
 
 func (r *PostgresTournamentReadRepository) FindById(id string) (*domain.TournamentDto, error) {
-	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name, started_at FROM tournament_management.tournament WHERE id = $1", id)
+	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name, started_at, finished_at FROM tournament_management.tournament WHERE id = $1", id)
 
 	var Tournament domain.TournamentDto
 	var StartedAt sql.NullString
-	err := row.Scan(&Tournament.Id, &Tournament.Name, &StartedAt)
+	var FinishedAt sql.NullString
+	err := row.Scan(&Tournament.Id, &Tournament.Name, &StartedAt, &FinishedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +72,9 @@ func (r *PostgresTournamentReadRepository) FindById(id string) (*domain.Tourname
 
 	if StartedAt.Valid {
 		Tournament.StartedAt = StartedAt.String
+	}
+	if FinishedAt.Valid {
+		Tournament.FinishedAt = FinishedAt.String
 	}
 
 	return &Tournament, nil

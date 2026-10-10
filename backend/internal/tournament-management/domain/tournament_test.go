@@ -249,6 +249,25 @@ func TestCreateTeamRejectsNegativeNumber(t *testing.T) {
 }
 
 // ------ Join Team ------
+func TestJoinTeamMatchesContestantIdRegardlessOfCase(t *testing.T) {
+	// given
+	Tournament := CreateTournament(id, "name")
+	var teamId TeamId = "498697ab-156d-47a7-bd65-020b31b73886"
+	Tournament.CreateTeam(&teamId, "name", 1)
+	// Postgres returns uuid values in lowercase. macOS uuidgen supplies uppercase.
+	stored := ContestantId("d0ccd7c7-0323-4c9e-8ac7-40d4556577ef")
+	Tournament.JoinTournament(&stored)
+	Tournament.Commit()
+	requested := ContestantId("D0CCD7C7-0323-4C9E-8AC7-40D4556577EF")
+
+	// when
+	err := Tournament.JoinTeam(&teamId, &requested)
+
+	// then
+	assertNoError(t, err)
+	assertEvent(t, Tournament.GetEvents(), ContestantJoinedTeam{ContestantId: stored, TeamId: teamId})
+}
+
 func TestJoinTeam(t *testing.T) {
 	// given
 	Tournament := CreateTournament(id, "name")
@@ -561,6 +580,128 @@ func TestRemoveTournamentWithTables(t *testing.T) {
 		TableRemoved{TournamentId: id, TableId: tableId},
 		TournamentRemoved{TournamentId: id},
 	})
+}
+
+// ------ Finish ------
+func TestFinishTournament(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var teamId TeamId = "id"
+	Tournament.CreateTeam(&teamId, "name", 1)
+	var contestantId ContestantId = "id"
+	Tournament.JoinTournament(&contestantId)
+	Tournament.JoinTeam(&teamId, &contestantId)
+	assertNoError(t, Tournament.Start())
+	Tournament.Commit()
+
+	err := Tournament.Finish()
+	assertNoError(t, err)
+	assertEvent(t, Tournament.GetEvents(), TournamentFinished{TournamentId: id, FinishedAt: *Tournament.State.FinishedAt})
+}
+
+func TestFinishNotStartedTournament(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	err := Tournament.Finish()
+	assertError(t, err, ErrTournamentNotStarted)
+}
+
+func TestFinishAlreadyFinishedTournament(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var teamId TeamId = "id"
+	Tournament.CreateTeam(&teamId, "name", 1)
+	var contestantId ContestantId = "id"
+	Tournament.JoinTournament(&contestantId)
+	Tournament.JoinTeam(&teamId, &contestantId)
+	assertNoError(t, Tournament.Start())
+	assertNoError(t, Tournament.Finish())
+	Tournament.Commit()
+
+	err := Tournament.Finish()
+	assertError(t, err, ErrTournamentAlreadyFinished)
+}
+
+// ------ Set ------
+func TestCreateSet(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var ns TeamId = "ns"
+	var ew TeamId = "ew"
+	assertNoError(t, Tournament.CreateTeam(&ns, "ns", 1))
+	assertNoError(t, Tournament.CreateTeam(&ew, "ew", 2))
+	pairs := []TeamPairs{{NS: ns, EW: ew}}
+	assertNoError(t, Tournament.CreateBoardProtocol(1, None, pairs))
+	assertNoError(t, Tournament.CreateBoardProtocol(2, NS, pairs))
+	Tournament.Commit()
+
+	var setId SetId = "set-a"
+	assertNoError(t, Tournament.CreateSet(setId, "A", []int{1, 2}))
+	assertEvent(t, Tournament.GetEvents(), SetCreated{
+		TournamentId: id,
+		SetId:        setId,
+		Label:        "A",
+		BoardNos:     []int{1, 2},
+		TeamPairs:    pairs,
+	})
+}
+
+func TestCreateSetRejectsMismatchedPairs(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var ns1 TeamId = "ns1"
+	var ew1 TeamId = "ew1"
+	var ns2 TeamId = "ns2"
+	var ew2 TeamId = "ew2"
+	assertNoError(t, Tournament.CreateTeam(&ns1, "ns1", 1))
+	assertNoError(t, Tournament.CreateTeam(&ew1, "ew1", 2))
+	assertNoError(t, Tournament.CreateTeam(&ns2, "ns2", 3))
+	assertNoError(t, Tournament.CreateTeam(&ew2, "ew2", 4))
+	assertNoError(t, Tournament.CreateBoardProtocol(1, None, []TeamPairs{{NS: ns1, EW: ew1}}))
+	assertNoError(t, Tournament.CreateBoardProtocol(2, None, []TeamPairs{{NS: ns2, EW: ew2}}))
+
+	err := Tournament.CreateSet("set-a", "A", []int{1, 2})
+	assertError(t, err, ErrSetTeamPairsMismatch)
+}
+
+func TestCreateSetRejectsBoardAlreadyInSet(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var ns TeamId = "ns"
+	var ew TeamId = "ew"
+	assertNoError(t, Tournament.CreateTeam(&ns, "ns", 1))
+	assertNoError(t, Tournament.CreateTeam(&ew, "ew", 2))
+	pairs := []TeamPairs{{NS: ns, EW: ew}}
+	assertNoError(t, Tournament.CreateBoardProtocol(1, None, pairs))
+	assertNoError(t, Tournament.CreateBoardProtocol(2, None, pairs))
+	assertNoError(t, Tournament.CreateSet("set-a", "A", []int{1, 2}))
+
+	err := Tournament.CreateSet("set-b", "B", []int{1})
+	assertError(t, err, ErrSetBoardAlreadyInSet)
+}
+
+func TestRemoveSet(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var ns TeamId = "ns"
+	var ew TeamId = "ew"
+	assertNoError(t, Tournament.CreateTeam(&ns, "ns", 1))
+	assertNoError(t, Tournament.CreateTeam(&ew, "ew", 2))
+	pairs := []TeamPairs{{NS: ns, EW: ew}}
+	assertNoError(t, Tournament.CreateBoardProtocol(1, None, pairs))
+	var setId SetId = "set-a"
+	assertNoError(t, Tournament.CreateSet(setId, "A", []int{1}))
+	Tournament.Commit()
+
+	assertNoError(t, Tournament.RemoveSet(setId))
+	assertEvent(t, Tournament.GetEvents(), SetRemoved{TournamentId: id, SetId: setId})
+}
+
+func TestRemoveBoardProtocolBelongsToSet(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	var ns TeamId = "ns"
+	var ew TeamId = "ew"
+	assertNoError(t, Tournament.CreateTeam(&ns, "ns", 1))
+	assertNoError(t, Tournament.CreateTeam(&ew, "ew", 2))
+	pairs := []TeamPairs{{NS: ns, EW: ew}}
+	assertNoError(t, Tournament.CreateBoardProtocol(1, None, pairs))
+	assertNoError(t, Tournament.CreateSet("set-a", "A", []int{1}))
+
+	err := Tournament.RemoveBoardProtocol(1)
+	assertError(t, err, ErrBoardProtocolBelongsToSet)
 }
 
 // ------ Helpers ------

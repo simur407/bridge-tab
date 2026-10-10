@@ -1,6 +1,7 @@
 package tournament_management
 
 import (
+	"bridge-tab/internal/idutil"
 	"errors"
 	"slices"
 	"time"
@@ -12,10 +13,12 @@ type TournamentState struct {
 	Id             TournamentId
 	Name           string
 	StartedAt      *time.Time
+	FinishedAt     *time.Time
 	Teams          []*Team
 	Tables         []*Table
 	Contestants    []*Contestant
 	BoardProtocols []*BoardProtocol
+	Sets           []*Set
 	removed        bool
 }
 
@@ -38,6 +41,24 @@ type TournamentRemoved struct {
 type TournamentStarted struct {
 	TournamentId TournamentId
 	StartedAt    time.Time
+}
+
+type TournamentFinished struct {
+	TournamentId TournamentId
+	FinishedAt   time.Time
+}
+
+type SetCreated struct {
+	TournamentId TournamentId
+	SetId        SetId
+	Label        string
+	BoardNos     []int
+	TeamPairs    []TeamPairs
+}
+
+type SetRemoved struct {
+	TournamentId TournamentId
+	SetId        SetId
 }
 
 type ContestantJoinedTournament struct {
@@ -105,10 +126,28 @@ var ErrBoardProtocolAlreadyExists = errors.New("board protocol already exists")
 var ErrNoSuchBoardProtocol = errors.New("no such board protocol")
 var ErrBoardProtocolHasTheSameTeamMultipleTimes = errors.New("board protocol has the same team multiple times")
 var ErrBoardProtocolHasTheSameTableMultipleTimes = errors.New("board protocol has the same table multiple times")
+var ErrTournamentAlreadyFinished = errors.New("tournament already finished")
+var ErrSetAlreadyExists = errors.New("set with this label already exists")
+var ErrSetIdAlreadyExists = errors.New("set already exists")
+var ErrNoSuchSet = errors.New("no such set")
+var ErrSetBoardsEmpty = errors.New("set must contain at least one board")
+var ErrSetBoardMissingProtocol = errors.New("set board has no board protocol")
+var ErrSetBoardAlreadyInSet = errors.New("board already belongs to a set")
+var ErrSetTeamPairsMismatch = errors.New("board protocols in a set must share the same team pairs")
+var ErrBoardProtocolBelongsToSet = errors.New("board protocol belongs to a set")
+var ErrInvalidSetLabel = errors.New("set label must not be empty")
 
 func CreateTournament(id TournamentId, name string) *Tournament {
 	return &Tournament{
-		State:  TournamentState{Id: id, Name: name, removed: false, Teams: []*Team{}, Tables: []*Table{}, Contestants: []*Contestant{}},
+		State: TournamentState{
+			Id:          id,
+			Name:        name,
+			removed:     false,
+			Teams:       []*Team{},
+			Tables:      []*Table{},
+			Contestants: []*Contestant{},
+			Sets:        []*Set{},
+		},
 		events: []any{TournamentCreated{TournamentId: id, Name: name}},
 	}
 }
@@ -122,6 +161,11 @@ func (t *Tournament) Remove() error {
 		return ErrTournamentAlreadyStarted
 	}
 
+	for _, set := range slices.Clone(t.State.Sets) {
+		if err := t.RemoveSet(set.Id); err != nil {
+			return err
+		}
+	}
 	for _, boardProtocol := range slices.Clone(t.State.BoardProtocols) {
 		if err := t.RemoveBoardProtocol(boardProtocol.BoardNo); err != nil {
 			return err
@@ -169,6 +213,25 @@ func (t *Tournament) Start() error {
 	return nil
 }
 
+func (t *Tournament) Finish() error {
+	if t.State.removed {
+		return ErrTournamentRemoved
+	}
+
+	if t.State.StartedAt == nil {
+		return ErrTournamentNotStarted
+	}
+
+	if t.State.FinishedAt != nil {
+		return ErrTournamentAlreadyFinished
+	}
+
+	now := time.Now()
+	t.State.FinishedAt = &now
+	t.events = append(t.events, TournamentFinished{TournamentId: t.State.Id, FinishedAt: now})
+	return nil
+}
+
 func (t *Tournament) JoinTournament(contestantId *ContestantId) error {
 	if t.State.removed {
 		return ErrTournamentRemoved
@@ -179,7 +242,7 @@ func (t *Tournament) JoinTournament(contestantId *ContestantId) error {
 	}
 
 	if slices.ContainsFunc(t.State.Contestants, func(c *Contestant) bool {
-		return c.Id == *contestantId
+		return idutil.SameId(c.Id, *contestantId)
 	}) {
 		return nil
 	}
@@ -199,7 +262,7 @@ func (t *Tournament) LeaveTournament(contestantId *ContestantId) error {
 	}
 
 	contestantIndex := slices.IndexFunc(t.State.Contestants, func(c *Contestant) bool {
-		return c.Id == *contestantId
+		return idutil.SameId(c.Id, *contestantId)
 	})
 	if contestantIndex == -1 {
 		return nil
@@ -232,7 +295,7 @@ func (t *Tournament) CreateTeam(teamId *TeamId, name string, number int) error {
 	}
 
 	if slices.ContainsFunc(t.State.Teams, func(tt *Team) bool {
-		return tt.State.Id == *teamId
+		return idutil.SameId(tt.State.Id, *teamId)
 	}) {
 		return ErrTeamAlreadyExists
 	}
@@ -276,7 +339,7 @@ func (t *Tournament) CreateTable(tableId *TableId, number int) error {
 	}
 
 	if slices.ContainsFunc(t.State.Tables, func(tt *Table) bool {
-		return tt.State.Id == *tableId
+		return idutil.SameId(tt.State.Id, *tableId)
 	}) {
 		return ErrTableAlreadyExists
 	}
@@ -320,7 +383,7 @@ func (t *Tournament) DeleteTable(tableId *TableId) error {
 	}
 
 	tableIndex := slices.IndexFunc(t.State.Tables, func(tt *Table) bool {
-		return tt.State.Id == *tableId
+		return idutil.SameId(tt.State.Id, *tableId)
 	})
 	if tableIndex == -1 {
 		return ErrNoSuchTableInTournament
@@ -328,7 +391,7 @@ func (t *Tournament) DeleteTable(tableId *TableId) error {
 
 	for _, boardProtocol := range t.State.BoardProtocols {
 		for _, pair := range boardProtocol.TeamPairs {
-			if pair.Table != nil && *pair.Table == *tableId {
+			if pair.Table != nil && idutil.SameId(*pair.Table, *tableId) {
 				return ErrTableReferencedByBoardProtocol
 			}
 		}
@@ -349,7 +412,7 @@ func (t *Tournament) DeleteTeam(teamId *TeamId) error {
 	}
 
 	teamIndex := slices.IndexFunc(t.State.Teams, func(tt *Team) bool {
-		return tt.State.Id == *teamId
+		return idutil.SameId(tt.State.Id, *teamId)
 	})
 	teamToRemove := t.State.Teams[teamIndex]
 
@@ -377,7 +440,7 @@ func (t *Tournament) JoinTeam(teamId *TeamId, contestantId *ContestantId) error 
 	}
 
 	contestantIndex := slices.IndexFunc(t.State.Contestants, func(c *Contestant) bool {
-		return c.Id == *contestantId
+		return idutil.SameId(c.Id, *contestantId)
 	})
 	if contestantIndex == -1 {
 		return ErrContestantNotJoinedTournament
@@ -385,14 +448,14 @@ func (t *Tournament) JoinTeam(teamId *TeamId, contestantId *ContestantId) error 
 	contestant := t.State.Contestants[contestantIndex]
 
 	contestantHasTeam := contestant.Team != nil
-	itsDifferentTeam := contestant.Team != nil && contestant.Team.State.Id != *teamId
+	itsDifferentTeam := contestant.Team != nil && !idutil.SameId(contestant.Team.State.Id, *teamId)
 
 	if contestantHasTeam && itsDifferentTeam {
 		return ErrContestantAlreadyInOtherTeam
 	}
 
 	teamIndex := slices.IndexFunc(t.State.Teams, func(tt *Team) bool {
-		return tt.State.Id == *teamId
+		return idutil.SameId(tt.State.Id, *teamId)
 	})
 	if teamIndex == -1 {
 		return ErrNoSuchTeamInTournament
@@ -418,7 +481,7 @@ func (t *Tournament) LeaveTeam(teamId *TeamId, contestantId *ContestantId) error
 	}
 
 	contestantIndex := slices.IndexFunc(t.State.Contestants, func(c *Contestant) bool {
-		return c.Id == *contestantId
+		return idutil.SameId(c.Id, *contestantId)
 	})
 	if contestantIndex == -1 {
 		return ErrContestantNotJoinedTournament
@@ -460,20 +523,20 @@ func (t *Tournament) CreateBoardProtocol(boardNo int, vulnerable Vulnerable, tea
 	for i := 0; i < len(teamPairs); i++ {
 		if teamPairs[i].Table != nil {
 			if !slices.ContainsFunc(t.State.Tables, func(tt *Table) bool {
-				return tt.State.Id == *teamPairs[i].Table
+				return idutil.SameId(tt.State.Id, *teamPairs[i].Table)
 			}) {
 				return ErrNoSuchTableInTournament
 			}
 		}
-		if teamPairs[i].NS == teamPairs[i].EW {
+		if idutil.SameId(teamPairs[i].NS, teamPairs[i].EW) {
 			return ErrBoardProtocolHasTheSameTeamMultipleTimes
 		}
 		for j := i + 1; j < len(teamPairs); j++ {
-			if teamPairs[i].NS == teamPairs[j].NS || teamPairs[i].NS == teamPairs[j].EW ||
-				teamPairs[i].EW == teamPairs[j].EW || teamPairs[i].EW == teamPairs[j].NS {
+			if idutil.SameId(teamPairs[i].NS, teamPairs[j].NS) || idutil.SameId(teamPairs[i].NS, teamPairs[j].EW) ||
+				idutil.SameId(teamPairs[i].EW, teamPairs[j].EW) || idutil.SameId(teamPairs[i].EW, teamPairs[j].NS) {
 				return ErrBoardProtocolHasTheSameTeamMultipleTimes
 			}
-			if teamPairs[i].Table != nil && teamPairs[j].Table != nil && *teamPairs[i].Table == *teamPairs[j].Table {
+			if teamPairs[i].Table != nil && teamPairs[j].Table != nil && idutil.SameId(*teamPairs[i].Table, *teamPairs[j].Table) {
 				return ErrBoardProtocolHasTheSameTableMultipleTimes
 			}
 		}
@@ -501,9 +564,146 @@ func (t *Tournament) RemoveBoardProtocol(boardNo int) error {
 		return ErrNoSuchBoardProtocol
 	}
 
+	if t.State.BoardProtocols[protocolIndex].SetId != nil {
+		return ErrBoardProtocolBelongsToSet
+	}
+
 	t.State.BoardProtocols = slices.Delete(t.State.BoardProtocols, protocolIndex, protocolIndex+1)
 	t.events = append(t.events, BoardProtocolRemoved{TournamentId: t.State.Id, BoardNo: boardNo})
 	return nil
+}
+
+func (t *Tournament) CreateSet(setId SetId, label string, boardNos []int) error {
+	if t.State.removed {
+		return ErrTournamentRemoved
+	}
+
+	if t.State.StartedAt != nil {
+		return ErrTournamentAlreadyStarted
+	}
+
+	if label == "" {
+		return ErrInvalidSetLabel
+	}
+
+	if len(boardNos) == 0 {
+		return ErrSetBoardsEmpty
+	}
+
+	if slices.ContainsFunc(t.State.Sets, func(s *Set) bool {
+		return idutil.SameId(s.Id, setId)
+	}) {
+		return ErrSetIdAlreadyExists
+	}
+
+	if slices.ContainsFunc(t.State.Sets, func(s *Set) bool {
+		return s.Label == label
+	}) {
+		return ErrSetAlreadyExists
+	}
+
+	protocols := make([]*BoardProtocol, 0, len(boardNos))
+	for _, boardNo := range boardNos {
+		protocolIndex := slices.IndexFunc(t.State.BoardProtocols, func(bp *BoardProtocol) bool {
+			return bp.BoardNo == boardNo
+		})
+		if protocolIndex == -1 {
+			return ErrSetBoardMissingProtocol
+		}
+		protocol := t.State.BoardProtocols[protocolIndex]
+		if protocol.SetId != nil {
+			return ErrSetBoardAlreadyInSet
+		}
+		protocols = append(protocols, protocol)
+	}
+
+	referencePairs := protocols[0].TeamPairs
+	for _, protocol := range protocols[1:] {
+		if !teamPairsEqual(referencePairs, protocol.TeamPairs) {
+			return ErrSetTeamPairsMismatch
+		}
+	}
+
+	set := &Set{
+		Id:        setId,
+		Label:     label,
+		BoardNos:  append([]int(nil), boardNos...),
+		TeamPairs: append([]TeamPairs(nil), referencePairs...),
+	}
+	t.State.Sets = append(t.State.Sets, set)
+	for _, protocol := range protocols {
+		id := setId
+		protocol.SetId = &id
+	}
+	t.events = append(t.events, SetCreated{
+		TournamentId: t.State.Id,
+		SetId:        setId,
+		Label:        label,
+		BoardNos:     append([]int(nil), boardNos...),
+		TeamPairs:    append([]TeamPairs(nil), referencePairs...),
+	})
+	return nil
+}
+
+func (t *Tournament) RemoveSet(setId SetId) error {
+	if t.State.removed {
+		return ErrTournamentRemoved
+	}
+
+	if t.State.StartedAt != nil {
+		return ErrTournamentAlreadyStarted
+	}
+
+	setIndex := slices.IndexFunc(t.State.Sets, func(s *Set) bool {
+		return idutil.SameId(s.Id, setId)
+	})
+	if setIndex == -1 {
+		return ErrNoSuchSet
+	}
+
+	for _, protocol := range t.State.BoardProtocols {
+		if protocol.SetId != nil && idutil.SameId(*protocol.SetId, setId) {
+			protocol.SetId = nil
+		}
+	}
+
+	t.State.Sets = slices.Delete(t.State.Sets, setIndex, setIndex+1)
+	t.events = append(t.events, SetRemoved{TournamentId: t.State.Id, SetId: setId})
+	return nil
+}
+
+func teamPairsEqual(a, b []TeamPairs) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	used := make([]bool, len(b))
+	for _, left := range a {
+		matched := false
+		for j, right := range b {
+			if used[j] {
+				continue
+			}
+			if idutil.SameId(left.NS, right.NS) && idutil.SameId(left.EW, right.EW) && tableIdEqual(left.Table, right.Table) {
+				used[j] = true
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+	return true
+}
+
+func tableIdEqual(a, b *TableId) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	return idutil.SameId(*a, *b)
 }
 
 // GetEvents returns the events of a Tournament
@@ -521,9 +721,10 @@ type TournamentRepository interface {
 }
 
 type TournamentDto struct {
-	Id        string
-	Name      string
-	StartedAt string
+	Id         string
+	Name       string
+	StartedAt  string
+	FinishedAt string
 }
 
 type TournamentReadRepository interface {

@@ -1,6 +1,7 @@
 package rounds_registration
 
 import (
+	"bridge-tab/internal/idutil"
 	domain "bridge-tab/internal/rounds-registration/domain"
 	"fmt"
 
@@ -41,7 +42,7 @@ func (r *PostgresGameSessionRepository) Load(id *domain.GameSessionId) (*domain.
 		}
 
 		teamIndex := slices.IndexFunc(gameSession.State.Teams, func(tt *domain.Team) bool {
-			return tt.Id == teamId
+			return idutil.SameId(tt.Id, teamId)
 		})
 		if teamIndex == -1 {
 			gameSession.State.Teams = append(gameSession.State.Teams, &domain.Team{Id: teamId, Players: []domain.PlayerId{playerId}})
@@ -77,10 +78,10 @@ func (r *PostgresGameSessionRepository) Load(id *domain.GameSessionId) (*domain.
 		err := rows.Scan(&round.DealNo, &nsTeam, &ewTeam, &contract, &declarer, &tricks, &openingLead)
 
 		nsTeamIndex := slices.IndexFunc(gameSession.State.Teams, func(tt *domain.Team) bool {
-			return tt.Id == nsTeam
+			return idutil.SameId(tt.Id, nsTeam)
 		})
 		ewTeamIndex := slices.IndexFunc(gameSession.State.Teams, func(tt *domain.Team) bool {
-			return tt.Id == ewTeam
+			return idutil.SameId(tt.Id, ewTeam)
 		})
 
 		if nsTeamIndex == -1 || ewTeamIndex == -1 {

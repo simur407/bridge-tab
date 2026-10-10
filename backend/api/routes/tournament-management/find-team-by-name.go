@@ -2,7 +2,7 @@ package routes
 
 import (
 	"bridge-tab/api/middleware"
-	application "bridge-tab/internal/tournament-management/application"
+	application "bridge-tab/internal/tournament-management/application/query"
 	domain "bridge-tab/internal/tournament-management/domain"
 	infra "bridge-tab/internal/tournament-management/infrastructure"
 

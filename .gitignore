@@ -62,3 +62,9 @@ pgadmin-config
 
 # builds
 build
+
+# macOs
+.DS_Store
+
+# Local tournament protocol replays. They contain player names and stay out of the public repo.
+backend/e2e/protocol_*/

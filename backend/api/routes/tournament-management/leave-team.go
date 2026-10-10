@@ -2,7 +2,7 @@ package routes
 
 import (
 	"bridge-tab/api/middleware"
-	application "bridge-tab/internal/tournament-management/application"
+	application "bridge-tab/internal/tournament-management/application/command"
 	infra "bridge-tab/internal/tournament-management/infrastructure"
 
 	"github.com/gofiber/fiber/v2"

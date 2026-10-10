@@ -36,7 +36,7 @@ bridge-tab tournament board-protocol create -i $tournament_id -n "18" -v "NS" "5
 
 # Create contestants (testing purposes)
 for team_id in "${team_ids[@]}"; do
-    uuid=$(uuidgen)
+    uuid=$(uuidgen | tr '[:upper:]' '[:lower:]')
     bridge-tab tournament join -i $tournament_id -c $uuid
     echo $team_id
     bridge-tab tournament team join -t $tournament_id -c $uuid -i $team_id

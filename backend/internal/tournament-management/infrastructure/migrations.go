@@ -12,6 +12,7 @@ func Migrate(db *sql.DB) {
 	m0003_add_team_number(db)
 	m0004_optional_team_name(db)
 	m0005_add_tables(db)
+	m0006_sets_and_finish(db)
 }
 
 func m0001_initial(db *sql.DB) {
@@ -158,6 +159,28 @@ func m0005_add_tables(db *sql.DB) {
 
 		ALTER TABLE tournament_management.board_protocol_team_pairs
 		ADD COLUMN IF NOT EXISTS table_id UUID REFERENCES tournament_management.tournament_table (id);
+	`)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func m0006_sets_and_finish(db *sql.DB) {
+	_, err := db.Exec(`
+		ALTER TABLE tournament_management.tournament
+		ADD COLUMN IF NOT EXISTS finished_at TIMESTAMP;
+
+		CREATE TABLE IF NOT EXISTS tournament_management.tournament_set (
+			id UUID PRIMARY KEY NOT NULL,
+			tournament_id UUID NOT NULL REFERENCES tournament_management.tournament (id),
+			label TEXT NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+			CONSTRAINT tournament_set_label_unique UNIQUE (tournament_id, label)
+		);
+
+		ALTER TABLE tournament_management.board_protocol
+		ADD COLUMN IF NOT EXISTS set_id UUID REFERENCES tournament_management.tournament_set (id);
 	`)
 	if err != nil {
 		panic(err)
