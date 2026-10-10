@@ -1,0 +1,33 @@
+<h1>Rozdanie {{ .Round.DealNo }}</h1>
+<p><a href="/tournaments/{{ .TournamentId }}/rounds{{ if .Reveal }}?reveal=1{{ end }}">Wróć do listy</a></p>
+{{ if .Round.Found }}
+<p>{{ .Round.NSLabel }} – {{ .Round.EWLabel }}</p>
+<form method="post" action="/tournaments/{{ .TournamentId }}/rounds/{{ .Round.DealNo }}/{{ .Round.NS }}/{{ .Round.EW }}">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  {{ if .Reveal }}<input type="hidden" name="reveal" value="1">{{ end }}
+  <label>
+    Kontrakt
+    <input name="contract" value="{{ .Round.Contract }}" autocomplete="off" required>
+  </label>
+  <label>
+    Rozgrywający
+    <select name="declarer">
+      <option value=""></option>
+      <option value="N" {{ if eq .Round.Declarer "N" }}selected{{ end }}>N</option>
+      <option value="S" {{ if eq .Round.Declarer "S" }}selected{{ end }}>S</option>
+      <option value="E" {{ if eq .Round.Declarer "E" }}selected{{ end }}>E</option>
+      <option value="W" {{ if eq .Round.Declarer "W" }}selected{{ end }}>W</option>
+    </select>
+  </label>
+  <label>
+    Lewy
+    <input name="tricks" value="{{ .Round.Tricks }}" inputmode="numeric" autocomplete="off">
+  </label>
+  <label>
+    Wist
+    <input name="openingLead" value="{{ .Round.OpeningLead }}" autocomplete="off">
+  </label>
+  <p class="hint">Kontrakt: 4H, 3NT albo Pass. Przy Pass lewy, rozgrywający i wist mogą zostać puste.</p>
+  <button type="submit">{{ if .Round.Played }}Popraw wynik{{ else }}Zapisz wynik{{ end }}</button>
+</form>
+{{ end }}

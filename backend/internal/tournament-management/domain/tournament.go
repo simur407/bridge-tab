@@ -4,6 +4,7 @@ import (
 	"bridge-tab/internal/idutil"
 	"errors"
 	"slices"
+	"strings"
 	"time"
 )
 
@@ -115,7 +116,9 @@ var ErrContestantNotJoinedTournament = errors.New("contestant not joined Tournam
 var ErrNoSuchTeamInTournament = errors.New("no such team in Tournament")
 var ErrTeamAlreadyExists = errors.New("team already exists")
 var ErrTeamNumberAlreadyExists = errors.New("team number already exists")
+var ErrTeamNameAlreadyExists = errors.New("team name already exists")
 var ErrInvalidTeamNumber = errors.New("team number must be positive")
+var ErrInvalidTeamName = errors.New("team name must not be empty")
 var ErrContestantAlreadyInOtherTeam = errors.New("contestant already in other team")
 var ErrTableAlreadyExists = errors.New("table already exists")
 var ErrTableNumberAlreadyExists = errors.New("table number already exists")
@@ -315,7 +318,43 @@ func (t *Tournament) CreateTeam(teamId *TeamId, name string, number int) error {
 	team := CreateTeam(*teamId, t.State.Id, name, number)
 
 	t.State.Teams = append(t.State.Teams, team)
-	t.events = append(t.events, TeamCreated{TournamentId: t.State.Id, TeamId: *teamId, Name: name, Number: number})
+	t.events = append(t.events, team.GetEvents()...)
+	team.Commit()
+	return nil
+}
+
+func (t *Tournament) RenameTeam(teamId *TeamId, name string) error {
+	if t.State.removed {
+		return ErrTournamentRemoved
+	}
+
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return ErrInvalidTeamName
+	}
+
+	teamIndex := slices.IndexFunc(t.State.Teams, func(tt *Team) bool {
+		return idutil.SameId(tt.State.Id, *teamId)
+	})
+	if teamIndex == -1 {
+		return ErrNoSuchTeamInTournament
+	}
+
+	for _, other := range t.State.Teams {
+		if idutil.SameId(other.State.Id, *teamId) {
+			continue
+		}
+		if other.State.Name == name {
+			return ErrTeamNameAlreadyExists
+		}
+	}
+
+	team := t.State.Teams[teamIndex]
+	if err := team.Rename(name); err != nil {
+		return err
+	}
+	t.events = append(t.events, team.GetEvents()...)
+	team.Commit()
 	return nil
 }
 

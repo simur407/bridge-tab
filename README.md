@@ -63,6 +63,28 @@ Then you can run it with the following command:
 make run-http
 ```
 
+#### Admin
+
+:warning: This is a very early stage. It was done with a lot of AI and is more of a concept/prototype.
+
+The admin panel is a separate server. It needs the same database and a long random password:
+
+```bash
+export DATABASE_STRING=<your string here>
+export ADMIN_PASSWORD=<long random password>
+```
+
+`ADMIN_PORT` defaults to `3001`. Set `ADMIN_COOKIE_SECURE=1` when the panel is served over HTTPS.
+
+```bash
+make admin
+```
+
+To only build it:
+```bash
+make build-admin
+```
+
 #### CLI
 
 Run the CLI tool with the following command:
@@ -94,3 +116,7 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 ## License
 
 This project is licensed under the GNU Affero General Public License v3.0. See the LICENSE file for details.
+
+## AI
+
+Some parts of this project were created with AI assistance. Generally AI assisted code is accepted, but it has to be thoroughly reviewed and up to codebase standards.

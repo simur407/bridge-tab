@@ -1,0 +1,134 @@
+<h1>{{ .TournamentName }}</h1>
+<p class="noprint">Matchpointy. <button type="button" onclick="window.print()">Drukuj</button></p>
+{{ if not .Finished }}
+<form method="post" action="/tournaments/{{ .TournamentId }}/scores/finish" class="noprint">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <button type="submit">Zakończ turniej</button>
+</form>
+{{ end }}
+<form method="post" action="/tournaments/{{ .TournamentId }}/scores/calculate" class="noprint">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <button type="submit">Oblicz wyniki</button>
+</form>
+{{ if not .HasScores }}
+<p>Wyniki pojawią się po zakończeniu turnieju i obliczeniu punktacji.</p>
+{{ end }}
+{{ if .Standings }}
+<h2>Klasyfikacja</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Miejsce</th>
+      <th>Drużyna</th>
+      <th>Nazwa</th>
+      <th>Suma</th>
+      <th>Procent</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Standings }}
+    <tr>
+      <td>{{ .Rank }}</td>
+      <td>{{ .Number }}</td>
+      <td>{{ .Name }}</td>
+      <td>{{ .Total }}</td>
+      <td>{{ .Percentage }}</td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+{{ end }}
+{{ if .Pairs.Rows }}
+<h2>Wyniki par</h2>
+<table class="sheet">
+  <thead>
+    <tr>
+      <th>Rozdanie</th>
+      <th>Komplet</th>
+      {{ range .Pairs.Teams }}
+      <th>{{ .Number }}{{ if .Name }}<br>{{ .Name }}{{ end }}</th>
+      {{ end }}
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Pairs.Rows }}
+    <tr>
+      <td>{{ .Deal }}</td>
+      {{ if .SetSpan }}<td class="set" rowspan="{{ .SetSpan }}">{{ .Set }}</td>{{ end }}
+      {{ range .Cells }}<td>{{ . }}</td>{{ end }}
+    </tr>
+    {{ end }}
+    <tr>
+      <td colspan="2">Suma</td>
+      {{ range .Pairs.Totals }}<td>{{ . }}</td>{{ end }}
+    </tr>
+  </tbody>
+</table>
+{{ end }}
+{{ if .SetsSheet.Rows }}
+<h2>Komplety</h2>
+<table class="sheet">
+  <thead>
+    <tr>
+      <th>Komplet</th>
+      <th>Rozdania</th>
+      {{ range .SetsSheet.Teams }}
+      <th>{{ .Number }}{{ if .Name }}<br>{{ .Name }}{{ end }}</th>
+      {{ end }}
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .SetsSheet.Rows }}
+    <tr>
+      <td>{{ .Label }}</td>
+      <td>{{ .Boards }}</td>
+      {{ range .Cells }}<td>{{ . }}</td>{{ end }}
+    </tr>
+    {{ end }}
+    <tr>
+      <td colspan="2">Suma</td>
+      {{ range .SetsSheet.Totals }}<td>{{ . }}</td>{{ end }}
+    </tr>
+  </tbody>
+</table>
+{{ end }}
+{{ range .Groups }}
+<section {{ if .PageBreak }}class="break"{{ end }}>
+  <h2>{{ .Label }}</h2>
+  {{ range .Deals }}
+  <section class="deal">
+    <h3>Rozdanie {{ .Deal }}{{ if .Vulnerable }}, po partii: {{ .Vulnerable }}{{ end }}</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>NS</th>
+          <th>EW</th>
+          <th>Kontrakt</th>
+          <th>Grał</th>
+          <th>Lewy</th>
+          <th>Wist</th>
+          <th>Punkty NS</th>
+          <th>Zapis NS</th>
+          <th>Zapis EW</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .Lines }}
+        <tr>
+          <td>{{ .NS }}</td>
+          <td>{{ .EW }}</td>
+          <td>{{ .Contract }}</td>
+          <td>{{ .Declarer }}</td>
+          <td>{{ .Tricks }}</td>
+          <td>{{ .OpeningLead }}</td>
+          <td>{{ .Points }}</td>
+          <td>{{ .NsAward }}</td>
+          <td>{{ .EwAward }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </section>
+  {{ end }}
+</section>
+{{ end }}

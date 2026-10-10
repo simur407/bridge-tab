@@ -1,0 +1,36 @@
+<h1>{{ .TournamentName }}</h1>
+<p>Status: {{ .Status }}</p>
+<p>Kod dla zawodników: <code>{{ .Code }}</code></p>
+{{ if not .Started }}
+<form method="post" action="/tournaments/{{ .TournamentId }}/start" class="noprint">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <button type="submit">Rozpocznij</button>
+</form>
+<p class="hint">Rozpoczęcie tworzy rozdania z protokołów.</p>
+{{ else if not .Finished }}
+<form method="post" action="/tournaments/{{ .TournamentId }}/finish" class="noprint">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <button type="submit">Zakończ</button>
+</form>
+{{ end }}
+<h2>Zawodnicy</h2>
+{{ if .Contestants }}
+<table>
+  <thead>
+    <tr>
+      <th>Nazwa</th>
+      <th>Id</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Contestants }}
+    <tr>
+      <td>{{ .Name }}</td>
+      <td><code>{{ .Id }}</code></td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+{{ else }}
+<p>Brak zawodników.</p>
+{{ end }}

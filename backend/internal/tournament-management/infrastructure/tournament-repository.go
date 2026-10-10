@@ -267,6 +267,8 @@ func (r *PostgresTournamentRepository) Save(t *domain.Tournament) error {
 			err = r.contestantLeftTournament(event)
 		case domain.TeamCreated:
 			err = r.teamCreated(event)
+		case domain.TeamRenamed:
+			err = r.teamRenamed(event)
 		case domain.TeamRemoved:
 			err = r.teamRemoved(event)
 		case domain.TableCreated:
@@ -358,6 +360,11 @@ func (r *PostgresTournamentRepository) contestantLeftTournament(event domain.Con
 func (r *PostgresTournamentRepository) teamCreated(event domain.TeamCreated) error {
 	_, err := r.Tx.ExecContext(r.Ctx, "INSERT INTO tournament_management.team (id, Tournament_id, name, number) VALUES ($1, $2, $3, $4)", event.TeamId, event.TournamentId, event.Name, event.Number)
 
+	return err
+}
+
+func (r *PostgresTournamentRepository) teamRenamed(event domain.TeamRenamed) error {
+	_, err := r.Tx.ExecContext(r.Ctx, "UPDATE tournament_management.team SET name = $1 WHERE id = $2", event.Name, event.TeamId)
 	return err
 }
 

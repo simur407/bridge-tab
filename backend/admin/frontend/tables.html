@@ -1,0 +1,39 @@
+<h1>Stoły</h1>
+{{ if not .Started }}
+<form method="post" action="/tournaments/{{ .TournamentId }}/tables" class="noprint">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <label>
+    Numer
+    <input name="number" value="{{ .FormNumber }}" inputmode="numeric">
+  </label>
+  <p class="hint">Puste pole numeru nadaje kolejny numer.</p>
+  <button type="submit">Utwórz</button>
+</form>
+{{ end }}
+{{ if .Tables }}
+<table>
+  <thead>
+    <tr>
+      <th>Numer</th>
+      {{ if not .Started }}<th class="noprint"></th>{{ end }}
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Tables }}
+    <tr>
+      <td>{{ .Number }}</td>
+      {{ if not $.Started }}
+      <td class="noprint">
+        <form method="post" action="/tournaments/{{ $.TournamentId }}/tables/{{ .Id }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
+          <input type="hidden" name="csrf" value="{{ $.CSRF }}">
+          <button type="submit">Usuń</button>
+        </form>
+      </td>
+      {{ end }}
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+{{ else }}
+<p>Brak stołów.</p>
+{{ end }}

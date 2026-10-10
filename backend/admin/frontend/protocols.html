@@ -1,0 +1,59 @@
+<h1>Protokoły</h1>
+{{ if not .Started }}
+<form method="post" action="/tournaments/{{ .TournamentId }}/protocols" class="noprint">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <label>
+    Numer rozdania
+    <input name="board" value="{{ .FormBoard }}" inputmode="numeric" required>
+  </label>
+  <label>
+    Partia
+    <select name="vulnerable">
+      <option value="None" {{ if or (eq .FormVulnerable "None") (not .FormVulnerable) }}selected{{ end }}>brak</option>
+      <option value="NS" {{ if eq .FormVulnerable "NS" }}selected{{ end }}>NS</option>
+      <option value="EW" {{ if eq .FormVulnerable "EW" }}selected{{ end }}>EW</option>
+      <option value="Both" {{ if eq .FormVulnerable "Both" }}selected{{ end }}>obie</option>
+    </select>
+  </label>
+  <label>
+    Pary, każda linia: NS;EW albo stół;NS;EW
+    <textarea name="pairs" rows="6" required>{{ .FormPairs }}</textarea>
+  </label>
+  <button type="submit">Utwórz</button>
+</form>
+{{ end }}
+{{ if .Protocols }}
+<table>
+  <thead>
+    <tr>
+      <th>Rozdanie</th>
+      <th>Partia</th>
+      <th>Pary</th>
+      {{ if not .Started }}<th class="noprint"></th>{{ end }}
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Protocols }}
+    <tr>
+      <td>{{ .BoardNo }}</td>
+      <td>{{ .Vulnerable }}</td>
+      <td>
+        {{ range .Pairs }}
+        <div>{{ . }}</div>
+        {{ end }}
+      </td>
+      {{ if not $.Started }}
+      <td class="noprint">
+        <form method="post" action="/tournaments/{{ $.TournamentId }}/protocols/{{ .BoardNo }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
+          <input type="hidden" name="csrf" value="{{ $.CSRF }}">
+          <button type="submit">Usuń</button>
+        </form>
+      </td>
+      {{ end }}
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+{{ else }}
+<p>Brak protokołów.</p>
+{{ end }}

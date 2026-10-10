@@ -1,0 +1,31 @@
+<h1>Turnieje</h1>
+<form method="post" action="/tournaments" class="noprint">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <label>
+    Nazwa
+    <input name="name" value="{{ .FormName }}" required>
+  </label>
+  <button type="submit">Utwórz</button>
+</form>
+{{ if .Tournaments }}
+<table>
+  <thead>
+    <tr>
+      <th>Nazwa</th>
+      <th>Status</th>
+      <th>Kod</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Tournaments }}
+    <tr>
+      <td><a href="/tournaments/{{ .Id }}">{{ .Name }}</a></td>
+      <td>{{ .Status }}</td>
+      <td><code>{{ .Code }}</code></td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+{{ else }}
+<p>Brak turniejów.</p>
+{{ end }}

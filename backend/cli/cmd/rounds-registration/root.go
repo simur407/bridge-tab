@@ -15,11 +15,12 @@ var RoundsRegistrationCmd = func(
 	command := &cobra.Command{
 		Use:   "round",
 		Short: "Responsible for managing Rounds",
-		Long:  "Rounds registration allows organizers or umpires to manage Rounds registration like: start session, add played round",
+		Long:  "Rounds registration allows organizers or umpires to manage Rounds registration like: start session, add played round, edit played round",
 	}
 
 	command.AddCommand(
 		playRoundCmd(gameSessionRepository, teamRepository),
+		editRoundCmd(gameSessionRepository, gameSessionReadRepository, teamRepository),
 		listRoundsCsvCmd(gameSessionReadRepository),
 	)
 

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>{{ if .Title }}{{ .Title }} — {{ end }}Bridge Tab</title>
+    <link rel="stylesheet" href="/css/admin.css">
+  </head>
+  <body>
+    {{ if .CSRF }}
+    <nav class="nav">
+      <a href="/tournaments">Turnieje</a>
+      {{ if .TournamentId }}
+      <a href="/tournaments/{{ .TournamentId }}">{{ .TournamentName }}</a>
+      <a href="/tournaments/{{ .TournamentId }}/teams">Drużyny</a>
+      <a href="/tournaments/{{ .TournamentId }}/tables">Stoły</a>
+      <a href="/tournaments/{{ .TournamentId }}/protocols">Protokoły</a>
+      <a href="/tournaments/{{ .TournamentId }}/sets">Komplety</a>
+      <a href="/tournaments/{{ .TournamentId }}/rounds">Rozdania</a>
+      <a href="/tournaments/{{ .TournamentId }}/scores">Wyniki</a>
+      {{ end }}
+      <form method="post" action="/logout">
+        <input type="hidden" name="csrf" value="{{ .CSRF }}">
+        <button type="submit">Wyloguj</button>
+      </form>
+    </nav>
+    {{ end }}
+    {{ if .Error }}
+    <p class="error">{{ .Error }}</p>
+    {{ end }}
+    {{embed}}
+  </body>
+</html>

@@ -1,0 +1,54 @@
+<h1>Drużyny</h1>
+{{ if not .Started }}
+<form method="post" action="/tournaments/{{ .TournamentId }}/teams" class="noprint">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <label>
+    Nazwa
+    <input name="name" value="{{ .FormName }}" required>
+  </label>
+  <label>
+    Numer
+    <input name="number" value="{{ .FormNumber }}" inputmode="numeric">
+  </label>
+  <p class="hint">Puste pole numeru nadaje kolejny numer.</p>
+  <button type="submit">Utwórz</button>
+</form>
+{{ end }}
+{{ if .Teams }}
+<table>
+  <thead>
+    <tr>
+      <th>Numer</th>
+      <th>Nazwa</th>
+      <th>Zawodnicy</th>
+      {{ if not .Started }}<th class="noprint"></th>{{ end }}
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Teams }}
+    <tr>
+      <td>{{ .Number }}</td>
+      <td>
+        <form method="post" action="/tournaments/{{ $.TournamentId }}/teams/{{ .Id }}/rename" class="inline noprint">
+          <input type="hidden" name="csrf" value="{{ $.CSRF }}">
+          <input name="name" value="{{ .Name }}" required>
+          <button type="submit">Zapisz</button>
+        </form>
+        <span class="print-only">{{ .Name }}</span>
+      </td>
+      <td>{{ if .Players }}{{ .Players }}{{ else }}—{{ end }}</td>
+      {{ if not $.Started }}
+      <td class="noprint">
+        <form method="post" action="/tournaments/{{ $.TournamentId }}/teams/{{ .Id }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
+          <input type="hidden" name="csrf" value="{{ $.CSRF }}">
+          <button type="submit">Usuń</button>
+        </form>
+      </td>
+      {{ end }}
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+{{ else }}
+<p>Brak drużyn.</p>
+{{ end }}
