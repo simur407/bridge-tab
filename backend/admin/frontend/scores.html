@@ -98,6 +98,35 @@
   </table>
 </section>
 {{ end }}
+{{ if .Duels.Rows }}
+<section class="break">
+  <h2>Wyniki par bezpośrednio</h2>
+  <table class="sheet duel">
+    <thead>
+      <tr>
+        <th colspan="2">My</th>
+        <th colspan="{{ len .Duels.Teams }}">Oni →</th>
+      </tr>
+      <tr>
+        <th>Drużyna</th>
+        <th>Nazwa</th>
+        {{ range .Duels.Teams }}
+        <th>{{ .Number }}{{ if .Name }}<br>{{ .Name }}{{ end }}</th>
+        {{ end }}
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .Duels.Rows }}
+      <tr>
+        <td>{{ .Number }}</td>
+        <td>{{ .Name }}</td>
+        {{ range .Cells }}<td{{ if .Self }} class="x"{{ end }}>{{ .Value }}</td>{{ end }}
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</section>
+{{ end }}
 {{ range .Groups }}
 <section {{ if .PageBreak }}class="break"{{ end }}>
   <h2>{{ .Label }}</h2>

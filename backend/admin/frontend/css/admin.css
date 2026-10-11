@@ -62,6 +62,14 @@ table.sheet td.set {
   vertical-align: middle;
 }
 
+table.sheet.duel thead th {
+  text-align: center;
+}
+
+table.sheet.duel td.x {
+  text-align: center;
+}
+
 a {
   color: black;
 }
