@@ -14,83 +14,115 @@
 <p>Wyniki pojawią się po zakończeniu turnieju i obliczeniu punktacji.</p>
 {{ end }}
 {{ if .Standings }}
-<h2>Klasyfikacja</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Miejsce</th>
-      <th>Drużyna</th>
-      <th>Nazwa</th>
-      <th>Suma</th>
-      <th>Procent</th>
-    </tr>
-  </thead>
-  <tbody>
-    {{ range .Standings }}
-    <tr>
-      <td>{{ .Rank }}</td>
-      <td>{{ .Number }}</td>
-      <td>{{ .Name }}</td>
-      <td>{{ .Total }}</td>
-      <td>{{ .Percentage }}</td>
-    </tr>
-    {{ end }}
-  </tbody>
-</table>
+<section>
+  <h2>Klasyfikacja</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Miejsce</th>
+        <th>Drużyna</th>
+        <th>Nazwa</th>
+        <th>Suma</th>
+        <th>Procent</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .Standings }}
+      <tr>
+        <td>{{ .Rank }}</td>
+        <td>{{ .Number }}</td>
+        <td>{{ .Name }}</td>
+        <td>{{ .Total }}</td>
+        <td>{{ .Percentage }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</section>
 {{ end }}
 {{ if .Pairs.Rows }}
-<h2>Wyniki par</h2>
-<table class="sheet">
-  <thead>
-    <tr>
-      <th>Rozdanie</th>
-      <th>Komplet</th>
-      {{ range .Pairs.Teams }}
-      <th>{{ .Number }}{{ if .Name }}<br>{{ .Name }}{{ end }}</th>
+<section class="break">
+  <h2>Wyniki par</h2>
+  <table class="sheet">
+    <thead>
+      <tr>
+        <th>Rozdanie</th>
+        <th>Komplet</th>
+        {{ range .Pairs.Teams }}
+        <th>{{ .Number }}{{ if .Name }}<br>{{ .Name }}{{ end }}</th>
+        {{ end }}
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .Pairs.Rows }}
+      <tr>
+        <td>{{ .Deal }}</td>
+        {{ if .SetSpan }}<td class="set" rowspan="{{ .SetSpan }}">{{ .Set }}</td>{{ end }}
+        {{ range .Cells }}<td>{{ . }}</td>{{ end }}
+      </tr>
       {{ end }}
-    </tr>
-  </thead>
-  <tbody>
-    {{ range .Pairs.Rows }}
-    <tr>
-      <td>{{ .Deal }}</td>
-      {{ if .SetSpan }}<td class="set" rowspan="{{ .SetSpan }}">{{ .Set }}</td>{{ end }}
-      {{ range .Cells }}<td>{{ . }}</td>{{ end }}
-    </tr>
-    {{ end }}
-    <tr>
-      <td colspan="2">Suma</td>
-      {{ range .Pairs.Totals }}<td>{{ . }}</td>{{ end }}
-    </tr>
-  </tbody>
-</table>
+      <tr>
+        <td colspan="2">Suma</td>
+        {{ range .Pairs.Totals }}<td>{{ . }}</td>{{ end }}
+      </tr>
+    </tbody>
+  </table>
+</section>
 {{ end }}
 {{ if .SetsSheet.Rows }}
-<h2>Komplety</h2>
-<table class="sheet">
-  <thead>
-    <tr>
-      <th>Komplet</th>
-      <th>Rozdania</th>
-      {{ range .SetsSheet.Teams }}
-      <th>{{ .Number }}{{ if .Name }}<br>{{ .Name }}{{ end }}</th>
+<section class="break">
+  <h2>Komplety</h2>
+  <table class="sheet">
+    <thead>
+      <tr>
+        <th>Komplet</th>
+        <th>Rozdania</th>
+        {{ range .SetsSheet.Teams }}
+        <th>{{ .Number }}{{ if .Name }}<br>{{ .Name }}{{ end }}</th>
+        {{ end }}
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .SetsSheet.Rows }}
+      <tr>
+        <td>{{ .Label }}</td>
+        <td>{{ .Boards }}</td>
+        {{ range .Cells }}<td>{{ . }}</td>{{ end }}
+      </tr>
       {{ end }}
-    </tr>
-  </thead>
-  <tbody>
-    {{ range .SetsSheet.Rows }}
-    <tr>
-      <td>{{ .Label }}</td>
-      <td>{{ .Boards }}</td>
-      {{ range .Cells }}<td>{{ . }}</td>{{ end }}
-    </tr>
-    {{ end }}
-    <tr>
-      <td colspan="2">Suma</td>
-      {{ range .SetsSheet.Totals }}<td>{{ . }}</td>{{ end }}
-    </tr>
-  </tbody>
-</table>
+      <tr>
+        <td colspan="2">Suma</td>
+        {{ range .SetsSheet.Totals }}<td>{{ . }}</td>{{ end }}
+      </tr>
+    </tbody>
+  </table>
+</section>
+{{ end }}
+{{ if .Duels.Rows }}
+<section class="break">
+  <h2>Wyniki par bezpośrednio</h2>
+  <table class="sheet duel">
+    <thead>
+      <tr>
+        <th rowspan="2">Drużyna</th>
+        <th colspan="{{ len .Duels.Teams }}">Oni →</th>
+      </tr>
+      <tr>
+        {{ range .Duels.Teams }}
+        <th>{{ .Number }}{{ if .Name }}<br>{{ .Name }}{{ end }}</th>
+        {{ end }}
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .Duels.Rows }}
+      <tr>
+        <td>{{ .Number }}{{ if .Name }}<br>{{ .Name }}{{ end }}</td>
+        {{ range .Cells }}<td{{ if .Self }} class="x"{{ end }}>{{ .Value }}</td>{{ end }}
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</section>
 {{ end }}
 {{ range .Groups }}
 <section {{ if .PageBreak }}class="break"{{ end }}>

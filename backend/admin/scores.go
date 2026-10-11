@@ -79,6 +79,22 @@ type setSheet struct {
 	Totals []string
 }
 
+type duelCell struct {
+	Value string
+	Self  bool
+}
+
+type duelRow struct {
+	Number int
+	Name   string
+	Cells  []duelCell
+}
+
+type duelSheet struct {
+	Teams []sheetTeam
+	Rows  []duelRow
+}
+
 type roundKey struct {
 	deal int
 	ns   int
@@ -171,6 +187,7 @@ func scoresPage(s stores, tournament *tournament_domain.TournamentDto) (fiber.Ma
 	data["Standings"] = rows
 	data["Pairs"] = pairs
 	data["SetsSheet"] = setsSheet
+	data["Duels"] = directResults(boards, teams)
 	data["Groups"] = scoreGroups(sets, boards, teams, rounds, protocols)
 	data["HasScores"] = len(rows) > 0 || len(boards) > 0
 	return data, nil
@@ -470,6 +487,46 @@ func setTotalsSheet(sets []tournament_domain.SetDto, columns []sheetTeamCol, awa
 
 func canonId(id string) string {
 	return strings.ToLower(id)
+}
+
+type opponentKey struct {
+	team string
+	opp  string
+}
+
+func directResults(boards []score_domain.BoardScoreDto, teams []tournament_domain.TeamDto) duelSheet {
+	if len(boards) == 0 {
+		return duelSheet{}
+	}
+	columns := sheetTeams(boards, teams)
+	totals := map[opponentKey]float64{}
+	played := map[opponentKey]bool{}
+	for _, board := range boards {
+		ns := canonId(board.NsTeamId)
+		ew := canonId(board.EwTeamId)
+		totals[opponentKey{ns, ew}] += board.NsAward
+		totals[opponentKey{ew, ns}] += board.EwAward
+		played[opponentKey{ns, ew}] = true
+		played[opponentKey{ew, ns}] = true
+	}
+
+	rows := make([]duelRow, len(columns))
+	for i, team := range columns {
+		cells := make([]duelCell, len(columns))
+		for j, opponent := range columns {
+			if team.id == opponent.id {
+				cells[j] = duelCell{Value: "x", Self: true}
+				continue
+			}
+			key := opponentKey{team.id, opponent.id}
+			if !played[key] {
+				continue
+			}
+			cells[j] = duelCell{Value: formatScore(totals[key])}
+		}
+		rows[i] = duelRow{Number: team.number, Name: team.name, Cells: cells}
+	}
+	return duelSheet{Teams: sheetTeamView(columns), Rows: rows}
 }
 
 func formatBoardSpan(nums []int) string {
