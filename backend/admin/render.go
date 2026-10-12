@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"bridge-tab/internal/idutil"
-	rounds_domain "bridge-tab/internal/rounds-registration/domain"
-	rounds_infra "bridge-tab/internal/rounds-registration/infrastructure"
+	play_domain "bridge-tab/internal/play/domain"
+	play_infra "bridge-tab/internal/play/infrastructure"
 	score_app "bridge-tab/internal/score-registration/application"
 	score_domain "bridge-tab/internal/score-registration/domain"
 	score_infra "bridge-tab/internal/score-registration/infrastructure"
@@ -30,8 +30,9 @@ type stores struct {
 	boards         tournament_domain.BoardProtocolReadRepository
 	sets           tournament_domain.SetReadRepository
 	users          user_domain.UserReadRepository
-	sessions       rounds_domain.GameSessionRepository
-	sessionRead    rounds_domain.GameSessionReadRepository
+	boardResult    play_domain.BoardResultRepository
+	boardResults   play_domain.BoardResultReadRepository
+	playSession    play_domain.PlaySessionRepository
 	played         score_domain.PlayedResultRepository
 	scores         score_domain.TournamentScoreRepository
 	scoreRead      score_domain.TournamentScoreReadRepository
@@ -48,8 +49,9 @@ func newStores(c *fiber.Ctx) stores {
 		boards:         &tournament_infra.PostgresBoardProtocolReadRepository{Ctx: ctx, Tx: tx},
 		sets:           &tournament_infra.PostgresSetReadRepository{Ctx: ctx, Tx: tx},
 		users:          &user_infra.PostgresUserRepository{Ctx: ctx, Tx: tx},
-		sessions:       &rounds_infra.PostgresGameSessionRepository{Ctx: ctx, Tx: tx},
-		sessionRead:    &rounds_infra.PostgresGameSessionReadRepository{Ctx: ctx, Tx: tx},
+		boardResult:    &play_infra.PostgresBoardResultRepository{Ctx: ctx, Tx: tx},
+		boardResults:   &play_infra.PostgresBoardResultReadRepository{Ctx: ctx, Tx: tx},
+		playSession:    &play_infra.PostgresPlaySessionRepository{Ctx: ctx, Tx: tx},
 		played:         &score_infra.PostgresPlayedResultRepository{Ctx: ctx, Tx: tx},
 		scores:         &score_infra.PostgresTournamentScoreRepository{Ctx: ctx, Tx: tx},
 		scoreRead:      &score_infra.PostgresTournamentScoreReadRepository{Ctx: ctx, Tx: tx},
@@ -137,10 +139,12 @@ func explain(err error) error {
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return errors.New("nie znaleziono")
-	case errors.Is(err, tournament_cmd.ErrRoundsNotAllPlayed):
+	case errors.Is(err, play_domain.ErrPlaySessionNotProvisioned):
+		return errors.New("rozgrywka nie została rozpoczęta")
+	case errors.Is(err, tournament_cmd.ErrBoardResultsIncomplete):
 		return errors.New("nie wszystkie rozdania zostały rozegrane")
 	case errors.Is(err, score_app.ErrPlayedResultsNotFound):
-		return errors.New("brak wyników do obliczenia — najpierw zakończ turniej")
+		return errors.New("brak wyników do obliczenia")
 	case errors.Is(err, tournament_domain.ErrTournamentAlreadyStarted):
 		return errors.New("turniej jest już rozpoczęty")
 	case errors.Is(err, tournament_domain.ErrSomeTeamHasNoMembers):
@@ -149,8 +153,6 @@ func explain(err error) error {
 		return errors.New("turniej nie jest rozpoczęty")
 	case errors.Is(err, tournament_domain.ErrTournamentAlreadyFinished):
 		return errors.New("turniej jest już zakończony")
-	case errors.Is(err, tournament_domain.ErrInvalidTeamName):
-		return errors.New("nazwa drużyny nie może być pusta")
 	case errors.Is(err, tournament_domain.ErrTeamNameAlreadyExists):
 		return errors.New("drużyna o tej nazwie już istnieje")
 	case errors.Is(err, tournament_domain.ErrTeamNumberAlreadyExists):
@@ -161,12 +163,14 @@ func explain(err error) error {
 		return errors.New("stół jest użyty w protokole")
 	case errors.Is(err, tournament_domain.ErrBoardProtocolBelongsToSet):
 		return errors.New("rozdanie należy do seta")
-	case errors.Is(err, rounds_domain.ErrRoundAlreadyPlayed):
+	case errors.Is(err, play_domain.ErrBoardResultAlreadyRecorded):
 		return errors.New("to rozdanie jest już zapisane")
-	case errors.Is(err, rounds_domain.ErrRoundNotPlayed):
-		return errors.New("to rozdanie nie ma jeszcze zapisu")
-	case errors.Is(err, rounds_domain.ErrRoundNotFound):
+	case errors.Is(err, play_domain.ErrBoardResultNotFound):
+		return errors.New("nie znaleziono rozdania")
+	case errors.Is(err, play_domain.ErrMatchNotFound):
 		return errors.New("nie ma takiego rozdania")
+	case errors.Is(err, play_domain.ErrTeamNotFound):
+		return errors.New("nie znaleziono zespołu")
 	default:
 		return err
 	}

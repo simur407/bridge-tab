@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	rounds_registration "bridge-tab/internal/rounds-registration/application"
-	rounds_registration_query "bridge-tab/internal/rounds-registration/application/query"
-	rounds_registration_domain "bridge-tab/internal/rounds-registration/domain"
-	rounds_registration_infra "bridge-tab/internal/rounds-registration/infrastructure"
+	play_app "bridge-tab/internal/play/application"
+	play_query "bridge-tab/internal/play/application/query"
+	play_domain "bridge-tab/internal/play/domain"
+	play_infra "bridge-tab/internal/play/infrastructure"
 	score_app "bridge-tab/internal/score-registration/application"
 	score_query "bridge-tab/internal/score-registration/application/query"
 	score_registration_domain "bridge-tab/internal/score-registration/domain"
@@ -35,8 +35,9 @@ type Flow struct {
 	tournamentReadRepo    tournament_domain.TournamentReadRepository
 	teamReadRepo          tournament_domain.TeamReadRepository
 	boardProtocolReadRepo tournament_domain.BoardProtocolReadRepository
-	gameSessionRepo       rounds_registration_domain.GameSessionRepository
-	gameSessionReadRepo   rounds_registration_domain.GameSessionReadRepository
+	boardResultRepo       play_domain.BoardResultRepository
+	boardResultReadRepo   play_domain.BoardResultReadRepository
+	playSessionRepo       play_domain.PlaySessionRepository
 	playedResultRepo      score_registration_domain.PlayedResultRepository
 	scoreRepo             score_registration_domain.TournamentScoreRepository
 	scoreReadRepo         score_registration_domain.TournamentScoreReadRepository
@@ -63,7 +64,7 @@ func New(t *testing.T) *Flow {
 
 	user_infra.Migrate(db)
 	tournament_infra.Migrate(db)
-	rounds_registration_infra.Migrate(db)
+	play_infra.Migrate(db)
 	score_registration_infra.Migrate(db)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
@@ -96,11 +97,15 @@ func New(t *testing.T) *Flow {
 			Ctx: ctx,
 			Tx:  tx,
 		},
-		gameSessionRepo: &rounds_registration_infra.PostgresGameSessionRepository{
+		boardResultRepo: &play_infra.PostgresBoardResultRepository{
 			Ctx: ctx,
 			Tx:  tx,
 		},
-		gameSessionReadRepo: &rounds_registration_infra.PostgresGameSessionReadRepository{
+		boardResultReadRepo: &play_infra.PostgresBoardResultReadRepository{
+			Ctx: ctx,
+			Tx:  tx,
+		},
+		playSessionRepo: &play_infra.PostgresPlaySessionRepository{
 			Ctx: ctx,
 			Tx:  tx,
 		},
@@ -323,7 +328,7 @@ func (f *Flow) StartTournament() {
 	f.t.Helper()
 
 	cmd := &tournament_command.StartTurnamentCommand{TournamentId: f.tournamentId}
-	if err := cmd.Execute(f.tournamentRepo, f.teamReadRepo, f.boardProtocolReadRepo, f.gameSessionRepo); err != nil {
+	if err := cmd.Execute(f.tournamentRepo, f.teamReadRepo, f.boardProtocolReadRepo, f.playSessionRepo); err != nil {
 		f.t.Fatalf("start tournament: %v", err)
 	}
 
@@ -336,25 +341,35 @@ func (f *Flow) StartTournament() {
 	}
 }
 
-func (f *Flow) AssertPendingRounds(expected int) {
+func (f *Flow) AssertPendingMatches(expected int) {
 	f.t.Helper()
 
-	rounds := f.ListRounds()
-	if len(rounds) != expected {
-		f.t.Fatalf("expected %d pending rounds after start, got %d", expected, len(rounds))
+	matches := f.ListMatches()
+	if len(matches) != expected {
+		f.t.Fatalf("expected %d pending matches after start, got %d", expected, len(matches))
 	}
-	for _, round := range rounds {
-		if round.Contract != "" {
-			f.t.Fatalf("expected empty contract before play, got %#v", round)
+	for _, match := range matches {
+		if match.Contract != "" {
+			f.t.Fatalf("expected empty contract before play, got %#v", match)
 		}
 	}
 }
 
-func (f *Flow) PlayRound(playerId string, versusTeamNumber, dealNo int, contract string, tricks int, declarer, openingLead string) {
+func (f *Flow) ListMatches() []play_query.ScheduledMatchDto {
 	f.t.Helper()
 
-	cmd := &rounds_registration.PlayRoundCommand{
-		GameSessionId:    f.tournamentId,
+	matches, err := (&play_query.ListMatchesQuery{TournamentId: f.tournamentId}).Execute(f.playSessionRepo, f.boardResultReadRepo)
+	if err != nil {
+		f.t.Fatalf("list matches: %v", err)
+	}
+	return matches
+}
+
+func (f *Flow) RecordBoardResult(playerId string, versusTeamNumber, dealNo int, contract string, tricks int, declarer, openingLead string) {
+	f.t.Helper()
+
+	cmd := &play_app.RecordBoardResultCommand{
+		TournamentId:     f.tournamentId,
 		PlayerId:         playerId,
 		VersusTeamNumber: versusTeamNumber,
 		DealNo:           dealNo,
@@ -363,26 +378,26 @@ func (f *Flow) PlayRound(playerId string, versusTeamNumber, dealNo int, contract
 		Declarer:         declarer,
 		OpeningLead:      openingLead,
 	}
-	if err := cmd.Execute(f.gameSessionRepo, f.teamReadRepo); err != nil {
-		f.t.Fatalf("play deal %d: %v", dealNo, err)
+	if err := cmd.Execute(f.boardResultRepo, f.playSessionRepo, f.playedResultRepo); err != nil {
+		f.t.Fatalf("record board result deal %d: %v", dealNo, err)
 	}
 }
 
-func (f *Flow) ListRounds() []rounds_registration_domain.PlayedRoundDto {
+func (f *Flow) PlayedResultCount() int {
 	f.t.Helper()
 
-	rounds, err := (&rounds_registration_query.ListRoundsQuery{GameSessionId: f.tournamentId}).Execute(f.gameSessionReadRepo)
+	results, err := f.playedResultRepo.Find(score_registration_domain.TournamentScoreId(f.tournamentId))
 	if err != nil {
-		f.t.Fatalf("list rounds: %v", err)
+		f.t.Fatalf("find played results: %v", err)
 	}
-	return rounds
+	return len(results)
 }
 
 func (f *Flow) FinishTournament() {
 	f.t.Helper()
 
 	cmd := &tournament_command.FinishTournamentCommand{TournamentId: f.tournamentId}
-	if err := cmd.Execute(f.tournamentRepo, f.gameSessionRepo, f.boardProtocolReadRepo, f.playedResultRepo); err != nil {
+	if err := cmd.Execute(f.tournamentRepo, f.playSessionRepo, f.boardResultReadRepo, f.playedResultRepo, f.scoreRepo); err != nil {
 		f.t.Fatalf("finish tournament: %v", err)
 	}
 

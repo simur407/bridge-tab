@@ -1,8 +1,8 @@
 package tournament_management
 
 import (
-	round_registration "bridge-tab/internal/rounds-registration/application"
-	round_registration_domain "bridge-tab/internal/rounds-registration/domain"
+	play "bridge-tab/internal/play/application"
+	play_domain "bridge-tab/internal/play/domain"
 	query "bridge-tab/internal/tournament-management/application/query"
 	domain "bridge-tab/internal/tournament-management/domain"
 )
@@ -16,7 +16,8 @@ func (c *StartTurnamentCommand) Execute(
 	tournamentRepo domain.TournamentRepository,
 	teamReadRepo domain.TeamReadRepository,
 	boardProtocolReadRepo domain.BoardProtocolReadRepository,
-	gameSessionRepo round_registration_domain.GameSessionRepository) error {
+	playSessionRepo play_domain.PlaySessionRepository,
+) error {
 	id := domain.TournamentId(c.TournamentId)
 	// Load the turnament from the repository
 	t, err := tournamentRepo.Load(&id)
@@ -46,33 +47,31 @@ func (c *StartTurnamentCommand) Execute(
 		return err
 	}
 
-	sessionTeams := make([]round_registration.TeamDto, len(teams))
+	playTeams := make([]play.TeamDto, len(teams))
 	for i, team := range teams {
 		players := make([]string, len(team.Members))
 		for j, member := range team.Members {
 			players[j] = string(member.Id)
 		}
-		sessionTeams[i] = round_registration.TeamDto{Id: team.Id, Players: players}
+		playTeams[i] = play.TeamDto{Id: team.Id, Number: team.Number, Players: players}
 	}
 
-	rounds := []round_registration.RoundDto{}
+	matches := []play.MatchDto{}
 	for _, boardProtocol := range boardProtocols {
 		for _, teamPairs := range boardProtocol.TeamPairs {
-			rounds = append(rounds, round_registration.RoundDto{DealNo: boardProtocol.BoardNo, NsTeam: teamPairs.NS, EwTeam: teamPairs.EW})
+			matches = append(matches, play.MatchDto{
+				DealNo:     boardProtocol.BoardNo,
+				NsTeam:     teamPairs.NS,
+				EwTeam:     teamPairs.EW,
+				Vulnerable: boardProtocol.Vulnerable,
+			})
 		}
 	}
 
-	// Start the game session
-	startGameSession := round_registration.StartGameSessionCommand{
-		Id:     c.TournamentId,
-		Teams:  sessionTeams,
-		Rounds: rounds,
+	provisionPlaySession := play.ProvisionPlaySessionCommand{
+		TournamentId: c.TournamentId,
+		Teams:        playTeams,
+		Matches:      matches,
 	}
-
-	err = startGameSession.Execute(gameSessionRepo)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return provisionPlaySession.Execute(playSessionRepo)
 }

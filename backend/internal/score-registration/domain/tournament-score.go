@@ -6,21 +6,21 @@ import (
 )
 
 var (
-	ErrNoResults           = errors.New("no results to score")
+	ErrNoResults             = errors.New("no results to score")
 	ErrRoundResultIncomplete = errors.New("round result is incomplete")
 )
 
 type TournamentScoreId string
 
 type PlayedResult struct {
-	DealNo        int
-	NsTeamId      string
-	EwTeamId      string
-	Contract      string
-	Tricks        int
-	Declarer      string
-	NsVulnerable  bool
-	EwVulnerable  bool
+	DealNo       int
+	NsTeamId     string
+	EwTeamId     string
+	Contract     string
+	Tricks       int
+	Declarer     string
+	NsVulnerable bool
+	EwVulnerable bool
 }
 
 type BoardScore struct {
@@ -174,16 +174,17 @@ type TournamentScoreRepository interface {
 
 type PlayedResultRepository interface {
 	Replace(id TournamentScoreId, results []PlayedResult) error
+	Save(id TournamentScoreId, result PlayedResult) error
 	Find(id TournamentScoreId) ([]PlayedResult, error)
 }
 
 type StandingDto struct {
-	TeamId       string
-	TeamNumber   int
-	TeamName     string
-	TotalScore   float64
-	Percentage   float64
-	Rank         int
+	TeamId     string
+	TeamNumber int
+	TeamName   string
+	TotalScore float64
+	Percentage float64
+	Rank       int
 }
 
 type BoardScoreDto struct {

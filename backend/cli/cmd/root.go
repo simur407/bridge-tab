@@ -6,13 +6,13 @@ import (
 	"os"
 	"time"
 
-	rounds "bridge-tab/cli/cmd/rounds-registration"
+	play "bridge-tab/cli/cmd/play"
 	score "bridge-tab/cli/cmd/score-registration"
 	tournament_management "bridge-tab/cli/cmd/tournament-management"
 	users "bridge-tab/cli/cmd/users"
 
-	rounds_registration "bridge-tab/internal/rounds-registration/domain"
-	rounds_registration_infra "bridge-tab/internal/rounds-registration/infrastructure"
+	play_domain "bridge-tab/internal/play/domain"
+	play_infra "bridge-tab/internal/play/infrastructure"
 	score_registration "bridge-tab/internal/score-registration/domain"
 	score_registration_infra "bridge-tab/internal/score-registration/infrastructure"
 	tournament "bridge-tab/internal/tournament-management/domain"
@@ -31,10 +31,6 @@ var rootCmd = &cobra.Command{
 It allows organizers or umpires to prepare and manage tournaments, check scores, and more.`,
 }
 
-// Round Registration
-var GameSessionRepository rounds_registration.GameSessionRepository
-var GameSessionReadRepository rounds_registration.GameSessionReadRepository
-
 // Tournament Management
 var TournamentRepository tournament.TournamentRepository
 var TournamentReadRepository tournament.TournamentReadRepository
@@ -42,6 +38,11 @@ var TeamReadRepository tournament.TeamReadRepository
 var TableReadRepository tournament.TableReadRepository
 var BoardProtocolReadRepository tournament.BoardProtocolReadRepository
 var SetReadRepository tournament.SetReadRepository
+
+// Play
+var BoardResultRepository play_domain.BoardResultRepository
+var BoardResultReadRepository play_domain.BoardResultReadRepository
+var PlaySessionRepository play_domain.PlaySessionRepository
 
 // Score Registration
 var PlayedResultRepository score_registration.PlayedResultRepository
@@ -63,7 +64,7 @@ func Execute() error {
 
 	user_infra.Migrate(db)
 	tournament_infra.Migrate(db)
-	rounds_registration_infra.Migrate(db)
+	play_infra.Migrate(db)
 	score_registration_infra.Migrate(db)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
@@ -72,16 +73,6 @@ func Execute() error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
-	}
-
-	// Round Registration
-	GameSessionRepository = &rounds_registration_infra.PostgresGameSessionRepository{
-		Ctx: ctx,
-		Tx:  tx,
-	}
-	GameSessionReadRepository = &rounds_registration_infra.PostgresGameSessionReadRepository{
-		Ctx: ctx,
-		Tx:  tx,
 	}
 
 	TournamentRepository = &tournament_infra.PostgresTournamentRepository{
@@ -105,6 +96,19 @@ func Execute() error {
 		Tx:  tx,
 	}
 	SetReadRepository = &tournament_infra.PostgresSetReadRepository{
+		Ctx: ctx,
+		Tx:  tx,
+	}
+
+	BoardResultRepository = &play_infra.PostgresBoardResultRepository{
+		Ctx: ctx,
+		Tx:  tx,
+	}
+	BoardResultReadRepository = &play_infra.PostgresBoardResultReadRepository{
+		Ctx: ctx,
+		Tx:  tx,
+	}
+	PlaySessionRepository = &play_infra.PostgresPlaySessionRepository{
 		Ctx: ctx,
 		Tx:  tx,
 	}
@@ -148,10 +152,17 @@ func init() {
 		&TableReadRepository,
 		&BoardProtocolReadRepository,
 		&SetReadRepository,
-		&GameSessionRepository,
 		&PlayedResultRepository,
+		&BoardResultReadRepository,
+		&PlaySessionRepository,
+		&TournamentScoreRepository,
 	))
 	rootCmd.AddCommand(users.UserCmd(&UserReadRepository))
-	rootCmd.AddCommand(rounds.RoundsRegistrationCmd(&GameSessionRepository, &GameSessionReadRepository, &TeamReadRepository))
+	rootCmd.AddCommand(play.PlayCmd(
+		&BoardResultRepository,
+		&BoardResultReadRepository,
+		&PlaySessionRepository,
+		&PlayedResultRepository,
+	))
 	rootCmd.AddCommand(score.ScoreRegistrationCmd(&PlayedResultRepository, &TournamentScoreRepository, &TournamentScoreReadRepository))
 }

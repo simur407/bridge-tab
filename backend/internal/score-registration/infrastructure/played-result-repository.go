@@ -35,6 +35,25 @@ func (r *PostgresPlayedResultRepository) Replace(id domain.TournamentScoreId, re
 	return nil
 }
 
+func (r *PostgresPlayedResultRepository) Save(id domain.TournamentScoreId, result domain.PlayedResult) error {
+	_, err := r.Tx.ExecContext(r.Ctx, `
+		INSERT INTO score_registration.played_result (
+			tournament_id, deal_no, ns_team_id, ew_team_id,
+			contract, tricks, declarer, ns_vulnerable, ew_vulnerable
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		ON CONFLICT (tournament_id, deal_no, ns_team_id, ew_team_id)
+		DO UPDATE SET
+			contract = EXCLUDED.contract,
+			tricks = EXCLUDED.tricks,
+			declarer = EXCLUDED.declarer,
+			ns_vulnerable = EXCLUDED.ns_vulnerable,
+			ew_vulnerable = EXCLUDED.ew_vulnerable`,
+		id, result.DealNo, result.NsTeamId, result.EwTeamId,
+		result.Contract, result.Tricks, result.Declarer, result.NsVulnerable, result.EwVulnerable,
+	)
+	return err
+}
+
 func (r *PostgresPlayedResultRepository) Find(id domain.TournamentScoreId) ([]domain.PlayedResult, error) {
 	rows, err := r.Tx.QueryContext(r.Ctx, `
 		SELECT deal_no, ns_team_id, ew_team_id, contract, tricks, declarer, ns_vulnerable, ew_vulnerable

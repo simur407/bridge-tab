@@ -14,7 +14,7 @@ var ScoreRegistrationCmd = func(
 	command := &cobra.Command{
 		Use:   "score",
 		Short: "Calculate and browse tournament scores and standings",
-		Long:  "Score Registration calculates standings from transferred played results and lets organizers browse them.",
+		Long:  "Score Registration calculates standings from registered played results and lets organizers browse them.",
 	}
 
 	command.AddCommand(

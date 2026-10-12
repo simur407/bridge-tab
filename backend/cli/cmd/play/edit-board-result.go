@@ -1,22 +1,20 @@
-package rounds_registration
+package play
 
 import (
 	"bufio"
-	"database/sql"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
 
-	rounds_registration "bridge-tab/internal/rounds-registration/application"
-	rounds_registration_query "bridge-tab/internal/rounds-registration/application/query"
-	rounds_registration_domain "bridge-tab/internal/rounds-registration/domain"
-	tournament_management_domain "bridge-tab/internal/tournament-management/domain"
+	play_app "bridge-tab/internal/play/application"
+	play_query "bridge-tab/internal/play/application/query"
+	play_domain "bridge-tab/internal/play/domain"
+	score_domain "bridge-tab/internal/score-registration/domain"
 
 	"github.com/spf13/cobra"
 )
 
-var editGameSessionId string
+var editTournamentId string
 var editFirstTeamNumber int
 var editSecondTeamNumber int
 var editDealNo int
@@ -25,19 +23,20 @@ var editTricks int
 var editDeclarer string
 var editOpeningLead string
 
-var editRoundCmd = func(
-	GameSessionRepository *rounds_registration_domain.GameSessionRepository,
-	GameSessionReadRepository *rounds_registration_domain.GameSessionReadRepository,
-	TeamRepository *tournament_management_domain.TeamReadRepository,
+var editBoardResultCmd = func(
+	boardResultRepository *play_domain.BoardResultRepository,
+	boardResultReadRepository *play_domain.BoardResultReadRepository,
+	playSessionRepository *play_domain.PlaySessionRepository,
+	playedResultRepository *score_domain.PlayedResultRepository,
 ) *cobra.Command {
 	command := &cobra.Command{
-		Use:          "edit-round",
-		Short:        "Edits score of a played round",
-		Long:         `This command edits contract, tricks, declarer and opening lead of a played round. It prints the current and new score and asks for confirmation before saving.`,
+		Use:          "edit",
+		Short:        "Edits a board result",
+		Long:         "Edits contract, tricks, declarer and opening lead of a board result. It prints the current and new score and asks for confirmation before saving. The scoring record is updated as well.",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			command := &rounds_registration.EditRoundCommand{
-				GameSessionId:    editGameSessionId,
+			command := &play_app.EditBoardResultCommand{
+				TournamentId:     editTournamentId,
 				FirstTeamNumber:  editFirstTeamNumber,
 				SecondTeamNumber: editSecondTeamNumber,
 				DealNo:           editDealNo,
@@ -46,36 +45,25 @@ var editRoundCmd = func(
 				Declarer:         editDeclarer,
 				OpeningLead:      editOpeningLead,
 			}
-
 			if err := command.Validate(); err != nil {
 				return err
 			}
 
-			query := rounds_registration_query.GetRoundByTeamsQuery{
-				GameSessionId:    command.GameSessionId,
+			result, err := (&play_query.GetBoardResultByTeamsQuery{
+				TournamentId:     command.TournamentId,
 				FirstTeamNumber:  command.FirstTeamNumber,
 				SecondTeamNumber: command.SecondTeamNumber,
 				DealNo:           command.DealNo,
-			}
-			round, err := query.Execute(*GameSessionReadRepository, *TeamRepository)
+			}).Execute(*boardResultReadRepository, *playSessionRepository)
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					return rounds_registration_domain.ErrRoundNotFound
-				}
 				return err
 			}
-			if round == nil {
-				return rounds_registration_domain.ErrRoundNotFound
-			}
-			if round.Contract == "" {
-				return rounds_registration_domain.ErrRoundNotPlayed
-			}
 
-			fmt.Printf("Deal %d (NS %d vs EW %d)\n", round.DealNo, round.NsTeamNumber, round.EwTeamNumber)
-			fmt.Printf("%-14s %s -> %s\n", "Contract:", displayScore(round.Contract), displayScore(command.Contract))
-			fmt.Printf("%-14s %s -> %s\n", "Declarer:", displayScore(round.Declarer), displayScore(command.Declarer))
-			fmt.Printf("%-14s %d -> %d\n", "Tricks:", round.Tricks, command.Tricks)
-			fmt.Printf("%-14s %s -> %s\n", "Opening lead:", displayScore(round.OpeningLead), displayScore(command.OpeningLead))
+			fmt.Printf("Deal %d (NS %d vs EW %d)\n", result.DealNo, result.NsTeamNumber, result.EwTeamNumber)
+			fmt.Printf("%-14s %s -> %s\n", "Contract:", displayScore(result.Contract), displayScore(command.Contract))
+			fmt.Printf("%-14s %s -> %s\n", "Declarer:", displayScore(result.Declarer), displayScore(command.Declarer))
+			fmt.Printf("%-14s %d -> %d\n", "Tricks:", result.Tricks, command.Tricks)
+			fmt.Printf("%-14s %s -> %s\n", "Opening lead:", displayScore(result.OpeningLead), displayScore(command.OpeningLead))
 			fmt.Print("\nConfirm edit? [y/N]: ")
 
 			answer, err := bufio.NewReader(cmd.InOrStdin()).ReadString('\n')
@@ -87,16 +75,16 @@ var editRoundCmd = func(
 				return nil
 			}
 
-			if err := command.Execute(*GameSessionRepository, *TeamRepository); err != nil {
+			if err := command.Execute(*boardResultRepository, *playSessionRepository, *playedResultRepository); err != nil {
 				return err
 			}
 
-			fmt.Println("Round updated successfully")
+			fmt.Println("Board result updated successfully")
 			return nil
 		},
 	}
 
-	command.Flags().StringVarP(&editGameSessionId, "id", "i", "", "game session id")
+	command.Flags().StringVarP(&editTournamentId, "id", "i", "", "tournament id")
 	command.MarkFlagRequired("id")
 	command.Flags().IntVarP(&editFirstTeamNumber, "firstTeamNumber", "f", 0, "1st team number")
 	command.MarkFlagRequired("firstTeamNumber")

@@ -5,7 +5,7 @@ import (
 	sets "bridge-tab/cli/cmd/tournament-management/sets"
 	tables "bridge-tab/cli/cmd/tournament-management/tables"
 	teams "bridge-tab/cli/cmd/tournament-management/teams"
-	rounds_registration "bridge-tab/internal/rounds-registration/domain"
+	play "bridge-tab/internal/play/domain"
 	score_registration "bridge-tab/internal/score-registration/domain"
 	tournament "bridge-tab/internal/tournament-management/domain"
 
@@ -19,8 +19,10 @@ var TournamentManagementCmd = func(
 	tableReadRepository *tournament.TableReadRepository,
 	boardProtocolReadRepository *tournament.BoardProtocolReadRepository,
 	setReadRepository *tournament.SetReadRepository,
-	gameSessionRepository *rounds_registration.GameSessionRepository,
 	playedResultRepository *score_registration.PlayedResultRepository,
+	boardResultReadRepository *play.BoardResultReadRepository,
+	playSessionRepository *play.PlaySessionRepository,
+	tournamentScoreRepository *score_registration.TournamentScoreRepository,
 ) *cobra.Command {
 	command := &cobra.Command{
 		Use:   "tournament",
@@ -32,8 +34,8 @@ var TournamentManagementCmd = func(
 		createTournamentCmd(tournamentRepository),
 		removeTournamentCmd(tournamentRepository),
 		listTournamentsCmd(tournamentReadRepository),
-		startTournamentCmd(tournamentRepository, teamReadRepository, boardProtocolReadRepository, gameSessionRepository),
-		finishTournamentCmd(tournamentRepository, gameSessionRepository, boardProtocolReadRepository, playedResultRepository),
+		startTournamentCmd(tournamentRepository, teamReadRepository, boardProtocolReadRepository, playSessionRepository),
+		finishTournamentCmd(tournamentRepository, playSessionRepository, boardResultReadRepository, playedResultRepository, tournamentScoreRepository),
 		joinTournamentCmd(tournamentRepository),
 		leaveTournamentCmd(tournamentRepository),
 		listContestantsCmd(tournamentReadRepository),

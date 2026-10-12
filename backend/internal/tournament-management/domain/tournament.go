@@ -118,7 +118,6 @@ var ErrTeamAlreadyExists = errors.New("team already exists")
 var ErrTeamNumberAlreadyExists = errors.New("team number already exists")
 var ErrTeamNameAlreadyExists = errors.New("team name already exists")
 var ErrInvalidTeamNumber = errors.New("team number must be positive")
-var ErrInvalidTeamName = errors.New("team name must not be empty")
 var ErrContestantAlreadyInOtherTeam = errors.New("contestant already in other team")
 var ErrTableAlreadyExists = errors.New("table already exists")
 var ErrTableNumberAlreadyExists = errors.New("table number already exists")
@@ -329,9 +328,6 @@ func (t *Tournament) RenameTeam(teamId *TeamId, name string) error {
 	}
 
 	name = strings.TrimSpace(name)
-	if name == "" {
-		return ErrInvalidTeamName
-	}
 
 	teamIndex := slices.IndexFunc(t.State.Teams, func(tt *Team) bool {
 		return idutil.SameId(tt.State.Id, *teamId)
@@ -340,12 +336,14 @@ func (t *Tournament) RenameTeam(teamId *TeamId, name string) error {
 		return ErrNoSuchTeamInTournament
 	}
 
-	for _, other := range t.State.Teams {
-		if idutil.SameId(other.State.Id, *teamId) {
-			continue
-		}
-		if other.State.Name == name {
-			return ErrTeamNameAlreadyExists
+	if name != "" {
+		for _, other := range t.State.Teams {
+			if idutil.SameId(other.State.Id, *teamId) {
+				continue
+			}
+			if other.State.Name == name {
+				return ErrTeamNameAlreadyExists
+			}
 		}
 	}
 

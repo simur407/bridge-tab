@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"strings"
 
 	tournament_cmd "bridge-tab/internal/tournament-management/application/command"
@@ -49,16 +48,15 @@ func postTeam(c *fiber.Ctx) error {
 	if err != nil {
 		return reject(c, "teams", data, err)
 	}
-	if name == "" {
-		return reject(c, "teams", data, errors.New("nazwa jest pusta"))
-	}
 	teams, err := (&tournament_query.ListTeamsQuery{TournamentId: tournament.Id}).Execute(s.teams)
 	if err != nil {
 		return err
 	}
-	for _, team := range teams {
-		if team.Name == name {
-			return reject(c, "teams", data, tournament_domain.ErrTeamNameAlreadyExists)
+	if name != "" {
+		for _, team := range teams {
+			if team.Name == name {
+				return reject(c, "teams", data, tournament_domain.ErrTeamNameAlreadyExists)
+			}
 		}
 	}
 	cmd := tournament_cmd.CreateTeamCommand{

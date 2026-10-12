@@ -1,4 +1,4 @@
-package rounds_registration
+package play
 
 import (
 	"errors"
@@ -10,28 +10,19 @@ func normalizeContract(contract string) string {
 	return strings.ReplaceAll(contract, "NT", "N")
 }
 
-func validateRoundInput(gameSessionId string, playerId string, versusTeamNumber int, dealNo int, contract string, tricks int, declarer string, openingLead string) error {
-	if gameSessionId == "" {
-		return errors.New("game session id is empty")
-	}
-	if playerId == "" {
-		return errors.New("player id is empty")
-	}
-	if versusTeamNumber < 1 {
-		return errors.New("versus team number is empty")
+func validateBoardResultInput(tournamentId string, dealNo int, contract string, tricks int, declarer string, openingLead string) error {
+	if tournamentId == "" {
+		return errors.New("tournament id is empty")
 	}
 	if dealNo == 0 {
 		return errors.New("deal no is empty")
 	}
-	return validateRoundScore(contract, tricks, declarer, openingLead)
+	return validateScore(contract, tricks, declarer, openingLead)
 }
 
-func validateRoundScore(contract string, tricks int, declarer string, openingLead string) error {
+func validateScore(contract string, tricks int, declarer string, openingLead string) error {
 	if contract == "" {
 		return errors.New("contract is empty")
-	}
-	if contract != "Pass" && tricks == 0 {
-		return errors.New("tricks is empty")
 	}
 	if contract != "Pass" && declarer == "" {
 		return errors.New("declarer is empty")

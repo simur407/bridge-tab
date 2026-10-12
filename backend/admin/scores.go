@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"bridge-tab/internal/idutil"
-	rounds_query "bridge-tab/internal/rounds-registration/application/query"
-	rounds_domain "bridge-tab/internal/rounds-registration/domain"
+	play_query "bridge-tab/internal/play/application/query"
+	play_domain "bridge-tab/internal/play/domain"
 	score_app "bridge-tab/internal/score-registration/application"
 	score_query "bridge-tab/internal/score-registration/application/query"
 	score_domain "bridge-tab/internal/score-registration/domain"
@@ -95,7 +95,7 @@ type duelSheet struct {
 	Rows  []duelRow
 }
 
-type roundKey struct {
+type boardKey struct {
 	deal int
 	ns   int
 	ew   int
@@ -161,7 +161,7 @@ func scoresPage(s stores, tournament *tournament_domain.TournamentDto) (fiber.Ma
 	if err != nil {
 		return nil, err
 	}
-	rounds, err := (&rounds_query.ListRoundsQuery{GameSessionId: tournament.Id}).Execute(s.sessionRead)
+	boardResults, err := (&play_query.ListBoardResultsQuery{TournamentId: tournament.Id}).Execute(s.boardResults)
 	if err != nil {
 		return nil, err
 	}
@@ -188,16 +188,16 @@ func scoresPage(s stores, tournament *tournament_domain.TournamentDto) (fiber.Ma
 	data["Pairs"] = pairs
 	data["SetsSheet"] = setsSheet
 	data["Duels"] = directResults(boards, teams)
-	data["Groups"] = scoreGroups(sets, boards, teams, rounds, protocols)
+	data["Groups"] = scoreGroups(sets, boards, teams, boardResults, protocols)
 	data["HasScores"] = len(rows) > 0 || len(boards) > 0
 	return data, nil
 }
 
-func scoreGroups(sets []tournament_domain.SetDto, boards []score_domain.BoardScoreDto, teams []tournament_domain.TeamDto, rounds []rounds_domain.PlayedRoundDto, protocols []tournament_domain.BoardProtocolDto) []scoreGroup {
+func scoreGroups(sets []tournament_domain.SetDto, boards []score_domain.BoardScoreDto, teams []tournament_domain.TeamDto, boardResults []play_domain.BoardResultDto, protocols []tournament_domain.BoardProtocolDto) []scoreGroup {
 	if len(boards) == 0 {
 		return nil
 	}
-	played := indexRounds(rounds)
+	played := indexBoardResults(boardResults)
 	vulnerable := indexVulnerable(protocols)
 	if len(sets) == 0 {
 		return []scoreGroup{boardGroup("Rozdania", boards, teams, played, vulnerable, false)}
@@ -236,7 +236,7 @@ func scoreGroups(sets []tournament_domain.SetDto, boards []score_domain.BoardSco
 	return groups
 }
 
-func boardGroup(label string, boards []score_domain.BoardScoreDto, teams []tournament_domain.TeamDto, played map[roundKey]rounds_domain.PlayedRoundDto, vulnerable map[int]string, pageBreak bool) scoreGroup {
+func boardGroup(label string, boards []score_domain.BoardScoreDto, teams []tournament_domain.TeamDto, played map[boardKey]play_domain.BoardResultDto, vulnerable map[int]string, pageBreak bool) scoreGroup {
 	sorted := append([]score_domain.BoardScoreDto(nil), boards...)
 	sort.Slice(sorted, func(i, j int) bool {
 		if sorted[i].DealNo == sorted[j].DealNo {
@@ -253,12 +253,12 @@ func boardGroup(label string, boards []score_domain.BoardScoreDto, teams []tourn
 			NsAward: formatScore(board.NsAward),
 			EwAward: formatScore(board.EwAward),
 		}
-		if round, ok := played[roundKey{board.DealNo, board.NsTeamNumber, board.EwTeamNumber}]; ok {
-			line.Contract = displayContract(round.Contract)
-			line.Declarer = round.Declarer
-			line.OpeningLead = round.OpeningLead
-			if round.Contract != "" && round.Contract != "Pass" {
-				line.Tricks = strconv.Itoa(round.Tricks)
+		if result, ok := played[boardKey{board.DealNo, board.NsTeamNumber, board.EwTeamNumber}]; ok {
+			line.Contract = displayContract(result.Contract)
+			line.Declarer = result.Declarer
+			line.OpeningLead = result.OpeningLead
+			if result.Contract != "" && result.Contract != "Pass" {
+				line.Tricks = strconv.Itoa(result.Tricks)
 			}
 		}
 		if len(deals) == 0 || deals[len(deals)-1].Deal != board.DealNo {
@@ -541,10 +541,10 @@ func formatBoardSpan(nums []int) string {
 	return joinInts(sorted)
 }
 
-func indexRounds(rounds []rounds_domain.PlayedRoundDto) map[roundKey]rounds_domain.PlayedRoundDto {
-	out := make(map[roundKey]rounds_domain.PlayedRoundDto, len(rounds))
-	for _, round := range rounds {
-		out[roundKey{round.DealNo, round.NsTeamNumber, round.EwTeamNumber}] = round
+func indexBoardResults(results []play_domain.BoardResultDto) map[boardKey]play_domain.BoardResultDto {
+	out := make(map[boardKey]play_domain.BoardResultDto, len(results))
+	for _, result := range results {
+		out[boardKey{result.DealNo, result.NsTeamNumber, result.EwTeamNumber}] = result
 	}
 	return out
 }

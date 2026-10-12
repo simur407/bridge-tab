@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	rounds_infra "bridge-tab/internal/rounds-registration/infrastructure"
+	play_infra "bridge-tab/internal/play/infrastructure"
 	score_infra "bridge-tab/internal/score-registration/infrastructure"
 	tournament_infra "bridge-tab/internal/tournament-management/infrastructure"
 	user_infra "bridge-tab/internal/user/infrastructure"
@@ -65,7 +65,7 @@ func main() {
 
 	tournament_infra.Migrate(db)
 	user_infra.Migrate(db)
-	rounds_infra.Migrate(db)
+	play_infra.Migrate(db)
 	score_infra.Migrate(db)
 
 	app.Get("/login", getLogin)
