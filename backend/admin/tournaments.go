@@ -100,7 +100,7 @@ func postStart(c *fiber.Ctx) error {
 		return err
 	}
 	cmd := tournament_cmd.StartTurnamentCommand{TournamentId: tournament.Id}
-	if err := cmd.Execute(s.tournament, s.teams, s.boards, s.sessions); err != nil {
+	if err := cmd.Execute(s.tournament, s.teams, s.boards, s.sessions, s.playSession); err != nil {
 		return reject(c, "tournament", data, err)
 	}
 	return c.Redirect("/tournaments/"+tournament.Id, fiber.StatusSeeOther)
@@ -117,7 +117,7 @@ func finishTournament(c *fiber.Ctx, back string) error {
 		return err
 	}
 	cmd := tournament_cmd.FinishTournamentCommand{TournamentId: tournament.Id}
-	if err := cmd.Execute(s.tournament, s.sessions, s.boards, s.played); err != nil {
+	if err := cmd.Execute(s.tournament, s.playSession, s.boardResults, s.played, s.scores); err != nil {
 		if strings.HasSuffix(back, "/scores") {
 			data, pageErr := scoresPage(s, tournament)
 			if pageErr != nil {

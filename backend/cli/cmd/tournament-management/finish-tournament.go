@@ -1,7 +1,7 @@
 package tournament_management
 
 import (
-	rounds_domain "bridge-tab/internal/rounds-registration/domain"
+	play_domain "bridge-tab/internal/play/domain"
 	score_domain "bridge-tab/internal/score-registration/domain"
 	tournament_management "bridge-tab/internal/tournament-management/application/command"
 	tournament_domain "bridge-tab/internal/tournament-management/domain"
@@ -14,29 +14,31 @@ var finishTournamentId string
 
 var finishTournamentCmd = func(
 	TournamentRepository *tournament_domain.TournamentRepository,
-	GameSessionRepository *rounds_domain.GameSessionRepository,
-	BoardProtocolRepository *tournament_domain.BoardProtocolReadRepository,
+	PlaySessionRepository *play_domain.PlaySessionRepository,
+	BoardResultReadRepository *play_domain.BoardResultReadRepository,
 	PlayedResultRepository *score_domain.PlayedResultRepository,
+	TournamentScoreRepository *score_domain.TournamentScoreRepository,
 ) *cobra.Command {
 	command := &cobra.Command{
 		Use:   "finish",
-		Short: "Finishes a tournament and transfers results for scoring",
-		Long: `This command finishes a tournament after all rounds are played.
-	It transfers played results into score registration. Use score calculate to produce standings.`,
+		Short: "Finishes a tournament and calculates matchpoint standings",
+		Long: `This command finishes a tournament after every board result has been recorded.
+	Played results are already registered one by one. Finishing calculates matchpoint standings.`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			command := &tournament_management.FinishTournamentCommand{TournamentId: finishTournamentId}
 
 			if err := command.Execute(
 				*TournamentRepository,
-				*GameSessionRepository,
-				*BoardProtocolRepository,
+				*PlaySessionRepository,
+				*BoardResultReadRepository,
 				*PlayedResultRepository,
+				*TournamentScoreRepository,
 			); err != nil {
 				return err
 			}
 
-			fmt.Println("Finished Tournament { Id:", command.TournamentId, "}")
+			fmt.Println("Finished Tournament { Id:", command.TournamentId, "} and calculated matchpoint standings")
 			return nil
 		},
 	}

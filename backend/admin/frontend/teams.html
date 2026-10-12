@@ -4,7 +4,7 @@
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <label>
     Nazwa
-    <input name="name" value="{{ .FormName }}" required>
+    <input name="name" value="{{ .FormName }}">
   </label>
   <label>
     Numer
@@ -31,7 +31,7 @@
       <td>
         <form method="post" action="/tournaments/{{ $.TournamentId }}/teams/{{ .Id }}/rename" class="inline noprint">
           <input type="hidden" name="csrf" value="{{ $.CSRF }}">
-          <input name="name" value="{{ .Name }}" required>
+          <input name="name" value="{{ .Name }}">
           <button type="submit">Zapisz</button>
         </form>
         <span class="print-only">{{ .Name }}</span>

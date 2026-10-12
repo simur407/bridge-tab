@@ -56,9 +56,6 @@ func (t *Team) Rename(name string) error {
 	}
 
 	name = strings.TrimSpace(name)
-	if name == "" {
-		return ErrInvalidTeamName
-	}
 	if t.State.Name == name {
 		return nil
 	}

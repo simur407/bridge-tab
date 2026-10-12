@@ -67,14 +67,18 @@ func TestTournamentScoring(t *testing.T) {
 	}
 
 	flow.StartTournament()
-	flow.AssertPendingRounds(2)
 
 	// Table 1: 3NT making = +400 NS; Table 2: 3NT down 1 = -50 NS
-	flow.PlayRound(players[1], 2, 1, "3NT", 9, "N", "KH")
-	flow.PlayRound(players[3], 4, 1, "3NT", 8, "N", "AS")
+	flow.RecordBoardResult(players[1], 2, 1, "3NT", 9, "N", "KH")
+	if flow.PlayedResultCount() != 1 {
+		t.Fatalf("expected 1 played result after the first board, got %d", flow.PlayedResultCount())
+	}
+	flow.RecordBoardResult(players[3], 4, 1, "3NT", 8, "N", "AS")
+	if flow.PlayedResultCount() != 2 {
+		t.Fatalf("expected 2 played results before finish, got %d", flow.PlayedResultCount())
+	}
 
 	flow.FinishTournament()
-	flow.CalculateStandings(score_registration_domain.MethodMatchpoints)
 
 	standings := flow.GetStandings(score_registration_domain.MethodMatchpoints)
 	if len(standings) != 4 {

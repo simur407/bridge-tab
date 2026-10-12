@@ -1,14 +1,14 @@
 package main
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
-	rounds_cmd "bridge-tab/internal/rounds-registration/application"
-	rounds_query "bridge-tab/internal/rounds-registration/application/query"
+	play_app "bridge-tab/internal/play/application"
+	play_query "bridge-tab/internal/play/application/query"
+	play_domain "bridge-tab/internal/play/domain"
 	tournament_query "bridge-tab/internal/tournament-management/application/query"
 	tournament_domain "bridge-tab/internal/tournament-management/domain"
 
@@ -105,8 +105,8 @@ func postRound(c *fiber.Ctx) error {
 	data["Round"] = form
 
 	if form.Played {
-		cmd := rounds_cmd.EditRoundCommand{
-			GameSessionId:    tournament.Id,
+		cmd := play_app.EditBoardResultCommand{
+			TournamentId:     tournament.Id,
 			FirstTeamNumber:  form.NS,
 			SecondTeamNumber: form.EW,
 			DealNo:           form.DealNo,
@@ -115,12 +115,12 @@ func postRound(c *fiber.Ctx) error {
 			Declarer:         declarer,
 			OpeningLead:      lead,
 		}
-		if err := cmd.Execute(s.sessions, s.teams); err != nil {
+		if err := cmd.Execute(s.boardResult, s.playSession, s.played); err != nil {
 			return reject(c, "round", data, err)
 		}
 	} else {
-		cmd := rounds_cmd.RecordRoundCommand{
-			GameSessionId:    tournament.Id,
+		cmd := play_app.RecordBoardResultByTeamsCommand{
+			TournamentId:     tournament.Id,
 			FirstTeamNumber:  form.NS,
 			SecondTeamNumber: form.EW,
 			DealNo:           form.DealNo,
@@ -129,7 +129,7 @@ func postRound(c *fiber.Ctx) error {
 			Declarer:         declarer,
 			OpeningLead:      lead,
 		}
-		if err := cmd.Execute(s.sessions, s.teams); err != nil {
+		if err := cmd.Execute(s.boardResult, s.playSession, s.played); err != nil {
 			return reject(c, "round", data, err)
 		}
 	}
@@ -142,26 +142,26 @@ func postRound(c *fiber.Ctx) error {
 }
 
 func roundsPage(s stores, tournament *tournament_domain.TournamentDto, reveal bool) (fiber.Map, error) {
-	rounds, err := (&rounds_query.ListRoundsQuery{GameSessionId: tournament.Id}).Execute(s.sessionRead)
+	matches, err := (&play_query.ListMatchesQuery{TournamentId: tournament.Id}).Execute(s.playSession, s.boardResults)
 	if err != nil {
 		return nil, err
 	}
 	showScores := tournament.FinishedAt != "" || reveal
-	rows := make([]roundRow, len(rounds))
-	for i, round := range rounds {
+	rows := make([]roundRow, len(matches))
+	for i, match := range matches {
 		tricks := ""
-		if round.Contract != "" && round.Contract != "Pass" {
-			tricks = strconv.Itoa(round.Tricks)
+		if match.Contract != "" && match.Contract != "Pass" {
+			tricks = strconv.Itoa(match.Tricks)
 		}
 		rows[i] = roundRow{
-			DealNo:      round.DealNo,
-			NS:          round.NsTeamNumber,
-			EW:          round.EwTeamNumber,
-			Played:      round.Contract != "",
-			Contract:    round.Contract,
-			Declarer:    round.Declarer,
+			DealNo:      match.DealNo,
+			NS:          match.NsTeamNumber,
+			EW:          match.EwTeamNumber,
+			Played:      match.Contract != "",
+			Contract:    match.Contract,
+			Declarer:    match.Declarer,
 			Tricks:      tricks,
-			OpeningLead: round.OpeningLead,
+			OpeningLead: match.OpeningLead,
 		}
 	}
 	data := pageData(tournament)
@@ -195,32 +195,29 @@ func loadRoundForm(c *fiber.Ctx, s stores, tournament *tournament_domain.Tournam
 		NSLabel: teamByNumber(teams, ns),
 		EWLabel: teamByNumber(teams, ew),
 	}
-	round, err := (&rounds_query.GetRoundByTeamsQuery{
-		GameSessionId:    tournament.Id,
+	match, err := (&play_query.GetMatchByTeamsQuery{
+		TournamentId:     tournament.Id,
 		FirstTeamNumber:  ns,
 		SecondTeamNumber: ew,
 		DealNo:           deal,
-	}).Execute(s.sessionRead, s.teams)
+	}).Execute(s.playSession, s.boardResults)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, play_domain.ErrMatchNotFound) || errors.Is(err, play_domain.ErrTeamNotFound) || errors.Is(err, play_domain.ErrPlaySessionNotProvisioned) {
 			return form, nil
 		}
 		return roundForm{}, err
 	}
-	if round == nil {
-		return form, nil
-	}
 	form.Found = true
-	form.Played = round.Contract != ""
-	form.Contract = round.Contract
-	form.Declarer = round.Declarer
-	form.OpeningLead = round.OpeningLead
-	form.NS = round.NsTeamNumber
-	form.EW = round.EwTeamNumber
-	form.NSLabel = teamByNumber(teams, round.NsTeamNumber)
-	form.EWLabel = teamByNumber(teams, round.EwTeamNumber)
-	if round.Contract != "" && round.Contract != "Pass" {
-		form.Tricks = strconv.Itoa(round.Tricks)
+	form.Played = match.Contract != ""
+	form.Contract = match.Contract
+	form.Declarer = match.Declarer
+	form.OpeningLead = match.OpeningLead
+	form.NS = match.NsTeamNumber
+	form.EW = match.EwTeamNumber
+	form.NSLabel = teamByNumber(teams, match.NsTeamNumber)
+	form.EWLabel = teamByNumber(teams, match.EwTeamNumber)
+	if match.Contract != "" && match.Contract != "Pass" {
+		form.Tricks = strconv.Itoa(match.Tricks)
 	}
 	return form, nil
 }

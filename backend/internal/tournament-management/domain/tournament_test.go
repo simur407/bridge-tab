@@ -291,14 +291,16 @@ func TestRenameTeamSameNameHasNoEvent(t *testing.T) {
 	assertNoEvents(t, Tournament.GetEvents())
 }
 
-func TestRenameTeamRejectsEmptyName(t *testing.T) {
+func TestRenameTeamAllowsEmptyName(t *testing.T) {
 	Tournament := CreateTournament(id, "name")
 	var teamId TeamId = "team"
 	assertNoError(t, Tournament.CreateTeam(&teamId, "Alpha", 1))
+	Tournament.Commit()
 
 	err := Tournament.RenameTeam(&teamId, "   ")
 
-	assertError(t, err, ErrInvalidTeamName)
+	assertNoError(t, err)
+	assertEvent(t, Tournament.GetEvents(), TeamRenamed{TeamId: teamId, Name: ""})
 }
 
 func TestRenameTeamRejectsDuplicateName(t *testing.T) {

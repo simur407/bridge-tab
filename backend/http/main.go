@@ -4,9 +4,10 @@ import (
 	"bridge-tab/http/middleware"
 	auth "bridge-tab/internal/auth"
 	"bridge-tab/internal/idutil"
-	rounds_registration_cmd "bridge-tab/internal/rounds-registration/application"
-	rounds_registration_query "bridge-tab/internal/rounds-registration/application/query"
-	rounds_registration_domain "bridge-tab/internal/rounds-registration/domain"
+	play_app "bridge-tab/internal/play/application"
+	play_query "bridge-tab/internal/play/application/query"
+	play_domain "bridge-tab/internal/play/domain"
+	play_infra "bridge-tab/internal/play/infrastructure"
 	rounds_registration_infra "bridge-tab/internal/rounds-registration/infrastructure"
 	score_registration_infra "bridge-tab/internal/score-registration/infrastructure"
 	tournament_management_cmd "bridge-tab/internal/tournament-management/application/command"
@@ -16,12 +17,12 @@ import (
 	users "bridge-tab/internal/user/application"
 	users_infra "bridge-tab/internal/user/infrastructure"
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"slices"
-	"sort"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -73,6 +74,7 @@ func main() {
 	tournament_management_infra.Migrate(db)
 	users_infra.Migrate(db)
 	rounds_registration_infra.Migrate(db)
+	play_infra.Migrate(db)
 	score_registration_infra.Migrate(db)
 
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -374,18 +376,16 @@ func GetTournamentStatus(c *fiber.Ctx) error {
 		return notFound(c, "Nie znaleziono turnieju")
 	}
 
-	getRounds := rounds_registration_query.ListRoundsQuery{
-		GameSessionId: tournamentId,
-	}
-
-	rounds, err := getRounds.Execute(&rounds_registration_infra.PostgresGameSessionReadRepository{
-		Ctx: c.UserContext(),
-		Tx:  middleware.GetTransaction(c),
-	})
-
-	sort.Slice(rounds, func(i, j int) bool {
-		return rounds[i].NsTeamNumber < rounds[j].NsTeamNumber
-	})
+	rounds, err := (&play_query.ListMatchesQuery{TournamentId: tournamentId}).Execute(
+		&play_infra.PostgresPlaySessionRepository{
+			Ctx: c.UserContext(),
+			Tx:  middleware.GetTransaction(c),
+		},
+		&play_infra.PostgresBoardResultReadRepository{
+			Ctx: c.UserContext(),
+			Tx:  middleware.GetTransaction(c),
+		},
+	)
 
 	type BoardModel struct {
 		NsTeamNumber int
@@ -399,7 +399,7 @@ func GetTournamentStatus(c *fiber.Ctx) error {
 
 	startedDeals := map[string]bool{}
 	for _, round := range rounds {
-		if round.Declarer != "" {
+		if round.Contract != "" {
 			startedDeals[fmt.Sprintf("%d-%d", round.NsTeamNumber, round.EwTeamNumber)] = true
 		}
 	}
@@ -415,7 +415,7 @@ func GetTournamentStatus(c *fiber.Ctx) error {
 			Declarer:     round.Declarer,
 			OpeningLead:  round.OpeningLead,
 		}
-		if round.Declarer != "" {
+		if round.Contract != "" {
 			board.Status = "completed"
 		} else {
 			_, ok := startedDeals[fmt.Sprintf("%d-%d", round.NsTeamNumber, round.EwTeamNumber)]
@@ -547,27 +547,31 @@ func GetAddRoundForm(c *fiber.Ctx) error {
 	}
 
 	playerId := c.Locals("user").(middleware.UserMetadata).Id
-	getPlayerTeam := tournament_management_query.GetTeamByMemberQuery{TournamentId: gameSessionId, MemberId: playerId}
-	playerTeam, err := getPlayerTeam.Execute(&tournament_management_infra.PostgresTeamReadRepository{
+	playerTeamNumber, err := (&play_query.GetTeamNumberByMemberQuery{
+		TournamentId: gameSessionId,
+		PlayerId:     playerId,
+	}).Execute(&play_infra.PostgresPlaySessionRepository{
 		Ctx: c.UserContext(),
 		Tx:  middleware.GetTransaction(c),
 	})
-
 	if err != nil {
 		log.Debug(err)
-		return notFound(c, "Nie dołączono do żadnego zespołu")
+		if errors.Is(err, play_domain.ErrTeamNotFound) {
+			return notFound(c, "Nie dołączono do żadnego zespołu")
+		}
+		return notFound(c, translateError(err))
 	}
 
 	var success string
 	if c.Query("success") != "" {
-		success = "Pomyślnie dodano rundę"
+		success = "Pomyślnie zapisano rozdanie"
 	}
 
 	return c.Render("add-round", fiber.Map{
 		"Success":       success,
 		"Title":         "Dodaj rundę",
 		"GameSessionId": c.Params("gameSessionId"),
-		"PlayerTeam":    playerTeam.Number,
+		"PlayerTeam":    playerTeamNumber,
 		"UserId":        playerId,
 	}, "layout")
 }
@@ -604,16 +608,12 @@ func VerifyRound(c *fiber.Ctx) error {
 
 	contestantId := c.Locals("user").(middleware.UserMetadata).Id
 
-	getRound := rounds_registration_query.GetRoundQuery{
-		GameSessionId:    gameSessionId,
+	round, err := (&play_query.GetMatchQuery{
+		TournamentId:     gameSessionId,
 		PlayerId:         contestantId,
 		DealNo:           body.DealNo,
 		VersusTeamNumber: body.VersusTeamNumber,
-	}
-	round, err := getRound.Execute(&rounds_registration_infra.PostgresGameSessionReadRepository{
-		Ctx: c.UserContext(),
-		Tx:  middleware.GetTransaction(c),
-	}, &tournament_management_infra.PostgresTeamReadRepository{
+	}).Execute(&play_infra.PostgresPlaySessionRepository{
 		Ctx: c.UserContext(),
 		Tx:  middleware.GetTransaction(c),
 	})
@@ -622,13 +622,6 @@ func VerifyRound(c *fiber.Ctx) error {
 		log.Debug(err)
 		return c.Render("error", fiber.Map{
 			"Error": translateError(err),
-		})
-	}
-
-	if round == nil {
-		log.Debug(err)
-		return c.Render("error", fiber.Map{
-			"Error": "Nie znaleziono takiego pojedynku",
 		})
 	}
 
@@ -670,8 +663,8 @@ func SubmitRound(c *fiber.Ctx) error {
 	contract := body.ContractLevel + body.ContractSuit + body.ContractModifier
 	openingLead := body.OpeningLeadFigure + body.OpeningLeadSuit
 
-	submitRound := rounds_registration_cmd.PlayRoundCommand{
-		GameSessionId:    gameSessionId,
+	submitRound := play_app.RecordBoardResultCommand{
+		TournamentId:     gameSessionId,
 		PlayerId:         contestantId,
 		DealNo:           body.DealNo,
 		VersusTeamNumber: body.VersusTeamNumber,
@@ -680,13 +673,20 @@ func SubmitRound(c *fiber.Ctx) error {
 		Declarer:         body.Declarer,
 		OpeningLead:      openingLead,
 	}
-	err := submitRound.Execute(&rounds_registration_infra.PostgresGameSessionRepository{
-		Ctx: c.UserContext(),
-		Tx:  middleware.GetTransaction(c),
-	}, &tournament_management_infra.PostgresTeamReadRepository{
-		Ctx: c.UserContext(),
-		Tx:  middleware.GetTransaction(c),
-	})
+	err := submitRound.Execute(
+		&play_infra.PostgresBoardResultRepository{
+			Ctx: c.UserContext(),
+			Tx:  middleware.GetTransaction(c),
+		},
+		&play_infra.PostgresPlaySessionRepository{
+			Ctx: c.UserContext(),
+			Tx:  middleware.GetTransaction(c),
+		},
+		&score_registration_infra.PostgresPlayedResultRepository{
+			Ctx: c.UserContext(),
+			Tx:  middleware.GetTransaction(c),
+		},
+	)
 
 	if err != nil {
 		log.Debug(err)
@@ -707,16 +707,22 @@ func notFound(c *fiber.Ctx, message string) error {
 }
 
 func translateError(e error) string {
-	switch e {
-	case rounds_registration_domain.ErrRoundNotFound:
-		return "Nie ma takiej rundy. Sprawdź czy nr rozdania i zespół jest prawidłowy."
-	case rounds_registration_domain.ErrRoundAlreadyPlayed:
-		return "Runda juz została wpisana"
-	case rounds_registration_domain.ErrTeamsAreEmpty:
+	switch {
+	case errors.Is(e, play_domain.ErrMatchNotFound):
+		return "Nie ma takiego rozdania. Sprawdź czy nr rozdania i zespół jest prawidłowy."
+	case errors.Is(e, play_domain.ErrBoardResultAlreadyRecorded):
+		return "Rozdanie już zostało wpisane"
+	case errors.Is(e, play_domain.ErrBoardResultNotFound):
+		return "Nie znaleziono rozdania"
+	case errors.Is(e, play_domain.ErrTeamNotFound):
+		return "Nie znaleziono zespołu"
+	case errors.Is(e, play_domain.ErrPlaySessionNotProvisioned):
+		return "Rozgrywka nie została rozpoczęta"
+	case errors.Is(e, play_domain.ErrTeamsAreEmpty):
 		return "Brak drużyn w rozgrywce"
-	case rounds_registration_domain.ErrRoundsAreEmpty:
-		return "Brak rund w rozgrywce"
-	case sql.ErrNoRows:
+	case errors.Is(e, play_domain.ErrMatchesAreEmpty):
+		return "Brak rozdań w rozgrywce"
+	case errors.Is(e, sql.ErrNoRows):
 		return "Nie znaleziono pojedynku"
 	default:
 		return e.Error()

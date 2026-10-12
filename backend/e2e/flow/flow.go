@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	play_app "bridge-tab/internal/play/application"
+	play_domain "bridge-tab/internal/play/domain"
+	play_infra "bridge-tab/internal/play/infrastructure"
 	rounds_registration "bridge-tab/internal/rounds-registration/application"
 	rounds_registration_query "bridge-tab/internal/rounds-registration/application/query"
 	rounds_registration_domain "bridge-tab/internal/rounds-registration/domain"
@@ -37,6 +40,9 @@ type Flow struct {
 	boardProtocolReadRepo tournament_domain.BoardProtocolReadRepository
 	gameSessionRepo       rounds_registration_domain.GameSessionRepository
 	gameSessionReadRepo   rounds_registration_domain.GameSessionReadRepository
+	boardResultRepo       play_domain.BoardResultRepository
+	boardResultReadRepo   play_domain.BoardResultReadRepository
+	playSessionRepo       play_domain.PlaySessionRepository
 	playedResultRepo      score_registration_domain.PlayedResultRepository
 	scoreRepo             score_registration_domain.TournamentScoreRepository
 	scoreReadRepo         score_registration_domain.TournamentScoreReadRepository
@@ -64,6 +70,7 @@ func New(t *testing.T) *Flow {
 	user_infra.Migrate(db)
 	tournament_infra.Migrate(db)
 	rounds_registration_infra.Migrate(db)
+	play_infra.Migrate(db)
 	score_registration_infra.Migrate(db)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
@@ -101,6 +108,18 @@ func New(t *testing.T) *Flow {
 			Tx:  tx,
 		},
 		gameSessionReadRepo: &rounds_registration_infra.PostgresGameSessionReadRepository{
+			Ctx: ctx,
+			Tx:  tx,
+		},
+		boardResultRepo: &play_infra.PostgresBoardResultRepository{
+			Ctx: ctx,
+			Tx:  tx,
+		},
+		boardResultReadRepo: &play_infra.PostgresBoardResultReadRepository{
+			Ctx: ctx,
+			Tx:  tx,
+		},
+		playSessionRepo: &play_infra.PostgresPlaySessionRepository{
 			Ctx: ctx,
 			Tx:  tx,
 		},
@@ -323,7 +342,7 @@ func (f *Flow) StartTournament() {
 	f.t.Helper()
 
 	cmd := &tournament_command.StartTurnamentCommand{TournamentId: f.tournamentId}
-	if err := cmd.Execute(f.tournamentRepo, f.teamReadRepo, f.boardProtocolReadRepo, f.gameSessionRepo); err != nil {
+	if err := cmd.Execute(f.tournamentRepo, f.teamReadRepo, f.boardProtocolReadRepo, f.gameSessionRepo, f.playSessionRepo); err != nil {
 		f.t.Fatalf("start tournament: %v", err)
 	}
 
@@ -378,11 +397,39 @@ func (f *Flow) ListRounds() []rounds_registration_domain.PlayedRoundDto {
 	return rounds
 }
 
+func (f *Flow) RecordBoardResult(playerId string, versusTeamNumber, dealNo int, contract string, tricks int, declarer, openingLead string) {
+	f.t.Helper()
+
+	cmd := &play_app.RecordBoardResultCommand{
+		TournamentId:     f.tournamentId,
+		PlayerId:         playerId,
+		VersusTeamNumber: versusTeamNumber,
+		DealNo:           dealNo,
+		Contract:         contract,
+		Tricks:           tricks,
+		Declarer:         declarer,
+		OpeningLead:      openingLead,
+	}
+	if err := cmd.Execute(f.boardResultRepo, f.playSessionRepo, f.playedResultRepo); err != nil {
+		f.t.Fatalf("record board result deal %d: %v", dealNo, err)
+	}
+}
+
+func (f *Flow) PlayedResultCount() int {
+	f.t.Helper()
+
+	results, err := f.playedResultRepo.Find(score_registration_domain.TournamentScoreId(f.tournamentId))
+	if err != nil {
+		f.t.Fatalf("find played results: %v", err)
+	}
+	return len(results)
+}
+
 func (f *Flow) FinishTournament() {
 	f.t.Helper()
 
 	cmd := &tournament_command.FinishTournamentCommand{TournamentId: f.tournamentId}
-	if err := cmd.Execute(f.tournamentRepo, f.gameSessionRepo, f.boardProtocolReadRepo, f.playedResultRepo); err != nil {
+	if err := cmd.Execute(f.tournamentRepo, f.playSessionRepo, f.boardResultReadRepo, f.playedResultRepo, f.scoreRepo); err != nil {
 		f.t.Fatalf("finish tournament: %v", err)
 	}
 
