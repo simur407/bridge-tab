@@ -10,8 +10,6 @@ import (
 	"bridge-tab/internal/idutil"
 	play_domain "bridge-tab/internal/play/domain"
 	play_infra "bridge-tab/internal/play/infrastructure"
-	rounds_domain "bridge-tab/internal/rounds-registration/domain"
-	rounds_infra "bridge-tab/internal/rounds-registration/infrastructure"
 	score_app "bridge-tab/internal/score-registration/application"
 	score_domain "bridge-tab/internal/score-registration/domain"
 	score_infra "bridge-tab/internal/score-registration/infrastructure"
@@ -32,7 +30,6 @@ type stores struct {
 	boards         tournament_domain.BoardProtocolReadRepository
 	sets           tournament_domain.SetReadRepository
 	users          user_domain.UserReadRepository
-	sessions       rounds_domain.GameSessionRepository
 	boardResult    play_domain.BoardResultRepository
 	boardResults   play_domain.BoardResultReadRepository
 	playSession    play_domain.PlaySessionRepository
@@ -52,7 +49,6 @@ func newStores(c *fiber.Ctx) stores {
 		boards:         &tournament_infra.PostgresBoardProtocolReadRepository{Ctx: ctx, Tx: tx},
 		sets:           &tournament_infra.PostgresSetReadRepository{Ctx: ctx, Tx: tx},
 		users:          &user_infra.PostgresUserRepository{Ctx: ctx, Tx: tx},
-		sessions:       &rounds_infra.PostgresGameSessionRepository{Ctx: ctx, Tx: tx},
 		boardResult:    &play_infra.PostgresBoardResultRepository{Ctx: ctx, Tx: tx},
 		boardResults:   &play_infra.PostgresBoardResultReadRepository{Ctx: ctx, Tx: tx},
 		playSession:    &play_infra.PostgresPlaySessionRepository{Ctx: ctx, Tx: tx},
@@ -145,7 +141,7 @@ func explain(err error) error {
 		return errors.New("nie znaleziono")
 	case errors.Is(err, play_domain.ErrPlaySessionNotProvisioned):
 		return errors.New("rozgrywka nie została rozpoczęta")
-	case errors.Is(err, tournament_cmd.ErrRoundsNotAllPlayed), errors.Is(err, tournament_cmd.ErrBoardResultsIncomplete):
+	case errors.Is(err, tournament_cmd.ErrBoardResultsIncomplete):
 		return errors.New("nie wszystkie rozdania zostały rozegrane")
 	case errors.Is(err, score_app.ErrPlayedResultsNotFound):
 		return errors.New("brak wyników do obliczenia")

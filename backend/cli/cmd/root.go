@@ -7,15 +7,12 @@ import (
 	"time"
 
 	play "bridge-tab/cli/cmd/play"
-	rounds "bridge-tab/cli/cmd/rounds-registration"
 	score "bridge-tab/cli/cmd/score-registration"
 	tournament_management "bridge-tab/cli/cmd/tournament-management"
 	users "bridge-tab/cli/cmd/users"
 
 	play_domain "bridge-tab/internal/play/domain"
 	play_infra "bridge-tab/internal/play/infrastructure"
-	rounds_registration "bridge-tab/internal/rounds-registration/domain"
-	rounds_registration_infra "bridge-tab/internal/rounds-registration/infrastructure"
 	score_registration "bridge-tab/internal/score-registration/domain"
 	score_registration_infra "bridge-tab/internal/score-registration/infrastructure"
 	tournament "bridge-tab/internal/tournament-management/domain"
@@ -33,10 +30,6 @@ var rootCmd = &cobra.Command{
 	Long: `Bridge Tab CLI is a tool to manage duplicate bridge tournaments. 
 It allows organizers or umpires to prepare and manage tournaments, check scores, and more.`,
 }
-
-// Round Registration
-var GameSessionRepository rounds_registration.GameSessionRepository
-var GameSessionReadRepository rounds_registration.GameSessionReadRepository
 
 // Tournament Management
 var TournamentRepository tournament.TournamentRepository
@@ -71,7 +64,6 @@ func Execute() error {
 
 	user_infra.Migrate(db)
 	tournament_infra.Migrate(db)
-	rounds_registration_infra.Migrate(db)
 	play_infra.Migrate(db)
 	score_registration_infra.Migrate(db)
 
@@ -81,16 +73,6 @@ func Execute() error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
-	}
-
-	// Round Registration
-	GameSessionRepository = &rounds_registration_infra.PostgresGameSessionRepository{
-		Ctx: ctx,
-		Tx:  tx,
-	}
-	GameSessionReadRepository = &rounds_registration_infra.PostgresGameSessionReadRepository{
-		Ctx: ctx,
-		Tx:  tx,
 	}
 
 	TournamentRepository = &tournament_infra.PostgresTournamentRepository{
@@ -170,14 +152,12 @@ func init() {
 		&TableReadRepository,
 		&BoardProtocolReadRepository,
 		&SetReadRepository,
-		&GameSessionRepository,
 		&PlayedResultRepository,
 		&BoardResultReadRepository,
 		&PlaySessionRepository,
 		&TournamentScoreRepository,
 	))
 	rootCmd.AddCommand(users.UserCmd(&UserReadRepository))
-	rootCmd.AddCommand(rounds.RoundsRegistrationCmd(&GameSessionRepository, &GameSessionReadRepository, &TeamReadRepository))
 	rootCmd.AddCommand(play.PlayCmd(
 		&BoardResultRepository,
 		&BoardResultReadRepository,

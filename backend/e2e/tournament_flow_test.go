@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"bridge-tab/e2e/flow"
-	rounds_registration_domain "bridge-tab/internal/rounds-registration/domain"
+	play_query "bridge-tab/internal/play/application/query"
 	score_registration_domain "bridge-tab/internal/score-registration/domain"
 	tournament_domain "bridge-tab/internal/tournament-management/domain"
 )
@@ -32,18 +32,18 @@ func TestTournamentHappyPath(t *testing.T) {
 	flow.JoinTeam(bob, 2)
 
 	flow.StartTournament()
-	flow.AssertPendingRounds(4)
+	flow.AssertPendingMatches(4)
 
-	flow.PlayRound(alice, 2, 1, "3NT", 9, "N", "KH")
-	flow.PlayRound(bob, 1, 2, "4H", 10, "E", "AS")
-	flow.PlayRound(alice, 2, 3, "1Cx", 7, "S", "QD")
-	flow.PlayRound(bob, 1, 4, "Pass", 0, "", "")
+	flow.RecordBoardResult(alice, 2, 1, "3NT", 9, "N", "KH")
+	flow.RecordBoardResult(bob, 1, 2, "4H", 10, "E", "AS")
+	flow.RecordBoardResult(alice, 2, 3, "1Cx", 7, "S", "QD")
+	flow.RecordBoardResult(bob, 1, 4, "Pass", 0, "", "")
 
-	rounds := flow.ListRounds()
-	assertDeal(t, rounds, 1, 1, 2, "3N", 9, "N", "KH")
-	assertDeal(t, rounds, 2, 1, 2, "4H", 10, "E", "AS")
-	assertDeal(t, rounds, 3, 1, 2, "1Cx", 7, "S", "QD")
-	assertDeal(t, rounds, 4, 1, 2, "Pass", 0, "", "")
+	matches := flow.ListMatches()
+	assertDeal(t, matches, 1, 1, 2, "3N", 9, "N", "KH")
+	assertDeal(t, matches, 2, 1, 2, "4H", 10, "E", "AS")
+	assertDeal(t, matches, 3, 1, 2, "1Cx", 7, "S", "QD")
+	assertDeal(t, matches, 4, 1, 2, "Pass", 0, "", "")
 }
 
 func TestTournamentScoring(t *testing.T) {
@@ -109,7 +109,7 @@ func TestTournamentScoring(t *testing.T) {
 
 func assertDeal(
 	t *testing.T,
-	rounds []rounds_registration_domain.PlayedRoundDto,
+	matches []play_query.ScheduledMatchDto,
 	dealNo, nsTeamNumber, ewTeamNumber int,
 	contract string,
 	tricks int,
@@ -117,10 +117,10 @@ func assertDeal(
 ) {
 	t.Helper()
 
-	var deal *rounds_registration_domain.PlayedRoundDto
-	for i := range rounds {
-		if rounds[i].DealNo == dealNo {
-			deal = &rounds[i]
+	var deal *play_query.ScheduledMatchDto
+	for i := range matches {
+		if matches[i].DealNo == dealNo {
+			deal = &matches[i]
 			break
 		}
 	}

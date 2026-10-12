@@ -6,7 +6,6 @@ import (
 	tables "bridge-tab/cli/cmd/tournament-management/tables"
 	teams "bridge-tab/cli/cmd/tournament-management/teams"
 	play "bridge-tab/internal/play/domain"
-	rounds_registration "bridge-tab/internal/rounds-registration/domain"
 	score_registration "bridge-tab/internal/score-registration/domain"
 	tournament "bridge-tab/internal/tournament-management/domain"
 
@@ -20,7 +19,6 @@ var TournamentManagementCmd = func(
 	tableReadRepository *tournament.TableReadRepository,
 	boardProtocolReadRepository *tournament.BoardProtocolReadRepository,
 	setReadRepository *tournament.SetReadRepository,
-	gameSessionRepository *rounds_registration.GameSessionRepository,
 	playedResultRepository *score_registration.PlayedResultRepository,
 	boardResultReadRepository *play.BoardResultReadRepository,
 	playSessionRepository *play.PlaySessionRepository,
@@ -36,7 +34,7 @@ var TournamentManagementCmd = func(
 		createTournamentCmd(tournamentRepository),
 		removeTournamentCmd(tournamentRepository),
 		listTournamentsCmd(tournamentReadRepository),
-		startTournamentCmd(tournamentRepository, teamReadRepository, boardProtocolReadRepository, gameSessionRepository, playSessionRepository),
+		startTournamentCmd(tournamentRepository, teamReadRepository, boardProtocolReadRepository, playSessionRepository),
 		finishTournamentCmd(tournamentRepository, playSessionRepository, boardResultReadRepository, playedResultRepository, tournamentScoreRepository),
 		joinTournamentCmd(tournamentRepository),
 		leaveTournamentCmd(tournamentRepository),

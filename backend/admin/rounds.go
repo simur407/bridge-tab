@@ -228,6 +228,9 @@ func postedScore(c *fiber.Ctx) (string, string, string, int, error) {
 	lead := strings.ToUpper(strings.TrimSpace(c.FormValue("openingLead")))
 	rawTricks := strings.TrimSpace(c.FormValue("tricks"))
 	if rawTricks == "" {
+		if contract != "Pass" {
+			return "", "", "", 0, errors.New("tricks is empty")
+		}
 		return contract, declarer, lead, 0, nil
 	}
 	tricks, err := strconv.Atoi(rawTricks)

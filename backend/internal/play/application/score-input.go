@@ -24,9 +24,6 @@ func validateScore(contract string, tricks int, declarer string, openingLead str
 	if contract == "" {
 		return errors.New("contract is empty")
 	}
-	if contract != "Pass" && tricks == 0 {
-		return errors.New("tricks is empty")
-	}
 	if contract != "Pass" && declarer == "" {
 		return errors.New("declarer is empty")
 	}

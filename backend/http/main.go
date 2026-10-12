@@ -8,7 +8,6 @@ import (
 	play_query "bridge-tab/internal/play/application/query"
 	play_domain "bridge-tab/internal/play/domain"
 	play_infra "bridge-tab/internal/play/infrastructure"
-	rounds_registration_infra "bridge-tab/internal/rounds-registration/infrastructure"
 	score_registration_infra "bridge-tab/internal/score-registration/infrastructure"
 	tournament_management_cmd "bridge-tab/internal/tournament-management/application/command"
 	tournament_management_query "bridge-tab/internal/tournament-management/application/query"
@@ -73,7 +72,6 @@ func main() {
 
 	tournament_management_infra.Migrate(db)
 	users_infra.Migrate(db)
-	rounds_registration_infra.Migrate(db)
 	play_infra.Migrate(db)
 	score_registration_infra.Migrate(db)
 
