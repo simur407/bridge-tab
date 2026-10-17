@@ -1,11 +1,5 @@
 package tournament_management
 
-type TeamPairs struct {
-	Table *TableId // nil = no table assigned
-	NS    TeamId
-	EW    TeamId
-}
-
 type Vulnerable int
 
 const (
@@ -15,14 +9,28 @@ const (
 	Both
 )
 
+func (v Vulnerable) String() string {
+	switch v {
+	case None:
+		return "None"
+	case NS:
+		return "NS"
+	case EW:
+		return "EW"
+	case Both:
+		return "Both"
+	default:
+		return "Unknown"
+	}
+}
+
 type BoardProtocol struct {
 	BoardNo    int
 	Vulnerable Vulnerable
-	TeamPairs  []TeamPairs
 	SetId      *SetId
 }
 
-func CreateBoardProtocol(tournamentId TournamentId, boardNo int, vulnerable Vulnerable, teamPairs []TeamPairs) *BoardProtocol {
+func CreateBoardProtocol(tournamentId TournamentId, boardNo int, vulnerable Vulnerable) *BoardProtocol {
 	if vulnerable != None && vulnerable != NS && vulnerable != EW && vulnerable != Both {
 		panic("invalid vulnerable")
 	}
@@ -30,20 +38,12 @@ func CreateBoardProtocol(tournamentId TournamentId, boardNo int, vulnerable Vuln
 	return &BoardProtocol{
 		BoardNo:    boardNo,
 		Vulnerable: vulnerable,
-		TeamPairs:  teamPairs,
 	}
-}
-
-type TeamPairsDto struct {
-	TableNumber *int
-	NS          string
-	EW          string
 }
 
 type BoardProtocolDto struct {
 	BoardNo    int
 	Vulnerable string
-	TeamPairs  []TeamPairsDto
 }
 
 type BoardProtocolReadRepository interface {

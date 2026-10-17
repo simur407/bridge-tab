@@ -11,9 +11,9 @@ type CreateTableCommand struct {
 }
 
 func (c *CreateTableCommand) Execute(repo domain.TournamentRepository) error {
-	id := domain.TournamentId(c.TournamentId)
+	tournamentId := domain.TournamentId(c.TournamentId)
 	tableId := domain.TableId(c.TableId)
-	t, err := repo.Load(&id)
+	t, err := repo.Load(&tournamentId)
 	if err != nil {
 		return err
 	}

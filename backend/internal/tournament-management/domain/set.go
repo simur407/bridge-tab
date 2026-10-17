@@ -3,10 +3,9 @@ package tournament_management
 type SetId string
 
 type Set struct {
-	Id        SetId
-	Label     string
-	BoardNos  []int
-	TeamPairs []TeamPairs
+	Id       SetId
+	Label    string
+	BoardNos []int
 }
 
 type SetDto struct {

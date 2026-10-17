@@ -5,40 +5,40 @@ import (
 	"slices"
 )
 
-type TournamentId string
+type PlaySessionId string
 type TeamId string
 
 type BoardResultState struct {
-	TournamentId TournamentId
-	DealNo       int
-	NsTeamId     TeamId
-	EwTeamId     TeamId
-	Contract     string
-	Tricks       int
-	Declarer     string
-	OpeningLead  string
+	PlaySessionId PlaySessionId
+	DealNo        int
+	NsTeamId      TeamId
+	EwTeamId      TeamId
+	Contract      string
+	Tricks        int
+	Declarer      string
+	OpeningLead   string
 }
 
 type BoardResultRecorded struct {
-	TournamentId TournamentId
-	DealNo       int
-	NsTeamId     TeamId
-	EwTeamId     TeamId
-	Contract     string
-	Tricks       int
-	Declarer     string
-	OpeningLead  string
+	PlaySessionId PlaySessionId
+	DealNo        int
+	NsTeamId      TeamId
+	EwTeamId      TeamId
+	Contract      string
+	Tricks        int
+	Declarer      string
+	OpeningLead   string
 }
 
 type BoardResultEdited struct {
-	TournamentId TournamentId
-	DealNo       int
-	NsTeamId     TeamId
-	EwTeamId     TeamId
-	Contract     string
-	Tricks       int
-	Declarer     string
-	OpeningLead  string
+	PlaySessionId PlaySessionId
+	DealNo        int
+	NsTeamId      TeamId
+	EwTeamId      TeamId
+	Contract      string
+	Tricks        int
+	Declarer      string
+	OpeningLead   string
 }
 
 var ErrBoardResultNotFound = errors.New("board result not found")
@@ -49,28 +49,28 @@ type BoardResult struct {
 	events []any
 }
 
-func RecordBoardResult(tournamentId TournamentId, dealNo int, nsTeamId TeamId, ewTeamId TeamId, contract string, tricks int, declarer string, openingLead string) *BoardResult {
+func RecordBoardResult(playSessionId PlaySessionId, dealNo int, nsTeamId TeamId, ewTeamId TeamId, contract string, tricks int, declarer string, openingLead string) *BoardResult {
 	state := BoardResultState{
-		TournamentId: tournamentId,
-		DealNo:       dealNo,
-		NsTeamId:     nsTeamId,
-		EwTeamId:     ewTeamId,
-		Contract:     contract,
-		Tricks:       tricks,
-		Declarer:     declarer,
-		OpeningLead:  openingLead,
+		PlaySessionId: playSessionId,
+		DealNo:        dealNo,
+		NsTeamId:      nsTeamId,
+		EwTeamId:      ewTeamId,
+		Contract:      contract,
+		Tricks:        tricks,
+		Declarer:      declarer,
+		OpeningLead:   openingLead,
 	}
 	return &BoardResult{
 		State: state,
 		events: []any{BoardResultRecorded{
-			TournamentId: tournamentId,
-			DealNo:       dealNo,
-			NsTeamId:     nsTeamId,
-			EwTeamId:     ewTeamId,
-			Contract:     contract,
-			Tricks:       tricks,
-			Declarer:     declarer,
-			OpeningLead:  openingLead,
+			PlaySessionId: playSessionId,
+			DealNo:        dealNo,
+			NsTeamId:      nsTeamId,
+			EwTeamId:      ewTeamId,
+			Contract:      contract,
+			Tricks:        tricks,
+			Declarer:      declarer,
+			OpeningLead:   openingLead,
 		}},
 	}
 }
@@ -82,14 +82,14 @@ func (b *BoardResult) Edit(contract string, tricks int, declarer string, opening
 	b.State.OpeningLead = openingLead
 
 	b.events = append(b.events, BoardResultEdited{
-		TournamentId: b.State.TournamentId,
-		DealNo:       b.State.DealNo,
-		NsTeamId:     b.State.NsTeamId,
-		EwTeamId:     b.State.EwTeamId,
-		Contract:     contract,
-		Tricks:       tricks,
-		Declarer:     declarer,
-		OpeningLead:  openingLead,
+		PlaySessionId: b.State.PlaySessionId,
+		DealNo:        b.State.DealNo,
+		NsTeamId:      b.State.NsTeamId,
+		EwTeamId:      b.State.EwTeamId,
+		Contract:      contract,
+		Tricks:        tricks,
+		Declarer:      declarer,
+		OpeningLead:   openingLead,
 	})
 }
 
@@ -103,7 +103,7 @@ func (b *BoardResult) Commit() {
 
 type BoardResultRepository interface {
 	Save(result *BoardResult) error
-	Load(tournamentId TournamentId, dealNo int, teamA TeamId, teamB TeamId) (*BoardResult, error)
+	Load(playSessionId PlaySessionId, dealNo int, teamA TeamId, teamB TeamId) (*BoardResult, error)
 }
 
 type BoardResultDto struct {
@@ -119,6 +119,6 @@ type BoardResultDto struct {
 }
 
 type BoardResultReadRepository interface {
-	FindAll(tournamentId string) ([]BoardResultDto, error)
-	FindByTeams(tournamentId string, dealNo int, teamAId string, teamBId string) (*BoardResultDto, error)
+	FindAll(playSessionId string) ([]BoardResultDto, error)
+	FindByTeams(playSessionId string, dealNo int, teamAId string, teamBId string) (*BoardResultDto, error)
 }

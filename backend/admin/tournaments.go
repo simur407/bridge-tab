@@ -31,11 +31,7 @@ func getTournaments(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	return view(c, "tournaments", fiber.Map{
-		"Title":       "Turnieje",
-		"Tournaments": tournamentRows(list),
-		"FormName":    "",
-	})
+	return view(c, "tournaments", tournamentListData(list, "", ""))
 }
 
 func postTournament(c *fiber.Ctx) error {
@@ -44,20 +40,40 @@ func postTournament(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	data := fiber.Map{
-		"Title":       "Turnieje",
-		"Tournaments": tournamentRows(list),
-		"FormName":    strings.TrimSpace(c.FormValue("name")),
-	}
-	name := data["FormName"].(string)
+	name := strings.TrimSpace(c.FormValue("name"))
+	presetID := strings.TrimSpace(c.FormValue("preset"))
+	data := tournamentListData(list, name, presetID)
 	if name == "" {
 		return reject(c, "tournaments", data, errors.New("nazwa jest pusta"))
+	}
+	var preset *tournamentPreset
+	if presetID != "" {
+		found, ok := findPreset(presetID)
+		if !ok {
+			return reject(c, "tournaments", data, errors.New("nieznany preset"))
+		}
+		preset = &found
 	}
 	cmd := tournament_cmd.CreateTournamentCommand{TournamentId: uuid.NewString(), Name: name}
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "tournaments", data, err)
 	}
+	if preset != nil {
+		if err := applyPreset(s.tournament, cmd.TournamentId, *preset); err != nil {
+			return reject(c, "tournaments", data, err)
+		}
+	}
 	return c.Redirect("/tournaments/"+cmd.TournamentId, fiber.StatusSeeOther)
+}
+
+func tournamentListData(list []tournament_domain.TournamentDto, name string, presetID string) fiber.Map {
+	return fiber.Map{
+		"Title":       "Turnieje",
+		"Tournaments": tournamentRows(list),
+		"FormName":    name,
+		"FormPreset":  presetID,
+		"Presets":     presetViews(),
+	}
 }
 
 func tournamentRows(list []tournament_domain.TournamentDto) []tournamentRow {
@@ -100,7 +116,7 @@ func postStart(c *fiber.Ctx) error {
 		return err
 	}
 	cmd := tournament_cmd.StartTurnamentCommand{TournamentId: tournament.Id}
-	if err := cmd.Execute(s.tournament, s.teams, s.boards, s.playSession); err != nil {
+	if err := cmd.Execute(s.tournament, s.playSession); err != nil {
 		return reject(c, "tournament", data, err)
 	}
 	return c.Redirect("/tournaments/"+tournament.Id, fiber.StatusSeeOther)

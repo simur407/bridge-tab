@@ -161,7 +161,8 @@ func scoresPage(s stores, tournament *tournament_domain.TournamentDto) (fiber.Ma
 	if err != nil {
 		return nil, err
 	}
-	boardResults, err := (&play_query.ListBoardResultsQuery{TournamentId: tournament.Id}).Execute(s.boardResults)
+	playSessionId := tournament.Id
+	boardResults, err := (&play_query.ListBoardResultsQuery{PlaySessionId: playSessionId}).Execute(s.boardResults)
 	if err != nil {
 		return nil, err
 	}

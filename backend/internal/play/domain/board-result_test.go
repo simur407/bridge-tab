@@ -9,25 +9,25 @@ import (
 )
 
 func TestRecordBoardResult(t *testing.T) {
-	result := RecordBoardResult("tournament", 3, "ns", "ew", "3N", 9, "N", "KH")
+	result := RecordBoardResult("session", 3, "ns", "ew", "3N", 9, "N", "KH")
 
 	if result.State.DealNo != 3 || result.State.Contract != "3N" || result.State.Tricks != 9 {
 		t.Fatalf("unexpected state: %+v", result.State)
 	}
 	assertEvent(t, result.GetEvents(), BoardResultRecorded{
-		TournamentId: "tournament",
-		DealNo:       3,
-		NsTeamId:     "ns",
-		EwTeamId:     "ew",
-		Contract:     "3N",
-		Tricks:       9,
-		Declarer:     "N",
-		OpeningLead:  "KH",
+		PlaySessionId: "session",
+		DealNo:        3,
+		NsTeamId:      "ns",
+		EwTeamId:      "ew",
+		Contract:      "3N",
+		Tricks:        9,
+		Declarer:      "N",
+		OpeningLead:   "KH",
 	})
 }
 
 func TestEditBoardResult(t *testing.T) {
-	result := RecordBoardResult("tournament", 3, "ns", "ew", "3N", 9, "N", "KH")
+	result := RecordBoardResult("session", 3, "ns", "ew", "3N", 9, "N", "KH")
 	result.Commit()
 
 	result.Edit("4H", 10, "S", "AS")
@@ -36,14 +36,14 @@ func TestEditBoardResult(t *testing.T) {
 		t.Fatalf("unexpected state: %+v", result.State)
 	}
 	assertEvent(t, result.GetEvents(), BoardResultEdited{
-		TournamentId: "tournament",
-		DealNo:       3,
-		NsTeamId:     "ns",
-		EwTeamId:     "ew",
-		Contract:     "4H",
-		Tricks:       10,
-		Declarer:     "S",
-		OpeningLead:  "AS",
+		PlaySessionId: "session",
+		DealNo:        3,
+		NsTeamId:      "ns",
+		EwTeamId:      "ew",
+		Contract:      "4H",
+		Tricks:        10,
+		Declarer:      "S",
+		OpeningLead:   "AS",
 	})
 }
 

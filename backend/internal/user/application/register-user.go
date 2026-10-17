@@ -13,9 +13,9 @@ type RegisterUserCommand struct {
 }
 
 func (cmd *RegisterUserCommand) Execute(repository domain.UserRepository) error {
-	id := domain.UserId(cmd.Id)
+	userId := domain.UserId(cmd.Id)
 
-	u, err := repository.Load(&id)
+	u, err := repository.Load(&userId)
 	if err != nil {
 		if !errors.Is(err, infra.ErrUserNotFound) {
 			return err
@@ -26,6 +26,6 @@ func (cmd *RegisterUserCommand) Execute(repository domain.UserRepository) error 
 		return errors.New("user already exists")
 	}
 
-	user := domain.RegisterUser(&id, cmd.Name)
+	user := domain.RegisterUser(&userId, cmd.Name)
 	return repository.Save(user)
 }

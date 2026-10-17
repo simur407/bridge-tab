@@ -15,6 +15,21 @@ type Team struct {
 	Players []PlayerId
 }
 
+type TableScheduleBoard struct {
+	DealNo     int
+	Vulnerable string
+}
+
+type TableSchedule struct {
+	RoundNo     int
+	TableNumber int
+	NsTeamId    TeamId
+	EwTeamId    TeamId
+	SetId       string
+	SetLabel    string
+	Boards      []TableScheduleBoard
+}
+
 type Match struct {
 	DealNo     int
 	NsTeamId   TeamId
@@ -23,19 +38,19 @@ type Match struct {
 }
 
 type PlaySessionState struct {
-	TournamentId TournamentId
-	Teams        []*Team
-	Matches      []*Match
+	PlaySessionId  PlaySessionId
+	Teams          []*Team
+	TableSchedules []*TableSchedule
 }
 
 type PlaySessionProvisioned struct {
-	TournamentId TournamentId
-	Teams        []Team
-	Matches      []Match
+	PlaySessionId  PlaySessionId
+	Teams          []Team
+	TableSchedules []TableSchedule
 }
 
 var ErrTeamsAreEmpty = errors.New("no teams in play")
-var ErrMatchesAreEmpty = errors.New("no matches in play")
+var ErrMatchesAreEmpty = errors.New("no table schedules in play")
 var ErrPlaySessionNotProvisioned = errors.New("play session is not provisioned")
 var ErrTeamNotFound = errors.New("team not found")
 var ErrMatchNotFound = errors.New("match not found")
@@ -45,11 +60,11 @@ type PlaySession struct {
 	events []any
 }
 
-func ProvisionPlaySession(id TournamentId, teams []*Team, matches []*Match) (*PlaySession, error) {
+func ProvisionPlaySession(playSessionId PlaySessionId, teams []*Team, tableSchedules []*TableSchedule) (*PlaySession, error) {
 	if len(teams) == 0 {
 		return nil, ErrTeamsAreEmpty
 	}
-	if len(matches) == 0 {
+	if len(tableSchedules) == 0 {
 		return nil, ErrMatchesAreEmpty
 	}
 
@@ -57,17 +72,18 @@ func ProvisionPlaySession(id TournamentId, teams []*Team, matches []*Match) (*Pl
 	for i, team := range teams {
 		teamValues[i] = *team
 	}
-	matchValues := make([]Match, len(matches))
-	for i, match := range matches {
-		matchValues[i] = *match
+	scheduleValues := make([]TableSchedule, len(tableSchedules))
+	for i, schedule := range tableSchedules {
+		scheduleValues[i] = *schedule
+		scheduleValues[i].Boards = append([]TableScheduleBoard(nil), schedule.Boards...)
 	}
 
 	return &PlaySession{
-		State: PlaySessionState{TournamentId: id, Teams: teams, Matches: matches},
+		State: PlaySessionState{PlaySessionId: playSessionId, Teams: teams, TableSchedules: tableSchedules},
 		events: []any{PlaySessionProvisioned{
-			TournamentId: id,
-			Teams:        teamValues,
-			Matches:      matchValues,
+			PlaySessionId:  playSessionId,
+			Teams:          teamValues,
+			TableSchedules: scheduleValues,
 		}},
 	}, nil
 }
@@ -93,17 +109,40 @@ func (p *PlaySession) TeamByNumber(number int) (*Team, error) {
 }
 
 func (p *PlaySession) Match(dealNo int, teamA TeamId, teamB TeamId) (*Match, error) {
-	for _, match := range p.State.Matches {
-		if match.DealNo != dealNo {
+	for _, schedule := range p.State.TableSchedules {
+		sameOrder := idutil.SameId(schedule.NsTeamId, teamA) && idutil.SameId(schedule.EwTeamId, teamB)
+		oppositeOrder := idutil.SameId(schedule.NsTeamId, teamB) && idutil.SameId(schedule.EwTeamId, teamA)
+		if !sameOrder && !oppositeOrder {
 			continue
 		}
-		sameOrder := idutil.SameId(match.NsTeamId, teamA) && idutil.SameId(match.EwTeamId, teamB)
-		oppositeOrder := idutil.SameId(match.NsTeamId, teamB) && idutil.SameId(match.EwTeamId, teamA)
-		if sameOrder || oppositeOrder {
-			return match, nil
+		for _, board := range schedule.Boards {
+			if board.DealNo != dealNo {
+				continue
+			}
+			return &Match{
+				DealNo:     board.DealNo,
+				NsTeamId:   schedule.NsTeamId,
+				EwTeamId:   schedule.EwTeamId,
+				Vulnerable: board.Vulnerable,
+			}, nil
 		}
 	}
 	return nil, ErrMatchNotFound
+}
+
+func (p *PlaySession) Matches() []*Match {
+	matches := make([]*Match, 0)
+	for _, schedule := range p.State.TableSchedules {
+		for _, board := range schedule.Boards {
+			matches = append(matches, &Match{
+				DealNo:     board.DealNo,
+				NsTeamId:   schedule.NsTeamId,
+				EwTeamId:   schedule.EwTeamId,
+				Vulnerable: board.Vulnerable,
+			})
+		}
+	}
+	return matches
 }
 
 func (p *PlaySession) GetEvents() []any {
@@ -116,5 +155,5 @@ func (p *PlaySession) Commit() {
 
 type PlaySessionRepository interface {
 	Save(session *PlaySession) error
-	Load(id TournamentId) (*PlaySession, error)
+	Load(playSessionId PlaySessionId) (*PlaySession, error)
 }

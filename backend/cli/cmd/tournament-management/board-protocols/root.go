@@ -10,8 +10,6 @@ var boardProtocolsTournamentId string
 
 var BoardProtocolsCmd = func(
 	TournamentRepository *domain.TournamentRepository,
-	TeamReadRepository *domain.TeamReadRepository,
-	TableReadRepository *domain.TableReadRepository,
 	BoardProtocolReadRepository *domain.BoardProtocolReadRepository,
 ) *cobra.Command {
 	command := &cobra.Command{
@@ -23,7 +21,7 @@ var BoardProtocolsCmd = func(
 	command.PersistentFlags().StringVarP(&boardProtocolsTournamentId, "tournamentId", "i", "", "tournament id")
 	command.MarkPersistentFlagRequired("tournamentId")
 	command.AddCommand(
-		createBoardProtocolCmd(TournamentRepository, TeamReadRepository, TableReadRepository),
+		createBoardProtocolCmd(TournamentRepository),
 		removeBoardProtocolCmd(TournamentRepository),
 		listBoardProtocolsCmd(BoardProtocolReadRepository),
 	)

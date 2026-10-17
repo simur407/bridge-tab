@@ -5,17 +5,17 @@ import (
 )
 
 type LeaveTournamentCommand struct {
-	TournamentId   string
-	ContestantId 	string
+	TournamentId string
+	ContestantId string
 }
 
 // Execute executes the command
 func (c *LeaveTournamentCommand) Execute(repo domain.TournamentRepository) error {
-	id := domain.TournamentId(c.TournamentId)
+	tournamentId := domain.TournamentId(c.TournamentId)
 	contestantId := domain.ContestantId(c.ContestantId)
 
 	// Load the Tournament from the repository
-	t, err := repo.Load(&id)
+	t, err := repo.Load(&tournamentId)
 	if err != nil {
 		return err
 	}

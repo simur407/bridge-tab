@@ -5,7 +5,7 @@ import (
 )
 
 type GetBoardResultByTeamsQuery struct {
-	TournamentId     string
+	PlaySessionId    string
 	FirstTeamNumber  int
 	SecondTeamNumber int
 	DealNo           int
@@ -15,7 +15,8 @@ func (query *GetBoardResultByTeamsQuery) Execute(
 	boardResultReadRepository domain.BoardResultReadRepository,
 	playSessionRepository domain.PlaySessionRepository,
 ) (*domain.BoardResultDto, error) {
-	session, err := playSessionRepository.Load(domain.TournamentId(query.TournamentId))
+	playSessionId := domain.PlaySessionId(query.PlaySessionId)
+	session, err := playSessionRepository.Load(playSessionId)
 	if err != nil {
 		return nil, err
 	}
@@ -27,5 +28,7 @@ func (query *GetBoardResultByTeamsQuery) Execute(
 	if err != nil {
 		return nil, err
 	}
-	return boardResultReadRepository.FindByTeams(query.TournamentId, query.DealNo, string(firstTeam.Id), string(secondTeam.Id))
+	firstTeamId := string(firstTeam.Id)
+	secondTeamId := string(secondTeam.Id)
+	return boardResultReadRepository.FindByTeams(string(playSessionId), query.DealNo, firstTeamId, secondTeamId)
 }

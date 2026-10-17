@@ -27,21 +27,20 @@ import (
 )
 
 type Flow struct {
-	t                     *testing.T
-	tournamentId          string
-	teamIds               map[int]string
-	tableIds              map[int]string
-	tournamentRepo        tournament_domain.TournamentRepository
-	tournamentReadRepo    tournament_domain.TournamentReadRepository
-	teamReadRepo          tournament_domain.TeamReadRepository
-	boardProtocolReadRepo tournament_domain.BoardProtocolReadRepository
-	boardResultRepo       play_domain.BoardResultRepository
-	boardResultReadRepo   play_domain.BoardResultReadRepository
-	playSessionRepo       play_domain.PlaySessionRepository
-	playedResultRepo      score_registration_domain.PlayedResultRepository
-	scoreRepo             score_registration_domain.TournamentScoreRepository
-	scoreReadRepo         score_registration_domain.TournamentScoreReadRepository
-	userRepo              *user_infra.PostgresUserRepository
+	t                   *testing.T
+	tournamentId        string
+	teamIds             map[int]string
+	tableIds            map[int]string
+	setIds              map[string]string
+	tournamentRepo      tournament_domain.TournamentRepository
+	tournamentReadRepo  tournament_domain.TournamentReadRepository
+	boardResultRepo     play_domain.BoardResultRepository
+	boardResultReadRepo play_domain.BoardResultReadRepository
+	playSessionRepo     play_domain.PlaySessionRepository
+	playedResultRepo    score_registration_domain.PlayedResultRepository
+	scoreRepo           score_registration_domain.TournamentScoreRepository
+	scoreReadRepo       score_registration_domain.TournamentScoreReadRepository
+	userRepo            *user_infra.PostgresUserRepository
 }
 
 func New(t *testing.T) *Flow {
@@ -81,19 +80,12 @@ func New(t *testing.T) *Flow {
 		tournamentId: uuid.New().String(),
 		teamIds:      map[int]string{},
 		tableIds:     map[int]string{},
+		setIds:       map[string]string{},
 		tournamentRepo: &tournament_infra.PostgresTournamentRepository{
 			Ctx: ctx,
 			Tx:  tx,
 		},
 		tournamentReadRepo: &tournament_infra.PostgresTournamentReadRepository{
-			Ctx: ctx,
-			Tx:  tx,
-		},
-		teamReadRepo: &tournament_infra.PostgresTeamReadRepository{
-			Ctx: ctx,
-			Tx:  tx,
-		},
-		boardProtocolReadRepo: &tournament_infra.PostgresBoardProtocolReadRepository{
 			Ctx: ctx,
 			Tx:  tx,
 		},
@@ -179,43 +171,13 @@ func (f *Flow) CreateTable(number int) {
 	f.tableIds[number] = tableId
 }
 
-func (f *Flow) CreateBoardProtocol(boardNo int, vulnerable tournament_domain.Vulnerable, nsTeamNumber, ewTeamNumber int) {
+func (f *Flow) CreateBoardProtocol(boardNo int, vulnerable tournament_domain.Vulnerable) {
 	f.t.Helper()
-	f.createBoardProtocolWithOptionalTable(boardNo, vulnerable, 0, nsTeamNumber, ewTeamNumber)
-}
-
-func (f *Flow) CreateBoardProtocolWithPairs(boardNo int, vulnerable tournament_domain.Vulnerable, pairs [][2]int) {
-	f.t.Helper()
-
-	teamPairs := make([]struct {
-		Table *string
-		NS    string
-		EW    string
-	}, 0, len(pairs))
-	for _, pair := range pairs {
-		nsTeamId, ok := f.teamIds[pair[0]]
-		if !ok {
-			f.t.Fatalf("unknown NS team number %d", pair[0])
-		}
-		ewTeamId, ok := f.teamIds[pair[1]]
-		if !ok {
-			f.t.Fatalf("unknown EW team number %d", pair[1])
-		}
-		teamPairs = append(teamPairs, struct {
-			Table *string
-			NS    string
-			EW    string
-		}{
-			NS: nsTeamId,
-			EW: ewTeamId,
-		})
-	}
 
 	cmd := &tournament_command.CreateBoardProtocol{
 		TournamentId: f.tournamentId,
 		BoardNo:      boardNo,
 		Vulnerable:   int(vulnerable),
-		TeamPairs:    teamPairs,
 	}
 	if err := cmd.Execute(f.tournamentRepo); err != nil {
 		f.t.Fatalf("create board protocol %d: %v", boardNo, err)
@@ -225,25 +187,26 @@ func (f *Flow) CreateBoardProtocolWithPairs(boardNo int, vulnerable tournament_d
 func (f *Flow) CreateSet(label string, boardNos []int) {
 	f.t.Helper()
 
+	setId := uuid.New().String()
 	cmd := &tournament_command.CreateSetCommand{
 		TournamentId: f.tournamentId,
-		SetId:        uuid.New().String(),
+		SetId:        setId,
 		Label:        label,
 		BoardNos:     boardNos,
 	}
 	if err := cmd.Execute(f.tournamentRepo); err != nil {
 		f.t.Fatalf("create set %s: %v", label, err)
 	}
+	f.setIds[label] = setId
 }
 
-func (f *Flow) CreateBoardProtocolWithTable(boardNo int, vulnerable tournament_domain.Vulnerable, tableNumber, nsTeamNumber, ewTeamNumber int) {
-	f.t.Helper()
-	f.createBoardProtocolWithOptionalTable(boardNo, vulnerable, tableNumber, nsTeamNumber, ewTeamNumber)
-}
-
-func (f *Flow) createBoardProtocolWithOptionalTable(boardNo int, vulnerable tournament_domain.Vulnerable, tableNumber, nsTeamNumber, ewTeamNumber int) {
+func (f *Flow) AddSchedule(roundNo, tableNumber, nsTeamNumber, ewTeamNumber int, setLabel string) {
 	f.t.Helper()
 
+	tableId, ok := f.tableIds[tableNumber]
+	if !ok {
+		f.t.Fatalf("unknown table number %d", tableNumber)
+	}
 	nsTeamId, ok := f.teamIds[nsTeamNumber]
 	if !ok {
 		f.t.Fatalf("unknown NS team number %d", nsTeamNumber)
@@ -252,35 +215,21 @@ func (f *Flow) createBoardProtocolWithOptionalTable(boardNo int, vulnerable tour
 	if !ok {
 		f.t.Fatalf("unknown EW team number %d", ewTeamNumber)
 	}
-
-	pair := struct {
-		Table *string
-		NS    string
-		EW    string
-	}{
-		NS: nsTeamId,
-		EW: ewTeamId,
-	}
-	if tableNumber != 0 {
-		tableId, ok := f.tableIds[tableNumber]
-		if !ok {
-			f.t.Fatalf("unknown table number %d", tableNumber)
-		}
-		pair.Table = &tableId
+	setId, ok := f.setIds[setLabel]
+	if !ok {
+		f.t.Fatalf("unknown set %s", setLabel)
 	}
 
-	cmd := &tournament_command.CreateBoardProtocol{
+	cmd := &tournament_command.AddScheduleCommand{
 		TournamentId: f.tournamentId,
-		BoardNo:      boardNo,
-		Vulnerable:   int(vulnerable),
-		TeamPairs: []struct {
-			Table *string
-			NS    string
-			EW    string
-		}{pair},
+		RoundNo:      roundNo,
+		TableId:      tableId,
+		NsTeamId:     nsTeamId,
+		EwTeamId:     ewTeamId,
+		SetId:        setId,
 	}
 	if err := cmd.Execute(f.tournamentRepo); err != nil {
-		f.t.Fatalf("create board protocol %d: %v", boardNo, err)
+		f.t.Fatalf("add schedule round %d table %d: %v", roundNo, tableNumber, err)
 	}
 }
 
@@ -328,7 +277,7 @@ func (f *Flow) StartTournament() {
 	f.t.Helper()
 
 	cmd := &tournament_command.StartTurnamentCommand{TournamentId: f.tournamentId}
-	if err := cmd.Execute(f.tournamentRepo, f.teamReadRepo, f.boardProtocolReadRepo, f.playSessionRepo); err != nil {
+	if err := cmd.Execute(f.tournamentRepo, f.playSessionRepo); err != nil {
 		f.t.Fatalf("start tournament: %v", err)
 	}
 
@@ -358,7 +307,8 @@ func (f *Flow) AssertPendingMatches(expected int) {
 func (f *Flow) ListMatches() []play_query.ScheduledMatchDto {
 	f.t.Helper()
 
-	matches, err := (&play_query.ListMatchesQuery{TournamentId: f.tournamentId}).Execute(f.playSessionRepo, f.boardResultReadRepo)
+	playSessionId := f.tournamentId
+	matches, err := (&play_query.ListMatchesQuery{PlaySessionId: playSessionId}).Execute(f.playSessionRepo, f.boardResultReadRepo)
 	if err != nil {
 		f.t.Fatalf("list matches: %v", err)
 	}
@@ -368,8 +318,15 @@ func (f *Flow) ListMatches() []play_query.ScheduledMatchDto {
 func (f *Flow) RecordBoardResult(playerId string, versusTeamNumber, dealNo int, contract string, tricks int, declarer, openingLead string) {
 	f.t.Helper()
 
+	if err := f.TryRecordBoardResult(playerId, versusTeamNumber, dealNo, contract, tricks, declarer, openingLead); err != nil {
+		f.t.Fatalf("record board result deal %d: %v", dealNo, err)
+	}
+}
+
+func (f *Flow) TryRecordBoardResult(playerId string, versusTeamNumber, dealNo int, contract string, tricks int, declarer, openingLead string) error {
+	playSessionId := f.tournamentId
 	cmd := &play_app.RecordBoardResultCommand{
-		TournamentId:     f.tournamentId,
+		PlaySessionId:    playSessionId,
 		PlayerId:         playerId,
 		VersusTeamNumber: versusTeamNumber,
 		DealNo:           dealNo,
@@ -378,9 +335,7 @@ func (f *Flow) RecordBoardResult(playerId string, versusTeamNumber, dealNo int, 
 		Declarer:         declarer,
 		OpeningLead:      openingLead,
 	}
-	if err := cmd.Execute(f.boardResultRepo, f.playSessionRepo, f.playedResultRepo); err != nil {
-		f.t.Fatalf("record board result deal %d: %v", dealNo, err)
-	}
+	return cmd.Execute(f.boardResultRepo, f.playSessionRepo, f.playedResultRepo)
 }
 
 func (f *Flow) PlayedResultCount() int {

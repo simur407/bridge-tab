@@ -8,7 +8,7 @@ import (
 )
 
 type RecordBoardResultByTeamsCommand struct {
-	TournamentId     string
+	PlaySessionId    string
 	FirstTeamNumber  int
 	SecondTeamNumber int
 	DealNo           int
@@ -29,12 +29,13 @@ func (c *RecordBoardResultByTeamsCommand) Execute(
 	if c.SecondTeamNumber < 1 {
 		return errors.New("2nd team number is empty")
 	}
-	if err := validateBoardResultInput(c.TournamentId, c.DealNo, c.Contract, c.Tricks, c.Declarer, c.OpeningLead); err != nil {
+	if err := validateBoardResultInput(c.PlaySessionId, c.DealNo, c.Contract, c.Tricks, c.Declarer, c.OpeningLead); err != nil {
 		return err
 	}
 	c.Contract = normalizeContract(c.Contract)
 
-	session, err := playSessionRepository.Load(domain.TournamentId(c.TournamentId))
+	playSessionId := domain.PlaySessionId(c.PlaySessionId)
+	session, err := playSessionRepository.Load(playSessionId)
 	if err != nil {
 		return err
 	}
@@ -51,7 +52,7 @@ func (c *RecordBoardResultByTeamsCommand) Execute(
 		return err
 	}
 
-	existing, err := boardResultRepository.Load(session.State.TournamentId, c.DealNo, match.NsTeamId, match.EwTeamId)
+	existing, err := boardResultRepository.Load(session.State.PlaySessionId, c.DealNo, match.NsTeamId, match.EwTeamId)
 	if err != nil && !errors.Is(err, domain.ErrBoardResultNotFound) {
 		return err
 	}
@@ -59,9 +60,9 @@ func (c *RecordBoardResultByTeamsCommand) Execute(
 		return domain.ErrBoardResultAlreadyRecorded
 	}
 
-	result := domain.RecordBoardResult(session.State.TournamentId, c.DealNo, match.NsTeamId, match.EwTeamId, c.Contract, c.Tricks, c.Declarer, c.OpeningLead)
+	result := domain.RecordBoardResult(session.State.PlaySessionId, c.DealNo, match.NsTeamId, match.EwTeamId, c.Contract, c.Tricks, c.Declarer, c.OpeningLead)
 	if err := boardResultRepository.Save(result); err != nil {
 		return err
 	}
-	return registerPlayedResult(c.TournamentId, result.State, match.Vulnerable, playedResultRepository)
+	return registerPlayedResult(string(session.State.PlaySessionId), result.State, match.Vulnerable, playedResultRepository)
 }

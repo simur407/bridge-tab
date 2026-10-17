@@ -12,13 +12,15 @@ type CreateSetCommand struct {
 }
 
 func (c *CreateSetCommand) Execute(repo domain.TournamentRepository) error {
-	id := domain.TournamentId(c.TournamentId)
-	t, err := repo.Load(&id)
+	tournamentId := domain.TournamentId(c.TournamentId)
+	setId := domain.SetId(c.SetId)
+
+	t, err := repo.Load(&tournamentId)
 	if err != nil {
 		return err
 	}
 
-	if err := t.CreateSet(domain.SetId(c.SetId), c.Label, c.BoardNos); err != nil {
+	if err := t.CreateSet(setId, c.Label, c.BoardNos); err != nil {
 		return err
 	}
 

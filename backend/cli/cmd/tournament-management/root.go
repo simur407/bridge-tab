@@ -2,6 +2,7 @@ package tournament_management
 
 import (
 	board_protocols "bridge-tab/cli/cmd/tournament-management/board-protocols"
+	schedule "bridge-tab/cli/cmd/tournament-management/schedule"
 	sets "bridge-tab/cli/cmd/tournament-management/sets"
 	tables "bridge-tab/cli/cmd/tournament-management/tables"
 	teams "bridge-tab/cli/cmd/tournament-management/teams"
@@ -19,6 +20,7 @@ var TournamentManagementCmd = func(
 	tableReadRepository *tournament.TableReadRepository,
 	boardProtocolReadRepository *tournament.BoardProtocolReadRepository,
 	setReadRepository *tournament.SetReadRepository,
+	scheduleReadRepository *tournament.ScheduleReadRepository,
 	playedResultRepository *score_registration.PlayedResultRepository,
 	boardResultReadRepository *play.BoardResultReadRepository,
 	playSessionRepository *play.PlaySessionRepository,
@@ -34,15 +36,16 @@ var TournamentManagementCmd = func(
 		createTournamentCmd(tournamentRepository),
 		removeTournamentCmd(tournamentRepository),
 		listTournamentsCmd(tournamentReadRepository),
-		startTournamentCmd(tournamentRepository, teamReadRepository, boardProtocolReadRepository, playSessionRepository),
+		startTournamentCmd(tournamentRepository, playSessionRepository),
 		finishTournamentCmd(tournamentRepository, playSessionRepository, boardResultReadRepository, playedResultRepository, tournamentScoreRepository),
 		joinTournamentCmd(tournamentRepository),
 		leaveTournamentCmd(tournamentRepository),
 		listContestantsCmd(tournamentReadRepository),
 		teams.TeamsCmd(tournamentRepository, teamReadRepository),
 		tables.TablesCmd(tournamentRepository, tableReadRepository),
-		board_protocols.BoardProtocolsCmd(tournamentRepository, teamReadRepository, tableReadRepository, boardProtocolReadRepository),
+		board_protocols.BoardProtocolsCmd(tournamentRepository, boardProtocolReadRepository),
 		sets.SetsCmd(tournamentRepository, setReadRepository),
+		schedule.ScheduleCmd(tournamentRepository, teamReadRepository, tableReadRepository, setReadRepository, scheduleReadRepository),
 	)
 
 	return command

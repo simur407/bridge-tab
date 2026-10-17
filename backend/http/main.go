@@ -374,7 +374,8 @@ func GetTournamentStatus(c *fiber.Ctx) error {
 		return notFound(c, "Nie znaleziono turnieju")
 	}
 
-	rounds, err := (&play_query.ListMatchesQuery{TournamentId: tournamentId}).Execute(
+	playSessionId := tournamentId
+	rounds, err := (&play_query.ListMatchesQuery{PlaySessionId: playSessionId}).Execute(
 		&play_infra.PostgresPlaySessionRepository{
 			Ctx: c.UserContext(),
 			Tx:  middleware.GetTransaction(c),
@@ -545,9 +546,10 @@ func GetAddRoundForm(c *fiber.Ctx) error {
 	}
 
 	playerId := c.Locals("user").(middleware.UserMetadata).Id
+	playSessionId := gameSessionId
 	playerTeamNumber, err := (&play_query.GetTeamNumberByMemberQuery{
-		TournamentId: gameSessionId,
-		PlayerId:     playerId,
+		PlaySessionId: playSessionId,
+		PlayerId:      playerId,
 	}).Execute(&play_infra.PostgresPlaySessionRepository{
 		Ctx: c.UserContext(),
 		Tx:  middleware.GetTransaction(c),
@@ -606,8 +608,9 @@ func VerifyRound(c *fiber.Ctx) error {
 
 	contestantId := c.Locals("user").(middleware.UserMetadata).Id
 
+	playSessionId := gameSessionId
 	round, err := (&play_query.GetMatchQuery{
-		TournamentId:     gameSessionId,
+		PlaySessionId:    playSessionId,
 		PlayerId:         contestantId,
 		DealNo:           body.DealNo,
 		VersusTeamNumber: body.VersusTeamNumber,
@@ -661,8 +664,9 @@ func SubmitRound(c *fiber.Ctx) error {
 	contract := body.ContractLevel + body.ContractSuit + body.ContractModifier
 	openingLead := body.OpeningLeadFigure + body.OpeningLeadSuit
 
+	playSessionId := gameSessionId
 	submitRound := play_app.RecordBoardResultCommand{
-		TournamentId:     gameSessionId,
+		PlaySessionId:    playSessionId,
 		PlayerId:         contestantId,
 		DealNo:           body.DealNo,
 		VersusTeamNumber: body.VersusTeamNumber,

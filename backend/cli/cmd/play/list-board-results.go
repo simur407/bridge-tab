@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var listTournamentId string
+var listPlaySessionId string
 
 var listBoardResultsCmd = func(boardResultReadRepository *play_domain.BoardResultReadRepository) *cobra.Command {
 	command := &cobra.Command{
@@ -18,7 +18,8 @@ var listBoardResultsCmd = func(boardResultReadRepository *play_domain.BoardResul
 		Long:         "Lists every recorded board result in csv format.",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			results, err := (&play_query.ListBoardResultsQuery{TournamentId: listTournamentId}).Execute(*boardResultReadRepository)
+			playSessionId := listPlaySessionId
+			results, err := (&play_query.ListBoardResultsQuery{PlaySessionId: playSessionId}).Execute(*boardResultReadRepository)
 			if err != nil {
 				return err
 			}
@@ -31,7 +32,7 @@ var listBoardResultsCmd = func(boardResultReadRepository *play_domain.BoardResul
 		},
 	}
 
-	command.Flags().StringVarP(&listTournamentId, "id", "i", "", "tournament id")
+	command.Flags().StringVarP(&listPlaySessionId, "id", "i", "", "play session id")
 	command.MarkFlagRequired("id")
 
 	return command

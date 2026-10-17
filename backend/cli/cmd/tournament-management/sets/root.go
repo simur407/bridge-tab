@@ -15,7 +15,7 @@ var SetsCmd = func(
 	command := &cobra.Command{
 		Use:   "set",
 		Short: "Responsible for managing Sets (komplety) in Tournaments",
-		Long:  "Set Management groups board protocols that share the same team pairings for reports.",
+		Long:  "Set Management groups board protocols that share the same round.",
 	}
 
 	command.PersistentFlags().StringVarP(&setsTournamentId, "tournamentId", "i", "", "tournament id")

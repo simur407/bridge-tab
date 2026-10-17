@@ -13,5 +13,6 @@ func (c *RegisterPlayedResultCommand) Execute(repo domain.PlayedResultRepository
 	if c.Result.Contract == "" {
 		return domain.ErrRoundResultIncomplete
 	}
-	return repo.Save(domain.TournamentScoreId(c.TournamentId), c.Result)
+	tournamentId := domain.TournamentScoreId(c.TournamentId)
+	return repo.Save(tournamentId, c.Result)
 }

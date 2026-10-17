@@ -5,16 +5,19 @@ import (
 )
 
 type GetTeamNumberByMemberQuery struct {
-	TournamentId string
-	PlayerId     string
+	PlaySessionId string
+	PlayerId      string
 }
 
 func (query *GetTeamNumberByMemberQuery) Execute(playSessionRepository domain.PlaySessionRepository) (int, error) {
-	session, err := playSessionRepository.Load(domain.TournamentId(query.TournamentId))
+	playSessionId := domain.PlaySessionId(query.PlaySessionId)
+	playerId := domain.PlayerId(query.PlayerId)
+
+	session, err := playSessionRepository.Load(playSessionId)
 	if err != nil {
 		return 0, err
 	}
-	team, err := session.TeamByMember(domain.PlayerId(query.PlayerId))
+	team, err := session.TeamByMember(playerId)
 	if err != nil {
 		return 0, err
 	}

@@ -3,14 +3,14 @@ package tournament_management
 import domain "bridge-tab/internal/tournament-management/domain"
 
 type RemoveTournamentCommand struct {
-	TournamentId   string
+	TournamentId string
 }
 
 // Execute executes the command
 func (c *RemoveTournamentCommand) Execute(repo domain.TournamentRepository) error {
-	id := domain.TournamentId(c.TournamentId)
+	tournamentId := domain.TournamentId(c.TournamentId)
 	// Load the Tournament from the repository
-	t, err := repo.Load(&id)
+	t, err := repo.Load(&tournamentId)
 	if err != nil {
 		return err
 	}

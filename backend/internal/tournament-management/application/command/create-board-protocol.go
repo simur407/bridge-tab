@@ -8,34 +8,16 @@ type CreateBoardProtocol struct {
 	TournamentId string
 	BoardNo      int
 	Vulnerable   int
-	TeamPairs    [](struct {
-		Table *string
-		NS    string
-		EW    string
-	})
 }
 
 func (c *CreateBoardProtocol) Execute(repo domain.TournamentRepository) error {
-	id := domain.TournamentId(c.TournamentId)
-	vulnerable := domain.Vulnerable(c.Vulnerable)
-	teamPairs := make([]domain.TeamPairs, len(c.TeamPairs))
-	for i, pair := range c.TeamPairs {
-		NS, EW := domain.TeamId(pair.NS), domain.TeamId(pair.EW)
-		teamPairs[i] = domain.TeamPairs{
-			NS: NS,
-			EW: EW,
-		}
-		if pair.Table != nil {
-			tableId := domain.TableId(*pair.Table)
-			teamPairs[i].Table = &tableId
-		}
-	}
-	t, err := repo.Load(&id)
+	tournamentId := domain.TournamentId(c.TournamentId)
+	t, err := repo.Load(&tournamentId)
 	if err != nil {
 		return err
 	}
 
-	if err := t.CreateBoardProtocol(c.BoardNo, vulnerable, teamPairs); err != nil {
+	if err := t.CreateBoardProtocol(c.BoardNo, domain.Vulnerable(c.Vulnerable)); err != nil {
 		return err
 	}
 

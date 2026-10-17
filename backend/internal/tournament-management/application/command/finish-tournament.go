@@ -23,22 +23,24 @@ func (c *FinishTournamentCommand) Execute(
 	playedResultRepo score_registration_domain.PlayedResultRepository,
 	scoreRepo score_registration_domain.TournamentScoreRepository,
 ) error {
-	id := domain.TournamentId(c.TournamentId)
-	t, err := tournamentRepo.Load(&id)
+	tournamentId := domain.TournamentId(c.TournamentId)
+	playSessionId := play_domain.PlaySessionId(c.TournamentId)
+
+	t, err := tournamentRepo.Load(&tournamentId)
 	if err != nil {
 		return err
 	}
 
 	// FIXME: we need to handle this check some other way, this is a hack for now
-	session, err := playSessionRepo.Load(play_domain.TournamentId(c.TournamentId))
+	session, err := playSessionRepo.Load(playSessionId)
 	if err != nil {
 		return err
 	}
-	results, err := boardResultReadRepo.FindAll(c.TournamentId)
+	results, err := boardResultReadRepo.FindAll(string(playSessionId))
 	if err != nil {
 		return err
 	}
-	if err := ensureBoardResults(session.State.Matches, results); err != nil {
+	if err := ensureBoardResults(session.Matches(), results); err != nil {
 		return err
 	}
 
@@ -58,7 +60,9 @@ func (c *FinishTournamentCommand) Execute(
 
 func ensureBoardResults(matches []*play_domain.Match, results []play_domain.BoardResultDto) error {
 	for _, match := range matches {
-		if !boardResultCovers(results, match.DealNo, string(match.NsTeamId), string(match.EwTeamId)) {
+		nsTeamId := string(match.NsTeamId)
+		ewTeamId := string(match.EwTeamId)
+		if !boardResultCovers(results, match.DealNo, nsTeamId, ewTeamId) {
 			return ErrBoardResultsIncomplete
 		}
 	}

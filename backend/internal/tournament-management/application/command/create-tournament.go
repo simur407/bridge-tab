@@ -8,8 +8,8 @@ import (
 )
 
 type CreateTournamentCommand struct {
-	TournamentId   	string
-	Name 						string
+	TournamentId string
+	Name         string
 }
 
 func (c *CreateTournamentCommand) Execute(repo domain.TournamentRepository) error {

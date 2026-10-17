@@ -10,13 +10,15 @@ type RemoveSetCommand struct {
 }
 
 func (c *RemoveSetCommand) Execute(repo domain.TournamentRepository) error {
-	id := domain.TournamentId(c.TournamentId)
-	t, err := repo.Load(&id)
+	tournamentId := domain.TournamentId(c.TournamentId)
+	setId := domain.SetId(c.SetId)
+
+	t, err := repo.Load(&tournamentId)
 	if err != nil {
 		return err
 	}
 
-	if err := t.RemoveSet(domain.SetId(c.SetId)); err != nil {
+	if err := t.RemoveSet(setId); err != nil {
 		return err
 	}
 
