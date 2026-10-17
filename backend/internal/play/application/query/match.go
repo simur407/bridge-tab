@@ -7,6 +7,8 @@ import (
 
 type ScheduledMatchDto struct {
 	DealNo       int
+	RoundNo      int
+	TableNumber  int
 	NsTeamNumber int
 	EwTeamNumber int
 	Contract     string
@@ -18,6 +20,8 @@ type ScheduledMatchDto struct {
 func scheduledMatch(session *domain.PlaySession, match *domain.Match) ScheduledMatchDto {
 	return ScheduledMatchDto{
 		DealNo:       match.DealNo,
+		RoundNo:      match.RoundNo,
+		TableNumber:  match.TableNumber,
 		NsTeamNumber: teamNumber(session, match.NsTeamId),
 		EwTeamNumber: teamNumber(session, match.EwTeamId),
 	}

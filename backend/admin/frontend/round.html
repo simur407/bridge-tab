@@ -2,6 +2,7 @@
 <p><a href="/tournaments/{{ .TournamentId }}/rounds{{ if .Reveal }}?reveal=1{{ end }}">Wróć do listy</a></p>
 {{ if .Round.Found }}
 <p>{{ .Round.NSLabel }} – {{ .Round.EWLabel }}</p>
+{{ if .Round.RoundNo }}<p>Runda {{ .Round.RoundNo }}, stół {{ .Round.TableNumber }}</p>{{ end }}
 <form method="post" action="/tournaments/{{ .TournamentId }}/rounds/{{ .Round.DealNo }}/{{ .Round.NS }}/{{ .Round.EW }}">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   {{ if .Reveal }}<input type="hidden" name="reveal" value="1">{{ end }}

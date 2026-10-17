@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -16,6 +17,8 @@ import (
 )
 
 type roundRow struct {
+	RoundNo     int
+	TableNumber int
 	DealNo      int
 	NS          int
 	EW          int
@@ -27,6 +30,8 @@ type roundRow struct {
 }
 
 type roundForm struct {
+	RoundNo     int
+	TableNumber int
 	DealNo      int
 	NS          int
 	EW          int
@@ -156,6 +161,8 @@ func roundsPage(s stores, tournament *tournament_domain.TournamentDto, reveal bo
 			tricks = strconv.Itoa(match.Tricks)
 		}
 		rows[i] = roundRow{
+			RoundNo:     match.RoundNo,
+			TableNumber: match.TableNumber,
 			DealNo:      match.DealNo,
 			NS:          match.NsTeamNumber,
 			EW:          match.EwTeamNumber,
@@ -166,6 +173,21 @@ func roundsPage(s stores, tournament *tournament_domain.TournamentDto, reveal bo
 			OpeningLead: match.OpeningLead,
 		}
 	}
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].RoundNo != rows[j].RoundNo {
+			return rows[i].RoundNo < rows[j].RoundNo
+		}
+		if rows[i].TableNumber != rows[j].TableNumber {
+			return rows[i].TableNumber < rows[j].TableNumber
+		}
+		if rows[i].DealNo != rows[j].DealNo {
+			return rows[i].DealNo < rows[j].DealNo
+		}
+		if rows[i].NS != rows[j].NS {
+			return rows[i].NS < rows[j].NS
+		}
+		return rows[i].EW < rows[j].EW
+	})
 	data := pageData(tournament)
 	data["Rounds"] = rows
 	data["ShowScores"] = showScores
@@ -215,6 +237,8 @@ func loadRoundForm(c *fiber.Ctx, s stores, tournament *tournament_domain.Tournam
 	form.Contract = match.Contract
 	form.Declarer = match.Declarer
 	form.OpeningLead = match.OpeningLead
+	form.RoundNo = match.RoundNo
+	form.TableNumber = match.TableNumber
 	form.NS = match.NsTeamNumber
 	form.EW = match.EwTeamNumber
 	form.NSLabel = teamByNumber(teams, match.NsTeamNumber)

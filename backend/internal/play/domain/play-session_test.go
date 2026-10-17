@@ -69,7 +69,7 @@ func TestMatchKeepsProtocolOrientation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if match.NsTeamId != "ns" || match.EwTeamId != "ew" || match.Vulnerable != "NS" {
+	if match.NsTeamId != "ns" || match.EwTeamId != "ew" || match.Vulnerable != "NS" || match.RoundNo != 1 || match.TableNumber != 1 {
 		t.Fatalf("unexpected match: %+v", match)
 	}
 }
