@@ -99,6 +99,10 @@ func main() {
 	authed.Post("/tournaments/:id/sets", postSet)
 	authed.Post("/tournaments/:id/sets/:setId/remove", postRemoveSet)
 
+	authed.Get("/tournaments/:id/schedule", getSchedule)
+	authed.Post("/tournaments/:id/schedule", postSchedule)
+	authed.Post("/tournaments/:id/schedule/:round/:tableId/remove", postRemoveSchedule)
+
 	authed.Get("/tournaments/:id/rounds", getRounds)
 	authed.Get("/tournaments/:id/rounds/:deal/:ns/:ew", getRound)
 	authed.Post("/tournaments/:id/rounds/:deal/:ns/:ew", postRound)

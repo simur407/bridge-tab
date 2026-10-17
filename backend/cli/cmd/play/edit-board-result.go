@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var editTournamentId string
+var editPlaySessionId string
 var editFirstTeamNumber int
 var editSecondTeamNumber int
 var editDealNo int
@@ -35,8 +35,9 @@ var editBoardResultCmd = func(
 		Long:         "Edits contract, tricks, declarer and opening lead of a board result. It prints the current and new score and asks for confirmation before saving. The scoring record is updated as well.",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			playSessionId := editPlaySessionId
 			command := &play_app.EditBoardResultCommand{
-				TournamentId:     editTournamentId,
+				PlaySessionId:    playSessionId,
 				FirstTeamNumber:  editFirstTeamNumber,
 				SecondTeamNumber: editSecondTeamNumber,
 				DealNo:           editDealNo,
@@ -50,7 +51,7 @@ var editBoardResultCmd = func(
 			}
 
 			result, err := (&play_query.GetBoardResultByTeamsQuery{
-				TournamentId:     command.TournamentId,
+				PlaySessionId:    command.PlaySessionId,
 				FirstTeamNumber:  command.FirstTeamNumber,
 				SecondTeamNumber: command.SecondTeamNumber,
 				DealNo:           command.DealNo,
@@ -84,7 +85,7 @@ var editBoardResultCmd = func(
 		},
 	}
 
-	command.Flags().StringVarP(&editTournamentId, "id", "i", "", "tournament id")
+	command.Flags().StringVarP(&editPlaySessionId, "id", "i", "", "play session id")
 	command.MarkFlagRequired("id")
 	command.Flags().IntVarP(&editFirstTeamNumber, "firstTeamNumber", "f", 0, "1st team number")
 	command.MarkFlagRequired("firstTeamNumber")

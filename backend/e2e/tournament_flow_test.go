@@ -18,10 +18,12 @@ func TestTournamentHappyPath(t *testing.T) {
 	flow.CreateTeam(2)
 	flow.CreateTable(1)
 
-	flow.CreateBoardProtocol(1, tournament_domain.None, 1, 2)
-	flow.CreateBoardProtocolWithTable(2, tournament_domain.NS, 1, 1, 2)
-	flow.CreateBoardProtocol(3, tournament_domain.EW, 1, 2)
-	flow.CreateBoardProtocol(4, tournament_domain.Both, 1, 2)
+	flow.CreateBoardProtocol(1, tournament_domain.None)
+	flow.CreateBoardProtocol(2, tournament_domain.NS)
+	flow.CreateBoardProtocol(3, tournament_domain.EW)
+	flow.CreateBoardProtocol(4, tournament_domain.Both)
+	flow.CreateSet("A", []int{1, 2, 3, 4})
+	flow.AddSchedule(1, 1, 1, 2, "A")
 
 	alice := flow.RegisterUser("Alice")
 	flow.JoinTournament(alice)
@@ -34,8 +36,12 @@ func TestTournamentHappyPath(t *testing.T) {
 	flow.StartTournament()
 	flow.AssertPendingMatches(4)
 
-	flow.RecordBoardResult(alice, 2, 1, "3NT", 9, "N", "KH")
+	if err := flow.TryRecordBoardResult(alice, 2, 5, "3NT", 9, "N", "KH"); err == nil {
+		t.Fatal("expected a deal outside the table schedule to be rejected")
+	}
+
 	flow.RecordBoardResult(bob, 1, 2, "4H", 10, "E", "AS")
+	flow.RecordBoardResult(alice, 2, 1, "3NT", 9, "N", "KH")
 	flow.RecordBoardResult(alice, 2, 3, "1Cx", 7, "S", "QD")
 	flow.RecordBoardResult(bob, 1, 4, "Pass", 0, "", "")
 
@@ -54,9 +60,12 @@ func TestTournamentScoring(t *testing.T) {
 		flow.CreateTeam(teamNo)
 	}
 
-	// Two tables play the same board (classic MP field of size 2).
-	flow.CreateBoardProtocolWithPairs(1, tournament_domain.None, [][2]int{{1, 2}, {3, 4}})
+	flow.CreateTable(1)
+	flow.CreateTable(2)
+	flow.CreateBoardProtocol(1, tournament_domain.None)
 	flow.CreateSet("A", []int{1})
+	flow.AddSchedule(1, 1, 1, 2, "A")
+	flow.AddSchedule(2, 2, 3, 4, "A")
 
 	players := map[int]string{}
 	for teamNo := 1; teamNo <= 4; teamNo++ {

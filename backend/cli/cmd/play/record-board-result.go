@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var recordTournamentId string
+var recordPlaySessionId string
 var recordPlayerId string
 var recordVersusTeamNumber int
 var recordDealNo int
@@ -30,8 +30,9 @@ var recordBoardResultCmd = func(
 		Long:         "Records the result of one board at one table and registers it for scoring.",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			playSessionId := recordPlaySessionId
 			command := &play_app.RecordBoardResultCommand{
-				TournamentId:     recordTournamentId,
+				PlaySessionId:    playSessionId,
 				PlayerId:         recordPlayerId,
 				VersusTeamNumber: recordVersusTeamNumber,
 				DealNo:           recordDealNo,
@@ -49,7 +50,7 @@ var recordBoardResultCmd = func(
 		},
 	}
 
-	command.Flags().StringVarP(&recordTournamentId, "id", "i", "", "tournament id")
+	command.Flags().StringVarP(&recordPlaySessionId, "id", "i", "", "play session id")
 	command.MarkFlagRequired("id")
 	command.Flags().StringVarP(&recordPlayerId, "playerId", "p", "", "player id")
 	command.MarkFlagRequired("playerId")

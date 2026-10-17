@@ -8,7 +8,7 @@ import (
 )
 
 type EditBoardResultCommand struct {
-	TournamentId     string
+	PlaySessionId    string
 	FirstTeamNumber  int
 	SecondTeamNumber int
 	DealNo           int
@@ -25,7 +25,7 @@ func (c *EditBoardResultCommand) Validate() error {
 	if c.SecondTeamNumber < 1 {
 		return errors.New("2nd team number is empty")
 	}
-	if err := validateBoardResultInput(c.TournamentId, c.DealNo, c.Contract, c.Tricks, c.Declarer, c.OpeningLead); err != nil {
+	if err := validateBoardResultInput(c.PlaySessionId, c.DealNo, c.Contract, c.Tricks, c.Declarer, c.OpeningLead); err != nil {
 		return err
 	}
 	c.Contract = normalizeContract(c.Contract)
@@ -41,7 +41,8 @@ func (c *EditBoardResultCommand) Execute(
 		return err
 	}
 
-	session, err := playSessionRepository.Load(domain.TournamentId(c.TournamentId))
+	playSessionId := domain.PlaySessionId(c.PlaySessionId)
+	session, err := playSessionRepository.Load(playSessionId)
 	if err != nil {
 		return err
 	}
@@ -54,7 +55,7 @@ func (c *EditBoardResultCommand) Execute(
 		return err
 	}
 
-	result, err := boardResultRepository.Load(session.State.TournamentId, c.DealNo, firstTeam.Id, secondTeam.Id)
+	result, err := boardResultRepository.Load(session.State.PlaySessionId, c.DealNo, firstTeam.Id, secondTeam.Id)
 	if err != nil {
 		return err
 	}
@@ -67,5 +68,5 @@ func (c *EditBoardResultCommand) Execute(
 	if err := boardResultRepository.Save(result); err != nil {
 		return err
 	}
-	return registerPlayedResult(c.TournamentId, result.State, match.Vulnerable, playedResultRepository)
+	return registerPlayedResult(string(session.State.PlaySessionId), result.State, match.Vulnerable, playedResultRepository)
 }

@@ -11,9 +11,9 @@ type RenameTeamCommand struct {
 }
 
 func (c *RenameTeamCommand) Execute(repo domain.TournamentRepository) error {
-	id := domain.TournamentId(c.TournamentId)
+	tournamentId := domain.TournamentId(c.TournamentId)
 	teamId := domain.TeamId(c.TeamId)
-	t, err := repo.Load(&id)
+	t, err := repo.Load(&tournamentId)
 	if err != nil {
 		return err
 	}

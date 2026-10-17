@@ -5,18 +5,21 @@ import (
 )
 
 type GetMatchQuery struct {
-	TournamentId     string
+	PlaySessionId    string
 	PlayerId         string
 	VersusTeamNumber int
 	DealNo           int
 }
 
 func (query *GetMatchQuery) Execute(playSessionRepository domain.PlaySessionRepository) (*ScheduledMatchDto, error) {
-	session, err := playSessionRepository.Load(domain.TournamentId(query.TournamentId))
+	playSessionId := domain.PlaySessionId(query.PlaySessionId)
+	playerId := domain.PlayerId(query.PlayerId)
+
+	session, err := playSessionRepository.Load(playSessionId)
 	if err != nil {
 		return nil, err
 	}
-	playerTeam, err := session.TeamByMember(domain.PlayerId(query.PlayerId))
+	playerTeam, err := session.TeamByMember(playerId)
 	if err != nil {
 		return nil, err
 	}

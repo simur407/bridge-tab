@@ -13,8 +13,6 @@ var startTournamentId string
 
 var startTournamentCmd = func(
 	TournamentRepository *tournament_domain.TournamentRepository,
-	TeamRepository *tournament_domain.TeamReadRepository,
-	BoardProtocolRepository *tournament_domain.BoardProtocolReadRepository,
 	PlaySessionRepository *play_domain.PlaySessionRepository,
 ) *cobra.Command {
 	command := &cobra.Command{
@@ -26,7 +24,7 @@ var startTournamentCmd = func(
 		RunE: func(cmd *cobra.Command, args []string) error {
 			command := &tournament_management.StartTurnamentCommand{TournamentId: startTournamentId}
 
-			if err := command.Execute(*TournamentRepository, *TeamRepository, *BoardProtocolRepository, *PlaySessionRepository); err != nil {
+			if err := command.Execute(*TournamentRepository, *PlaySessionRepository); err != nil {
 				return err
 			}
 

@@ -38,6 +38,7 @@ var TeamReadRepository tournament.TeamReadRepository
 var TableReadRepository tournament.TableReadRepository
 var BoardProtocolReadRepository tournament.BoardProtocolReadRepository
 var SetReadRepository tournament.SetReadRepository
+var ScheduleReadRepository tournament.ScheduleReadRepository
 
 // Play
 var BoardResultRepository play_domain.BoardResultRepository
@@ -99,6 +100,10 @@ func Execute() error {
 		Ctx: ctx,
 		Tx:  tx,
 	}
+	ScheduleReadRepository = &tournament_infra.PostgresScheduleReadRepository{
+		Ctx: ctx,
+		Tx:  tx,
+	}
 
 	BoardResultRepository = &play_infra.PostgresBoardResultRepository{
 		Ctx: ctx,
@@ -152,6 +157,7 @@ func init() {
 		&TableReadRepository,
 		&BoardProtocolReadRepository,
 		&SetReadRepository,
+		&ScheduleReadRepository,
 		&PlayedResultRepository,
 		&BoardResultReadRepository,
 		&PlaySessionRepository,

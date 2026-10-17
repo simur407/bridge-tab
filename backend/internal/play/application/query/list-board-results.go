@@ -5,9 +5,10 @@ import (
 )
 
 type ListBoardResultsQuery struct {
-	TournamentId string
+	PlaySessionId string
 }
 
 func (query *ListBoardResultsQuery) Execute(repository domain.BoardResultReadRepository) ([]domain.BoardResultDto, error) {
-	return repository.FindAll(query.TournamentId)
+	playSessionId := query.PlaySessionId
+	return repository.FindAll(playSessionId)
 }

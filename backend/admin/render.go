@@ -29,6 +29,7 @@ type stores struct {
 	tables         tournament_domain.TableReadRepository
 	boards         tournament_domain.BoardProtocolReadRepository
 	sets           tournament_domain.SetReadRepository
+	schedule       tournament_domain.ScheduleReadRepository
 	users          user_domain.UserReadRepository
 	boardResult    play_domain.BoardResultRepository
 	boardResults   play_domain.BoardResultReadRepository
@@ -48,6 +49,7 @@ func newStores(c *fiber.Ctx) stores {
 		tables:         &tournament_infra.PostgresTableReadRepository{Ctx: ctx, Tx: tx},
 		boards:         &tournament_infra.PostgresBoardProtocolReadRepository{Ctx: ctx, Tx: tx},
 		sets:           &tournament_infra.PostgresSetReadRepository{Ctx: ctx, Tx: tx},
+		schedule:       &tournament_infra.PostgresScheduleReadRepository{Ctx: ctx, Tx: tx},
 		users:          &user_infra.PostgresUserRepository{Ctx: ctx, Tx: tx},
 		boardResult:    &play_infra.PostgresBoardResultRepository{Ctx: ctx, Tx: tx},
 		boardResults:   &play_infra.PostgresBoardResultReadRepository{Ctx: ctx, Tx: tx},
@@ -149,6 +151,10 @@ func explain(err error) error {
 		return errors.New("turniej jest już rozpoczęty")
 	case errors.Is(err, tournament_domain.ErrSomeTeamHasNoMembers):
 		return errors.New("każda drużyna musi mieć co najmniej jednego zawodnika")
+	case errors.Is(err, tournament_domain.ErrScheduleEmpty):
+		return errors.New("harmonogram jest pusty")
+	case errors.Is(err, tournament_domain.ErrSetNotScheduled):
+		return errors.New("każdy set musi być w harmonogramie")
 	case errors.Is(err, tournament_domain.ErrTournamentNotStarted):
 		return errors.New("turniej nie jest rozpoczęty")
 	case errors.Is(err, tournament_domain.ErrTournamentAlreadyFinished):
@@ -159,8 +165,22 @@ func explain(err error) error {
 		return errors.New("numer drużyny jest zajęty")
 	case errors.Is(err, tournament_domain.ErrTableNumberAlreadyExists):
 		return errors.New("numer stołu jest zajęty")
-	case errors.Is(err, tournament_domain.ErrTableReferencedByBoardProtocol):
-		return errors.New("stół jest użyty w protokole")
+	case errors.Is(err, tournament_domain.ErrTableReferencedBySchedule):
+		return errors.New("stół jest użyty w harmonogramie")
+	case errors.Is(err, tournament_domain.ErrTeamReferencedBySchedule):
+		return errors.New("drużyna jest użyta w harmonogramie")
+	case errors.Is(err, tournament_domain.ErrSetReferencedBySchedule):
+		return errors.New("set jest użyty w harmonogramie")
+	case errors.Is(err, tournament_domain.ErrScheduleTableAlreadyUsed):
+		return errors.New("stół jest już zajęty w tej rundzie")
+	case errors.Is(err, tournament_domain.ErrScheduleTeamAlreadyUsed):
+		return errors.New("drużyna gra już w tej rundzie")
+	case errors.Is(err, tournament_domain.ErrScheduleSetAlreadyUsed):
+		return errors.New("komplet jest już użyty w tej rundzie")
+	case errors.Is(err, tournament_domain.ErrScheduleSameTeam):
+		return errors.New("drużyna nie może grać sama ze sobą")
+	case errors.Is(err, tournament_domain.ErrInvalidRoundNumber):
+		return errors.New("numer rundy musi być dodatni")
 	case errors.Is(err, tournament_domain.ErrBoardProtocolBelongsToSet):
 		return errors.New("rozdanie należy do seta")
 	case errors.Is(err, play_domain.ErrBoardResultAlreadyRecorded):

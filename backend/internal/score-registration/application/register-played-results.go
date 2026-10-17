@@ -22,5 +22,6 @@ func (c *RegisterPlayedResultsCommand) Execute(repo domain.PlayedResultRepositor
 			return domain.ErrRoundResultIncomplete
 		}
 	}
-	return repo.Replace(domain.TournamentScoreId(c.TournamentId), c.Results)
+	tournamentId := domain.TournamentScoreId(c.TournamentId)
+	return repo.Replace(tournamentId, c.Results)
 }

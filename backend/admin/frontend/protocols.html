@@ -15,10 +15,6 @@
       <option value="Both" {{ if eq .FormVulnerable "Both" }}selected{{ end }}>obie</option>
     </select>
   </label>
-  <label>
-    Pary, każda linia: NS;EW albo stół;NS;EW
-    <textarea name="pairs" rows="6" required>{{ .FormPairs }}</textarea>
-  </label>
   <button type="submit">Utwórz</button>
 </form>
 {{ end }}
@@ -28,7 +24,6 @@
     <tr>
       <th>Rozdanie</th>
       <th>Partia</th>
-      <th>Pary</th>
       {{ if not .Started }}<th class="noprint"></th>{{ end }}
     </tr>
   </thead>
@@ -37,11 +32,6 @@
     <tr>
       <td>{{ .BoardNo }}</td>
       <td>{{ .Vulnerable }}</td>
-      <td>
-        {{ range .Pairs }}
-        <div>{{ . }}</div>
-        {{ end }}
-      </td>
       {{ if not $.Started }}
       <td class="noprint">
         <form method="post" action="/tournaments/{{ $.TournamentId }}/protocols/{{ .BoardNo }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">

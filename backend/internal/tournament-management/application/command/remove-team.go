@@ -5,16 +5,16 @@ import (
 )
 
 type RemoveTeamCommand struct {
-	TournamentId   	string
-	TeamId					string
+	TournamentId string
+	TeamId       string
 }
 
 // Execute executes the command
 func (c *RemoveTeamCommand) Execute(repo domain.TournamentRepository) error {
-	id := domain.TournamentId(c.TournamentId)
+	tournamentId := domain.TournamentId(c.TournamentId)
 	teamId := domain.TeamId(c.TeamId)
 	// Load the Tournament from the repository
-	t, err := repo.Load(&id)
+	t, err := repo.Load(&tournamentId)
 	if err != nil {
 		return err
 	}

@@ -23,7 +23,8 @@ func (c *CalculateStandingsCommand) Execute(
 		return fmt.Errorf("scoring method is required")
 	}
 
-	results, err := playedResultRepo.Find(domain.TournamentScoreId(c.TournamentId))
+	tournamentId := domain.TournamentScoreId(c.TournamentId)
+	results, err := playedResultRepo.Find(tournamentId)
 	if err != nil {
 		return err
 	}
@@ -32,7 +33,7 @@ func (c *CalculateStandingsCommand) Execute(
 	}
 
 	score, err := domain.CalculateTournamentScore(
-		domain.TournamentScoreId(c.TournamentId),
+		tournamentId,
 		domain.NewScoringMethod(method),
 		results,
 	)

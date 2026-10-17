@@ -8,7 +8,7 @@ import (
 )
 
 type RecordBoardResultCommand struct {
-	TournamentId     string
+	PlaySessionId    string
 	PlayerId         string
 	VersusTeamNumber int
 	DealNo           int
@@ -29,16 +29,19 @@ func (c *RecordBoardResultCommand) Execute(
 	if c.VersusTeamNumber < 1 {
 		return errors.New("versus team number is empty")
 	}
-	if err := validateBoardResultInput(c.TournamentId, c.DealNo, c.Contract, c.Tricks, c.Declarer, c.OpeningLead); err != nil {
+	if err := validateBoardResultInput(c.PlaySessionId, c.DealNo, c.Contract, c.Tricks, c.Declarer, c.OpeningLead); err != nil {
 		return err
 	}
 	c.Contract = normalizeContract(c.Contract)
 
-	session, err := playSessionRepository.Load(domain.TournamentId(c.TournamentId))
+	playSessionId := domain.PlaySessionId(c.PlaySessionId)
+	playerId := domain.PlayerId(c.PlayerId)
+
+	session, err := playSessionRepository.Load(playSessionId)
 	if err != nil {
 		return err
 	}
-	playerTeam, err := session.TeamByMember(domain.PlayerId(c.PlayerId))
+	playerTeam, err := session.TeamByMember(playerId)
 	if err != nil {
 		return err
 	}
@@ -51,7 +54,7 @@ func (c *RecordBoardResultCommand) Execute(
 		return err
 	}
 
-	existing, err := boardResultRepository.Load(session.State.TournamentId, c.DealNo, match.NsTeamId, match.EwTeamId)
+	existing, err := boardResultRepository.Load(session.State.PlaySessionId, c.DealNo, match.NsTeamId, match.EwTeamId)
 	if err != nil && !errors.Is(err, domain.ErrBoardResultNotFound) {
 		return err
 	}
@@ -59,9 +62,9 @@ func (c *RecordBoardResultCommand) Execute(
 		return domain.ErrBoardResultAlreadyRecorded
 	}
 
-	result := domain.RecordBoardResult(session.State.TournamentId, c.DealNo, match.NsTeamId, match.EwTeamId, c.Contract, c.Tricks, c.Declarer, c.OpeningLead)
+	result := domain.RecordBoardResult(session.State.PlaySessionId, c.DealNo, match.NsTeamId, match.EwTeamId, c.Contract, c.Tricks, c.Declarer, c.OpeningLead)
 	if err := boardResultRepository.Save(result); err != nil {
 		return err
 	}
-	return registerPlayedResult(c.TournamentId, result.State, match.Vulnerable, playedResultRepository)
+	return registerPlayedResult(string(session.State.PlaySessionId), result.State, match.Vulnerable, playedResultRepository)
 }

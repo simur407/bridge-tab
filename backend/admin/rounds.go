@@ -104,9 +104,10 @@ func postRound(c *fiber.Ctx) error {
 	form.Tricks = strings.TrimSpace(c.FormValue("tricks"))
 	data["Round"] = form
 
+	playSessionId := tournament.Id
 	if form.Played {
 		cmd := play_app.EditBoardResultCommand{
-			TournamentId:     tournament.Id,
+			PlaySessionId:    playSessionId,
 			FirstTeamNumber:  form.NS,
 			SecondTeamNumber: form.EW,
 			DealNo:           form.DealNo,
@@ -120,7 +121,7 @@ func postRound(c *fiber.Ctx) error {
 		}
 	} else {
 		cmd := play_app.RecordBoardResultByTeamsCommand{
-			TournamentId:     tournament.Id,
+			PlaySessionId:    playSessionId,
 			FirstTeamNumber:  form.NS,
 			SecondTeamNumber: form.EW,
 			DealNo:           form.DealNo,
@@ -142,7 +143,8 @@ func postRound(c *fiber.Ctx) error {
 }
 
 func roundsPage(s stores, tournament *tournament_domain.TournamentDto, reveal bool) (fiber.Map, error) {
-	matches, err := (&play_query.ListMatchesQuery{TournamentId: tournament.Id}).Execute(s.playSession, s.boardResults)
+	playSessionId := tournament.Id
+	matches, err := (&play_query.ListMatchesQuery{PlaySessionId: playSessionId}).Execute(s.playSession, s.boardResults)
 	if err != nil {
 		return nil, err
 	}
@@ -195,8 +197,9 @@ func loadRoundForm(c *fiber.Ctx, s stores, tournament *tournament_domain.Tournam
 		NSLabel: teamByNumber(teams, ns),
 		EWLabel: teamByNumber(teams, ew),
 	}
+	playSessionId := tournament.Id
 	match, err := (&play_query.GetMatchByTeamsQuery{
-		TournamentId:     tournament.Id,
+		PlaySessionId:    playSessionId,
 		FirstTeamNumber:  ns,
 		SecondTeamNumber: ew,
 		DealNo:           deal,

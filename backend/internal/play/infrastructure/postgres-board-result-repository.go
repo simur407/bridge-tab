@@ -13,13 +13,13 @@ type PostgresBoardResultRepository struct {
 	Tx  *sql.Tx
 }
 
-func (r *PostgresBoardResultRepository) Load(tournamentId domain.TournamentId, dealNo int, teamA domain.TeamId, teamB domain.TeamId) (*domain.BoardResult, error) {
+func (r *PostgresBoardResultRepository) Load(playSessionId domain.PlaySessionId, dealNo int, teamA domain.TeamId, teamB domain.TeamId) (*domain.BoardResult, error) {
 	row := r.Tx.QueryRowContext(r.Ctx, `
 		SELECT deal_no, ns_team_id, ew_team_id, contract, tricks, declarer, opening_lead
 		FROM play.board_result
-		WHERE tournament_id = $1 AND deal_no = $2
+		WHERE play_session_id = $1 AND deal_no = $2
 			AND ((ns_team_id = $3 AND ew_team_id = $4) OR (ns_team_id = $4 AND ew_team_id = $3))`,
-		tournamentId, dealNo, teamA, teamB)
+		playSessionId, dealNo, teamA, teamB)
 
 	var deal int
 	var nsTeamId, ewTeamId domain.TeamId
@@ -34,14 +34,14 @@ func (r *PostgresBoardResultRepository) Load(tournamentId domain.TournamentId, d
 
 	return &domain.BoardResult{
 		State: domain.BoardResultState{
-			TournamentId: tournamentId,
-			DealNo:       deal,
-			NsTeamId:     nsTeamId,
-			EwTeamId:     ewTeamId,
-			Contract:     contract,
-			Tricks:       tricks,
-			Declarer:     declarer,
-			OpeningLead:  openingLead,
+			PlaySessionId: playSessionId,
+			DealNo:        deal,
+			NsTeamId:      nsTeamId,
+			EwTeamId:      ewTeamId,
+			Contract:      contract,
+			Tricks:        tricks,
+			Declarer:      declarer,
+			OpeningLead:   openingLead,
 		},
 	}, nil
 }
@@ -68,10 +68,10 @@ func (r *PostgresBoardResultRepository) Save(result *domain.BoardResult) error {
 func (r *PostgresBoardResultRepository) boardResultRecorded(event domain.BoardResultRecorded) error {
 	_, err := r.Tx.ExecContext(r.Ctx, `
 		INSERT INTO play.board_result (
-			tournament_id, deal_no, ns_team_id, ew_team_id,
+			play_session_id, deal_no, ns_team_id, ew_team_id,
 			contract, tricks, declarer, opening_lead
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-		event.TournamentId, event.DealNo, event.NsTeamId, event.EwTeamId,
+		event.PlaySessionId, event.DealNo, event.NsTeamId, event.EwTeamId,
 		event.Contract, event.Tricks, event.Declarer, event.OpeningLead,
 	)
 	return err
@@ -81,8 +81,8 @@ func (r *PostgresBoardResultRepository) boardResultEdited(event domain.BoardResu
 	_, err := r.Tx.ExecContext(r.Ctx, `
 		UPDATE play.board_result
 		SET contract = $5, tricks = $6, declarer = $7, opening_lead = $8, updated_at = now()
-		WHERE tournament_id = $1 AND deal_no = $2 AND ns_team_id = $3 AND ew_team_id = $4`,
-		event.TournamentId, event.DealNo, event.NsTeamId, event.EwTeamId,
+		WHERE play_session_id = $1 AND deal_no = $2 AND ns_team_id = $3 AND ew_team_id = $4`,
+		event.PlaySessionId, event.DealNo, event.NsTeamId, event.EwTeamId,
 		event.Contract, event.Tricks, event.Declarer, event.OpeningLead,
 	)
 	return err

@@ -10,9 +10,9 @@ func normalizeContract(contract string) string {
 	return strings.ReplaceAll(contract, "NT", "N")
 }
 
-func validateBoardResultInput(tournamentId string, dealNo int, contract string, tricks int, declarer string, openingLead string) error {
-	if tournamentId == "" {
-		return errors.New("tournament id is empty")
+func validateBoardResultInput(playSessionId string, dealNo int, contract string, tricks int, declarer string, openingLead string) error {
+	if playSessionId == "" {
+		return errors.New("play session id is empty")
 	}
 	if dealNo == 0 {
 		return errors.New("deal no is empty")

@@ -22,14 +22,14 @@ var listSetsCmd = func(SetReadRepository *domain.SetReadRepository) *cobra.Comma
 			}
 
 			fmt.Printf("%-36v | %-10v | %-20v\n", "Id", "Label", "Boards")
-			fmt.Println(strings.Repeat("-", 74))
+			fmt.Println(strings.Repeat("-", 72))
 			for _, set := range sets {
 				boardParts := make([]string, len(set.BoardNos))
 				for i, boardNo := range set.BoardNos {
 					boardParts[i] = fmt.Sprintf("%d", boardNo)
 				}
 				fmt.Printf("%-36v | %-10v | %-20v\n", set.Id, set.Label, strings.Join(boardParts, ","))
-				fmt.Println(strings.Repeat("-", 74))
+				fmt.Println(strings.Repeat("-", 72))
 			}
 			return nil
 		},

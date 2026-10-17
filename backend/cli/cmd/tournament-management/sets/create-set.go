@@ -56,7 +56,7 @@ var createSetCmd = func(TournamentRepository *domain.TournamentRepository) *cobr
 
 	command.Flags().StringVarP(&setLabel, "label", "l", "", "set label (e.g. A)")
 	command.MarkFlagRequired("label")
-	command.Flags().StringVarP(&setBoardNos, "boards", "b", "", "comma-separated board numbers that share team pairings")
+	command.Flags().StringVarP(&setBoardNos, "boards", "b", "", "comma-separated board numbers from the same round")
 	command.MarkFlagRequired("boards")
 
 	return command

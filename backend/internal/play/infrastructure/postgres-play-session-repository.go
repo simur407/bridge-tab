@@ -15,13 +15,13 @@ type PostgresPlaySessionRepository struct {
 	Tx  *sql.Tx
 }
 
-func (r *PostgresPlaySessionRepository) Load(id domain.TournamentId) (*domain.PlaySession, error) {
+func (r *PostgresPlaySessionRepository) Load(playSessionId domain.PlaySessionId) (*domain.PlaySession, error) {
 	var session domain.PlaySession
 
 	teamRows, err := r.Tx.QueryContext(r.Ctx, `
 		SELECT team_id, number
 		FROM play.team
-		WHERE tournament_id = $1`, id)
+		WHERE play_session_id = $1`, playSessionId)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (r *PostgresPlaySessionRepository) Load(id domain.TournamentId) (*domain.Pl
 	playerRows, err := r.Tx.QueryContext(r.Ctx, `
 		SELECT team_id, player_id
 		FROM play.team_player
-		WHERE tournament_id = $1`, id)
+		WHERE play_session_id = $1`, playSessionId)
 	if err != nil {
 		return nil, err
 	}
@@ -71,31 +71,60 @@ func (r *PostgresPlaySessionRepository) Load(id domain.TournamentId) (*domain.Pl
 	playerRows.Close()
 
 	matchRows, err := r.Tx.QueryContext(r.Ctx, `
-		SELECT deal_no, ns_team_id, ew_team_id, vulnerable
-		FROM play.match
-		WHERE tournament_id = $1
-		ORDER BY deal_no`, id)
+		SELECT round_no, table_number, ns_team_id, ew_team_id, set_id, set_label
+		FROM play.table_schedule
+		WHERE play_session_id = $1
+		ORDER BY round_no, table_number`, playSessionId)
 	if err != nil {
 		return nil, err
 	}
 	defer matchRows.Close()
 
 	for matchRows.Next() {
-		var match domain.Match
-		if err := matchRows.Scan(&match.DealNo, &match.NsTeamId, &match.EwTeamId, &match.Vulnerable); err != nil {
+		var schedule domain.TableSchedule
+		if err := matchRows.Scan(&schedule.RoundNo, &schedule.TableNumber, &schedule.NsTeamId, &schedule.EwTeamId, &schedule.SetId, &schedule.SetLabel); err != nil {
 			return nil, err
 		}
-		session.State.Matches = append(session.State.Matches, &match)
+		session.State.TableSchedules = append(session.State.TableSchedules, &schedule)
 	}
 	if err := matchRows.Err(); err != nil {
 		return nil, err
 	}
 
-	if len(session.State.Teams) == 0 && len(session.State.Matches) == 0 {
+	boardRows, err := r.Tx.QueryContext(r.Ctx, `
+		SELECT round_no, table_number, deal_no, vulnerable
+		FROM play.table_schedule_board
+		WHERE play_session_id = $1
+		ORDER BY round_no, table_number, position`, playSessionId)
+	if err != nil {
+		return nil, err
+	}
+	defer boardRows.Close()
+
+	for boardRows.Next() {
+		var roundNo int
+		var tableNumber int
+		var board domain.TableScheduleBoard
+		if err := boardRows.Scan(&roundNo, &tableNumber, &board.DealNo, &board.Vulnerable); err != nil {
+			return nil, err
+		}
+		index := slices.IndexFunc(session.State.TableSchedules, func(schedule *domain.TableSchedule) bool {
+			return schedule.RoundNo == roundNo && schedule.TableNumber == tableNumber
+		})
+		if index == -1 {
+			return nil, errors.New("play is not configured correctly")
+		}
+		session.State.TableSchedules[index].Boards = append(session.State.TableSchedules[index].Boards, board)
+	}
+	if err := boardRows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(session.State.Teams) == 0 && len(session.State.TableSchedules) == 0 {
 		return nil, domain.ErrPlaySessionNotProvisioned
 	}
 
-	session.State.TournamentId = id
+	session.State.PlaySessionId = playSessionId
 	return &session, nil
 }
 
@@ -119,18 +148,18 @@ func (r *PostgresPlaySessionRepository) Save(session *domain.PlaySession) error 
 func (r *PostgresPlaySessionRepository) playSessionProvisioned(event domain.PlaySessionProvisioned) error {
 	for _, team := range event.Teams {
 		_, err := r.Tx.ExecContext(r.Ctx, `
-			INSERT INTO play.team (tournament_id, team_id, number)
+			INSERT INTO play.team (play_session_id, team_id, number)
 			VALUES ($1, $2, $3)`,
-			event.TournamentId, team.Id, team.Number,
+			event.PlaySessionId, team.Id, team.Number,
 		)
 		if err != nil {
 			return err
 		}
 		for _, player := range team.Players {
 			_, err = r.Tx.ExecContext(r.Ctx, `
-				INSERT INTO play.team_player (tournament_id, team_id, player_id)
+				INSERT INTO play.team_player (play_session_id, team_id, player_id)
 				VALUES ($1, $2, $3)`,
-				event.TournamentId, team.Id, player,
+				event.PlaySessionId, team.Id, player,
 			)
 			if err != nil {
 				return err
@@ -138,14 +167,24 @@ func (r *PostgresPlaySessionRepository) playSessionProvisioned(event domain.Play
 		}
 	}
 
-	for _, match := range event.Matches {
+	for _, schedule := range event.TableSchedules {
 		_, err := r.Tx.ExecContext(r.Ctx, `
-			INSERT INTO play.match (tournament_id, deal_no, ns_team_id, ew_team_id, vulnerable)
-			VALUES ($1, $2, $3, $4, $5)`,
-			event.TournamentId, match.DealNo, match.NsTeamId, match.EwTeamId, match.Vulnerable,
+			INSERT INTO play.table_schedule (play_session_id, round_no, table_number, ns_team_id, ew_team_id, set_id, set_label)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+			event.PlaySessionId, schedule.RoundNo, schedule.TableNumber, schedule.NsTeamId, schedule.EwTeamId, schedule.SetId, schedule.SetLabel,
 		)
 		if err != nil {
 			return err
+		}
+		for position, board := range schedule.Boards {
+			_, err = r.Tx.ExecContext(r.Ctx, `
+				INSERT INTO play.table_schedule_board (play_session_id, round_no, table_number, deal_no, vulnerable, position)
+				VALUES ($1, $2, $3, $4, $5, $6)`,
+				event.PlaySessionId, schedule.RoundNo, schedule.TableNumber, board.DealNo, board.Vulnerable, position,
+			)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

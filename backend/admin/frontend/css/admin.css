@@ -103,6 +103,24 @@ textarea {
   margin: 0.5rem 0;
 }
 
+details.preset {
+  margin: 0.5rem 0 1rem;
+}
+
+details.preset[hidden] {
+  display: none;
+}
+
+details.preset summary {
+  cursor: pointer;
+}
+
+pre.movement {
+  font-family: ui-monospace, monospace;
+  font-size: 0.9rem;
+  margin: 0.5rem 0 0;
+}
+
 form.inline {
   display: inline;
 }

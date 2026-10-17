@@ -1,0 +1,63 @@
+<h1>Harmonogram</h1>
+{{ if not .Started }}
+<form method="post" action="/tournaments/{{ .TournamentId }}/schedule" class="noprint">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <label>
+    Runda
+    <input name="round" value="{{ .FormRound }}" inputmode="numeric" required>
+  </label>
+  <label>
+    Stół
+    <input name="table" value="{{ .FormTable }}" inputmode="numeric" required>
+  </label>
+  <label>
+    NS
+    <input name="ns" value="{{ .FormNS }}" inputmode="numeric" required>
+  </label>
+  <label>
+    EW
+    <input name="ew" value="{{ .FormEW }}" inputmode="numeric" required>
+  </label>
+  <label>
+    Komplet
+    <input name="set" value="{{ .FormSet }}" required>
+  </label>
+  <p class="hint">Numery drużyn i stołu. Komplet to etykieta kompletu rozdań.</p>
+  <button type="submit">Dodaj</button>
+</form>
+{{ end }}
+{{ if .Schedule }}
+<table>
+  <thead>
+    <tr>
+      <th>Runda</th>
+      <th>Stół</th>
+      <th>NS</th>
+      <th>EW</th>
+      <th>Komplet</th>
+      {{ if not .Started }}<th class="noprint"></th>{{ end }}
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Schedule }}
+    <tr>
+      <td>{{ .RoundNo }}</td>
+      <td>{{ .TableNumber }}</td>
+      <td>{{ .NsNumber }}</td>
+      <td>{{ .EwNumber }}</td>
+      <td>{{ .SetLabel }}</td>
+      {{ if not $.Started }}
+      <td class="noprint">
+        <form method="post" action="/tournaments/{{ $.TournamentId }}/schedule/{{ .RoundNo }}/{{ .TableId }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
+          <input type="hidden" name="csrf" value="{{ $.CSRF }}">
+          <button type="submit">Usuń</button>
+        </form>
+      </td>
+      {{ end }}
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+{{ else }}
+<p>Brak harmonogramu.</p>
+{{ end }}

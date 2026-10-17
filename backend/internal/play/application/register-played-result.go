@@ -9,18 +9,21 @@ import (
 )
 
 func registerPlayedResult(
-	tournamentId string,
+	playSessionId string,
 	state domain.BoardResultState,
 	vulnerable string,
 	playedResultRepository score_domain.PlayedResultRepository,
 ) error {
+	nsTeamId := string(state.NsTeamId)
+	ewTeamId := string(state.EwTeamId)
+	tournamentId := playSessionId
 	nsVulnerable, ewVulnerable := vulnerabilityFlags(vulnerable)
 	command := score_app.RegisterPlayedResultCommand{
 		TournamentId: tournamentId,
 		Result: score_domain.PlayedResult{
 			DealNo:       state.DealNo,
-			NsTeamId:     string(state.NsTeamId),
-			EwTeamId:     string(state.EwTeamId),
+			NsTeamId:     nsTeamId,
+			EwTeamId:     ewTeamId,
 			Contract:     state.Contract,
 			Tricks:       state.Tricks,
 			Declarer:     state.Declarer,

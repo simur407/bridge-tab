@@ -10,9 +10,17 @@ import (
 func TestProvisionPlaySession(t *testing.T) {
 	ns := &Team{Id: "ns", Number: 1, Players: []PlayerId{"n"}}
 	ew := &Team{Id: "ew", Number: 2, Players: []PlayerId{"e"}}
-	match := &Match{DealNo: 1, NsTeamId: ns.Id, EwTeamId: ew.Id, Vulnerable: "NS"}
+	schedule := &TableSchedule{
+		RoundNo:     1,
+		TableNumber: 1,
+		NsTeamId:    ns.Id,
+		EwTeamId:    ew.Id,
+		SetId:       "set-a",
+		SetLabel:    "A",
+		Boards:      []TableScheduleBoard{{DealNo: 1, Vulnerable: "NS"}},
+	}
 
-	session, err := ProvisionPlaySession("tournament", []*Team{ns, ew}, []*Match{match})
+	session, err := ProvisionPlaySession("session", []*Team{ns, ew}, []*TableSchedule{schedule})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,33 +33,28 @@ func TestProvisionPlaySession(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected PlaySessionProvisioned, got %T", events[0])
 	}
-	if provisioned.TournamentId != "tournament" || len(provisioned.Teams) != 2 || len(provisioned.Matches) != 1 {
+	if provisioned.PlaySessionId != "session" || len(provisioned.Teams) != 2 || len(provisioned.TableSchedules) != 1 {
 		t.Fatalf("unexpected event: %+v", provisioned)
+	}
+	if len(session.Matches()) != 1 {
+		t.Fatalf("expected one match derived from the table schedule, got %d", len(session.Matches()))
 	}
 }
 
-func TestProvisionPlaySessionRequiresTeamsAndMatches(t *testing.T) {
-	_, err := ProvisionPlaySession("tournament", nil, []*Match{{DealNo: 1}})
+func TestProvisionPlaySessionRequiresTeamsAndTableSchedules(t *testing.T) {
+	_, err := ProvisionPlaySession("session", nil, []*TableSchedule{{RoundNo: 1}})
 	if !errors.Is(err, ErrTeamsAreEmpty) {
 		t.Fatalf("expected empty teams, got %v", err)
 	}
 
-	_, err = ProvisionPlaySession("tournament", []*Team{{Id: "ns", Number: 1}}, nil)
+	_, err = ProvisionPlaySession("session", []*Team{{Id: "ns", Number: 1}}, nil)
 	if !errors.Is(err, ErrMatchesAreEmpty) {
-		t.Fatalf("expected empty matches, got %v", err)
+		t.Fatalf("expected empty table schedules, got %v", err)
 	}
 }
 
 func TestMatchKeepsProtocolOrientation(t *testing.T) {
-	session, err := ProvisionPlaySession("tournament", []*Team{
-		{Id: "ns", Number: 1, Players: []PlayerId{"north"}},
-		{Id: "ew", Number: 2, Players: []PlayerId{"east"}},
-	}, []*Match{
-		{DealNo: 1, NsTeamId: "ns", EwTeamId: "ew", Vulnerable: "NS"},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	session := mustSession(t)
 	session.Commit()
 
 	team, err := session.TeamByMember("east")
@@ -71,19 +74,39 @@ func TestMatchKeepsProtocolOrientation(t *testing.T) {
 	}
 }
 
-func TestMatchNotFound(t *testing.T) {
-	session, err := ProvisionPlaySession("tournament", []*Team{
-		{Id: "ns", Number: 1},
-		{Id: "ew", Number: 2},
-	}, []*Match{
-		{DealNo: 1, NsTeamId: "ns", EwTeamId: "ew", Vulnerable: "None"},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
+func TestMatchNotFoundWhenDealIsNotOnTableSchedule(t *testing.T) {
+	session := mustSession(t)
 
-	_, err = session.Match(1, "ns", "other")
+	_, err := session.Match(2, "ns", "ew")
+	if !errors.Is(err, ErrMatchNotFound) {
+		t.Fatalf("expected missing deal, got %v", err)
+	}
+}
+
+func TestMatchNotFound(t *testing.T) {
+	session := mustSession(t)
+
+	_, err := session.Match(1, "ns", "other")
 	if !errors.Is(err, ErrMatchNotFound) {
 		t.Fatalf("expected missing match, got %v", err)
 	}
+}
+
+func mustSession(t *testing.T) *PlaySession {
+	t.Helper()
+	session, err := ProvisionPlaySession("session", []*Team{
+		{Id: "ns", Number: 1, Players: []PlayerId{"north"}},
+		{Id: "ew", Number: 2, Players: []PlayerId{"east"}},
+	}, []*TableSchedule{{
+		RoundNo:     1,
+		TableNumber: 1,
+		NsTeamId:    "ns",
+		EwTeamId:    "ew",
+		SetLabel:    "A",
+		Boards:      []TableScheduleBoard{{DealNo: 1, Vulnerable: "NS"}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return session
 }

@@ -5,7 +5,7 @@ import (
 )
 
 type ListTeamsQuery struct {
-	TournamentId 	string
+	TournamentId string
 }
 
 func (c *ListTeamsQuery) Execute(repo domain.TeamReadRepository) ([]domain.TeamDto, error) {

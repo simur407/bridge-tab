@@ -5,8 +5,40 @@
     Nazwa
     <input name="name" value="{{ .FormName }}" required>
   </label>
+  <label>
+    Preset
+    <select name="preset">
+      <option value="">pusty</option>
+      {{ range .Presets }}
+      <option value="{{ .ID }}" {{ if eq $.FormPreset .ID }}selected{{ end }}>{{ .Label }}</option>
+      {{ end }}
+    </select>
+  </label>
+  {{ range .Presets }}
+  <details class="preset" data-preset="{{ .ID }}" {{ if ne $.FormPreset .ID }}hidden{{ end }}>
+    <summary>Szczegóły presetu</summary>
+    <p class="hint">{{ .Hint }}</p>
+    <pre class="movement">{{ .Summary }}</pre>
+  </details>
+  {{ end }}
   <button type="submit">Utwórz</button>
 </form>
+<script>
+  (function () {
+    var select = document.querySelector('select[name="preset"]');
+    if (!select) return;
+    var show = function () {
+      var selected = select.value;
+      document.querySelectorAll("details.preset").forEach(function (details) {
+        var match = details.getAttribute("data-preset") === selected;
+        details.hidden = !match;
+        if (!match) details.open = false;
+      });
+    };
+    select.addEventListener("change", show);
+    show();
+  })();
+</script>
 {{ if .Tournaments }}
 <table>
   <thead>

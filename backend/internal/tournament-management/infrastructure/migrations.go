@@ -13,6 +13,8 @@ func Migrate(db *sql.DB) {
 	m0004_optional_team_name(db)
 	m0005_add_tables(db)
 	m0006_sets_and_finish(db)
+	m0007_schedule(db)
+	m0008_protocol_without_round(db)
 }
 
 func m0001_initial(db *sql.DB) {
@@ -157,8 +159,18 @@ func m0005_add_tables(db *sql.DB) {
 			CONSTRAINT tournament_table_number_unique UNIQUE (tournament_id, number)
 		);
 
-		ALTER TABLE tournament_management.board_protocol_team_pairs
-		ADD COLUMN IF NOT EXISTS table_id UUID REFERENCES tournament_management.tournament_table (id);
+		DO $$
+		BEGIN
+			IF EXISTS (
+				SELECT 1
+				FROM information_schema.tables
+				WHERE table_schema = 'tournament_management'
+					AND table_name = 'board_protocol_team_pairs'
+			) THEN
+				ALTER TABLE tournament_management.board_protocol_team_pairs
+				ADD COLUMN IF NOT EXISTS table_id UUID REFERENCES tournament_management.tournament_table (id);
+			END IF;
+		END $$;
 	`)
 	if err != nil {
 		panic(err)
@@ -181,6 +193,37 @@ func m0006_sets_and_finish(db *sql.DB) {
 
 		ALTER TABLE tournament_management.board_protocol
 		ADD COLUMN IF NOT EXISTS set_id UUID REFERENCES tournament_management.tournament_set (id);
+	`)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func m0007_schedule(db *sql.DB) {
+	_, err := db.Exec(`
+		DROP TABLE IF EXISTS tournament_management.board_protocol_team_pairs;
+
+		CREATE TABLE IF NOT EXISTS tournament_management.schedule (
+			tournament_id UUID NOT NULL REFERENCES tournament_management.tournament (id),
+			round_no INTEGER NOT NULL,
+			table_id UUID NOT NULL REFERENCES tournament_management.tournament_table (id),
+			team_ns_id UUID NOT NULL REFERENCES tournament_management.team (id),
+			team_ew_id UUID NOT NULL REFERENCES tournament_management.team (id),
+			set_id UUID NOT NULL REFERENCES tournament_management.tournament_set (id),
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+			PRIMARY KEY (tournament_id, round_no, table_id)
+		);
+	`)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func m0008_protocol_without_round(db *sql.DB) {
+	_, err := db.Exec(`
+		ALTER TABLE tournament_management.board_protocol
+		DROP COLUMN IF EXISTS round_no;
 	`)
 	if err != nil {
 		panic(err)

@@ -5,18 +5,18 @@ import (
 )
 
 type JoinTeamCommand struct {
-	TournamentId   string
-	TeamId				string
-	ContestantId 	string
+	TournamentId string
+	TeamId       string
+	ContestantId string
 }
 
 // Execute executes the command
 func (c *JoinTeamCommand) Execute(repo domain.TournamentRepository) error {
-	id := domain.TournamentId(c.TournamentId)
+	tournamentId := domain.TournamentId(c.TournamentId)
 	teamId := domain.TeamId(c.TeamId)
 	contestantId := domain.ContestantId(c.ContestantId)
 	// Load the Tournament from the repository
-	t, err := repo.Load(&id)
+	t, err := repo.Load(&tournamentId)
 	if err != nil {
 		return err
 	}
