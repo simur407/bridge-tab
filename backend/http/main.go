@@ -17,7 +17,6 @@ import (
 	users_infra "bridge-tab/internal/user/infrastructure"
 	"database/sql"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -374,8 +373,7 @@ func GetTournamentStatus(c *fiber.Ctx) error {
 		return notFound(c, "Nie znaleziono turnieju")
 	}
 
-	playSessionId := tournamentId
-	rounds, err := (&play_query.ListMatchesQuery{PlaySessionId: playSessionId}).Execute(
+	matches, err := (&play_query.ListMatchesQuery{PlaySessionId: tournamentId}).Execute(
 		&play_infra.PostgresPlaySessionRepository{
 			Ctx: c.UserContext(),
 			Tx:  middleware.GetTransaction(c),
@@ -385,53 +383,18 @@ func GetTournamentStatus(c *fiber.Ctx) error {
 			Tx:  middleware.GetTransaction(c),
 		},
 	)
-
-	type BoardModel struct {
-		NsTeamNumber int
-		EwTeamNumber int
-		Contract     string
-		Tricks       int
-		Declarer     string
-		OpeningLead  string
-		Status       string
+	if err != nil {
+		log.Debug(err)
+		return notFound(c, "Błąd przy pobieraniu rozdań")
 	}
 
-	startedDeals := map[string]bool{}
-	for _, round := range rounds {
-		if round.Contract != "" {
-			startedDeals[fmt.Sprintf("%d-%d", round.NsTeamNumber, round.EwTeamNumber)] = true
-		}
-	}
-
-	roundMap := make(map[int][]BoardModel)
-	for i, round := range rounds {
-		board := BoardModel{
-			NsTeamNumber: round.NsTeamNumber,
-			EwTeamNumber: round.EwTeamNumber,
-			Contract:     round.Contract,
-			Tricks:       round.Tricks,
-			Status:       "pending",
-			Declarer:     round.Declarer,
-			OpeningLead:  round.OpeningLead,
-		}
-		if round.Contract != "" {
-			board.Status = "completed"
-		} else {
-			_, ok := startedDeals[fmt.Sprintf("%d-%d", round.NsTeamNumber, round.EwTeamNumber)]
-			if ok {
-				board.Status = "in-progress"
-			}
-		}
-		roundMap[rounds[i].DealNo] = append(roundMap[round.DealNo], board)
-	}
-
+	status := play_query.BuildRoundStatus(matches)
 	return c.Render("rounds-status", fiber.Map{
 		"Title":          tournament.Name,
 		"TournamentId":   tournament.Id,
 		"TournamentName": tournament.Name,
-		"Started":        tournament.StartedAt != "",
-		"Rounds":         rounds,
-		"RoundMap":       roundMap,
+		"Tables":         status.Tables,
+		"Rows":           status.Rows,
 	})
 }
 

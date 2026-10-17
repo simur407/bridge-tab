@@ -31,10 +31,12 @@ type TableSchedule struct {
 }
 
 type Match struct {
-	DealNo     int
-	NsTeamId   TeamId
-	EwTeamId   TeamId
-	Vulnerable string
+	DealNo      int
+	RoundNo     int
+	TableNumber int
+	NsTeamId    TeamId
+	EwTeamId    TeamId
+	Vulnerable  string
 }
 
 type PlaySessionState struct {
@@ -120,10 +122,12 @@ func (p *PlaySession) Match(dealNo int, teamA TeamId, teamB TeamId) (*Match, err
 				continue
 			}
 			return &Match{
-				DealNo:     board.DealNo,
-				NsTeamId:   schedule.NsTeamId,
-				EwTeamId:   schedule.EwTeamId,
-				Vulnerable: board.Vulnerable,
+				DealNo:      board.DealNo,
+				RoundNo:     schedule.RoundNo,
+				TableNumber: schedule.TableNumber,
+				NsTeamId:    schedule.NsTeamId,
+				EwTeamId:    schedule.EwTeamId,
+				Vulnerable:  board.Vulnerable,
 			}, nil
 		}
 	}
@@ -135,10 +139,12 @@ func (p *PlaySession) Matches() []*Match {
 	for _, schedule := range p.State.TableSchedules {
 		for _, board := range schedule.Boards {
 			matches = append(matches, &Match{
-				DealNo:     board.DealNo,
-				NsTeamId:   schedule.NsTeamId,
-				EwTeamId:   schedule.EwTeamId,
-				Vulnerable: board.Vulnerable,
+				DealNo:      board.DealNo,
+				RoundNo:     schedule.RoundNo,
+				TableNumber: schedule.TableNumber,
+				NsTeamId:    schedule.NsTeamId,
+				EwTeamId:    schedule.EwTeamId,
+				Vulnerable:  board.Vulnerable,
 			})
 		}
 	}
