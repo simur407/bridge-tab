@@ -1,5 +1,19 @@
 * {
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Firefox 68 ignores dvh, so the compass fills the layout viewport instead. */
+.play-root {
+  height: 100%;
 }
 
 body {
@@ -14,6 +28,7 @@ body {
 
 .play-body {
   padding: 0;
+  height: 100%;
   height: 100dvh;
   overflow: hidden;
   background: #eee;
@@ -87,71 +102,165 @@ button.accept {
   margin-top: 2rem;
 }
 
+/* Absolute boxes: KitKat WebView and Crosswalk have no CSS grid. */
 .play-frame {
-  display: grid;
-  grid-template-columns: 6.75rem 1fr 6.75rem;
-  grid-template-rows: 6.75rem 1fr 6.75rem;
-  height: 100dvh;
-  width: 100vw;
+  position: relative;
+  height: 100%;
+  width: 100%;
   background: white;
 }
 
+.play-frame .n,
+.play-frame .s,
+.play-frame .w,
+.play-frame .e,
+.play-center {
+  position: absolute;
+}
+
 .play-frame .n {
-  grid-column: 1 / -1;
-  grid-row: 1;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 6.75rem;
   border-bottom: 3px solid #111;
 }
 
 .play-frame .s {
-  grid-column: 1 / -1;
-  grid-row: 3;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 6.75rem;
   border-top: 3px solid #111;
 }
 
 .play-frame .w {
-  grid-column: 1;
-  grid-row: 2;
+  top: 6.75rem;
+  bottom: 6.75rem;
+  left: 0;
+  width: 6.75rem;
   border-right: 3px solid #111;
 }
 
 .play-frame .e {
-  grid-column: 3;
-  grid-row: 2;
+  top: 6.75rem;
+  right: 0;
+  bottom: 6.75rem;
+  width: 6.75rem;
   border-left: 3px solid #111;
 }
 
 .play-center {
-  grid-column: 2;
-  grid-row: 2;
-  position: relative;
-  overflow: auto;
+  top: 6.75rem;
+  right: 6.75rem;
+  bottom: 6.75rem;
+  left: 6.75rem;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   text-align: center;
 }
 
-#board-form,
-.step {
+/* The entry fills the center. Each step grows so its buttons share the bottom
+   edge. A step taller than the center grows the entry and the center scrolls. */
+.entry {
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+#board-form {
+  -webkit-box-flex: 1;
+  flex: 1 0 auto;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
   width: 100%;
   max-width: 44rem;
+  min-width: 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.step {
+  -webkit-box-flex: 1;
+  flex: 1 0 auto;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
+  width: 100%;
+  max-width: 44rem;
+  min-width: 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.step-body {
+  -webkit-box-flex: 1;
+  flex: 1 0 auto;
+}
+
+.step .actions {
+  -webkit-box-flex: 0;
+  flex: 0 0 auto;
+}
+
+.step .actions button,
+.step .actions .button-link {
+  margin: 0;
+  vertical-align: middle;
+}
+
+.step .actions .pass-action {
+  margin-bottom: 0.75rem;
+}
+
+.actions-nav {
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-pack: center;
+  -webkit-box-align: center;
+  justify-content: center;
+  align-items: center;
+}
+
+.step .actions .actions-nav > * + * {
+  margin-left: 0.5rem;
+}
+
+.actions-nav > * {
+  min-width: 9rem;
 }
 
 .combo-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
   width: 100%;
+}
+
+.combo-label {
+  margin: 0.85rem 0 0.35rem;
+  font-weight: 600;
+}
+
+.combo-grid > .combo-label:first-child {
+  margin-top: 0;
+}
+
+.combo-row + .combo-row {
+  margin-top: 0.35rem;
 }
 
 .combo-row,
 .choice-row {
+  display: -webkit-box;
   display: flex;
-  flex-wrap: nowrap;
-  justify-content: center;
   width: 100%;
-  gap: 0.25rem;
 }
 
 .combo-row input,
@@ -166,20 +275,28 @@ button.accept {
 
 .combo-row label,
 .choice-row label {
-  flex: 1 1 0;
+  -webkit-box-flex: 1;
+  flex: 1 1 0%;
   min-width: 0;
-  margin: 0;
+  margin: 0 0.125rem;
   background: #f0f0f0;
   color: #111;
   border: 1px solid #ccc;
   border-radius: 6px;
   text-align: center;
+  -webkit-user-select: none;
+  -moz-user-select: none;
   user-select: none;
+  display: block;
+  display: -webkit-box;
   display: flex;
+  -webkit-box-align: center;
+  -webkit-box-pack: center;
   align-items: center;
   justify-content: center;
   min-height: 2.6rem;
   padding: 0.35rem 0.15rem;
+  font-size: 0.85rem;
   font-size: clamp(0.7rem, 2.1vw, 1.05rem);
   line-height: 1.1;
 }
@@ -196,17 +313,33 @@ button.accept {
   color: white;
 }
 
-.combo-row input:checked + label .suit {
+.combo-row input:checked + label .suit,
+.choice-row input:checked + label .suit {
   color: white;
 }
 
+.combo-spacer {
+  -webkit-box-flex: 1;
+  flex: 1 1 0%;
+  min-width: 0;
+  margin: 0 0.125rem;
+}
+
+.choice-row .suit {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
 .dir {
+  display: -webkit-box;
   display: flex;
+  -webkit-box-align: center;
+  -webkit-box-pack: center;
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
   padding: 0.35rem;
   background: #e9e9e9;
+  overflow: hidden;
 }
 
 .dir.vul {
@@ -220,6 +353,7 @@ button.accept {
 }
 
 .dir.w, .dir.e {
+  -webkit-box-orient: vertical;
   flex-direction: column;
 }
 
@@ -233,8 +367,15 @@ button.accept {
   font-weight: 600;
   text-align: center;
   line-height: 1.15;
-  overflow-wrap: anywhere;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   max-width: 100%;
+  margin: 0 0 0 0.6rem;
+}
+
+.dir.w .team,
+.dir.e .team {
+  margin: 0.35rem 0 0;
 }
 
 .play-meta {
@@ -250,38 +391,49 @@ button.accept {
   margin: 0.2rem 0 0;
 }
 
+.entered {
+  margin-top: 0.45rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.entered-item {
+  display: inline-block;
+  margin: 0.15rem 0.55rem 0;
+}
+
+.entered-label {
+  display: block;
+  margin-bottom: 0.1rem;
+  color: #444;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .boards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
-  gap: 0.6rem;
   width: 100%;
   max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  font-size: 0;
 }
 
 .board {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
+  vertical-align: top;
+  width: 6.5rem;
+  margin: 0.3rem 0.25rem;
   min-height: 6rem;
   padding: 0.55rem 0.4rem 0.45rem;
   border: 3px solid #bbb;
   background-color: white;
   color: inherit;
   text-decoration: none;
+  text-align: center;
   border-radius: 8px;
-  --vul-n: transparent;
-  --vul-s: transparent;
-  --vul-e: transparent;
-  --vul-w: transparent;
-  background-image:
-    linear-gradient(var(--vul-n), var(--vul-n)),
-    linear-gradient(var(--vul-s), var(--vul-s)),
-    linear-gradient(var(--vul-w), var(--vul-w)),
-    linear-gradient(var(--vul-e), var(--vul-e));
-  background-size: 100% 10px, 100% 10px, 10px 100%, 10px 100%;
-  background-position: top, bottom, left, right;
-  background-repeat: no-repeat;
+  font-size: 1rem;
 }
 
 .board.done {
@@ -290,22 +442,47 @@ button.accept {
 
 .board.vul-n {
   border-top-color: #c62828;
-  --vul-n: rgba(198, 40, 40, 0.28);
 }
 
 .board.vul-s {
   border-bottom-color: #c62828;
-  --vul-s: rgba(198, 40, 40, 0.28);
 }
 
 .board.vul-w {
   border-left-color: #c62828;
-  --vul-w: rgba(198, 40, 40, 0.28);
 }
 
 .board.vul-e {
   border-right-color: #c62828;
-  --vul-e: rgba(198, 40, 40, 0.28);
+}
+
+.board.vul-n.vul-s {
+  -webkit-box-shadow: inset 0 10px 0 rgba(198, 40, 40, 0.28), inset 0 -10px 0 rgba(198, 40, 40, 0.28);
+  box-shadow: inset 0 10px 0 rgba(198, 40, 40, 0.28), inset 0 -10px 0 rgba(198, 40, 40, 0.28);
+}
+
+.board.vul-e.vul-w {
+  -webkit-box-shadow: inset 10px 0 0 rgba(198, 40, 40, 0.28), inset -10px 0 0 rgba(198, 40, 40, 0.28);
+  box-shadow: inset 10px 0 0 rgba(198, 40, 40, 0.28), inset -10px 0 0 rgba(198, 40, 40, 0.28);
+}
+
+.board.vul-n.vul-s.vul-e.vul-w {
+  -webkit-box-shadow:
+    inset 0 10px 0 rgba(198, 40, 40, 0.28),
+    inset 0 -10px 0 rgba(198, 40, 40, 0.28),
+    inset 10px 0 0 rgba(198, 40, 40, 0.28),
+    inset -10px 0 0 rgba(198, 40, 40, 0.28);
+  box-shadow:
+    inset 0 10px 0 rgba(198, 40, 40, 0.28),
+    inset 0 -10px 0 rgba(198, 40, 40, 0.28),
+    inset 10px 0 0 rgba(198, 40, 40, 0.28),
+    inset -10px 0 0 rgba(198, 40, 40, 0.28);
+}
+
+.board-no,
+.board-vul,
+.board-mark {
+  display: block;
 }
 
 .board-no {
@@ -334,9 +511,8 @@ button.accept {
 }
 
 .button-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
+  vertical-align: middle;
   margin-top: 0.75rem;
   margin-right: 0.5rem;
   border-radius: 8px;
@@ -345,19 +521,21 @@ button.accept {
   min-height: 48px;
   border: 1px solid #111;
   background: #f0f0f0;
+  text-align: center;
   text-decoration: none;
 }
 
 .confirm-overlay {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: rgba(250, 250, 250, 0.97);
   z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 0.75rem;
   overflow: auto;
+  text-align: center;
 }
 
 .confirm-overlay[hidden] {
@@ -365,17 +543,17 @@ button.accept {
 }
 
 .confirm-card {
+  display: inline-block;
+  vertical-align: top;
   width: 100%;
   max-width: 32rem;
+  text-align: left;
 }
 
 .switch-field {
-  display: flex;
-  flex-wrap: wrap;
   overflow: hidden;
   margin-top: 4px;
   margin-bottom: 8px;
-  gap: 4px;
 }
 
 .switch-field input {
@@ -396,8 +574,11 @@ button.accept {
   padding: 0.7rem 0;
   border: 1px solid #ccc;
   border-radius: 6px;
+  display: inline-block;
   width: 3rem;
-  margin: 0;
+  margin: 0 4px 4px 0;
+  -webkit-user-select: none;
+  -moz-user-select: none;
   user-select: none;
 }
 
@@ -440,12 +621,53 @@ table.result td {
   font-size: 1.15rem;
 }
 
+/* Center stage is the viewport minus the 6.75rem side bars. Below this width
+   a 7-column result row no longer fits, so each result stacks label over value. */
+@media (max-width: 880px) {
+  table.result,
+  table.result tbody,
+  table.result tr,
+  table.result td {
+    display: block;
+    width: 100%;
+  }
+
+  table.result {
+    border: 0;
+  }
+
+  table.result tr:first-child {
+    display: none;
+  }
+
+  table.result tr {
+    margin: 0 0 0.75rem;
+    border: 1px solid #111;
+  }
+
+  table.result td {
+    border: 0;
+    border-bottom: 1px solid #ccc;
+    text-align: left;
+  }
+
+  table.result tr td:last-child {
+    border-bottom: 0;
+  }
+
+  table.result td:before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.1rem;
+    color: #444;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+}
+
 .actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
   margin-top: 1rem;
-  justify-content: center;
+  text-align: center;
 }
 
 a {

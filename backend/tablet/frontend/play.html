@@ -32,6 +32,10 @@
 {{ if and .RoundComplete .HasNextRound }}
 <form id="advance-form" method="post" action="/play/advance">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <p class="status">Runda {{ .RoundNo }} jest zakończona.</p>
+  <div class="actions">
+    <button type="submit" class="accept">Przejdź do rundy {{ .NextRoundNo }}</button>
+  </div>
 </form>
 <div id="next-round-popup" class="confirm-overlay" hidden>
   <div class="confirm-card">

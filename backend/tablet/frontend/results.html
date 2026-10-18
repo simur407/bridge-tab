@@ -5,20 +5,20 @@
     <th>Stół</th>
     <th>NS</th>
     <th>EW</th>
+    <th>Wist</th>
     <th>Kontrakt</th>
     <th>Rozgrywa</th>
     <th>Lew</th>
-    <th>Wist</th>
   </tr>
   {{ range .Results }}
   <tr>
-    <td>{{ .TableNumber }}</td>
-    <td>{{ .NsTeamNumber }}</td>
-    <td>{{ .EwTeamNumber }}</td>
-    <td>{{ .ContractHTML }}</td>
-    <td>{{ if .Declarer }}{{ .Declarer }}{{ else }}—{{ end }}</td>
-    <td>{{ .Tricks }}</td>
-    <td>{{ .LeadHTML }}</td>
+    <td data-label="Stół">{{ .TableNumber }}</td>
+    <td data-label="NS">{{ .NsTeamNumber }}</td>
+    <td data-label="EW">{{ .EwTeamNumber }}</td>
+    <td data-label="Wist">{{ .LeadHTML }}</td>
+    <td data-label="Kontrakt">{{ .ContractHTML }}</td>
+    <td data-label="Rozgrywa">{{ if .Declarer }}{{ .Declarer }}{{ else }}—{{ end }}</td>
+    <td data-label="Lew">{{ .Tricks }}</td>
   </tr>
   {{ end }}
 </table>

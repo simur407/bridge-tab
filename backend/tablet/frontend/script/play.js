@@ -32,14 +32,22 @@
     }
   }
 
+  function setHidden(el, on) {
+    if (on) {
+      el.setAttribute("hidden", "hidden");
+    } else {
+      el.removeAttribute("hidden");
+    }
+  }
+
   function hidePopup() {
-    popup.hidden = true;
+    setHidden(popup, true);
     stopAuto();
     startIdle();
   }
 
   function showPopup() {
-    popup.hidden = false;
+    setHidden(popup, false);
     if (idleTimer) {
       clearTimeout(idleTimer);
       idleTimer = null;
@@ -65,7 +73,7 @@
   }
 
   function bumpIdle() {
-    if (!popup.hidden) {
+    if (!popup.hasAttribute("hidden")) {
       return;
     }
     startIdle();
@@ -80,9 +88,9 @@
       advance();
     });
   }
-  ["pointerdown", "keydown", "touchstart"].forEach(function (name) {
-    document.addEventListener(name, bumpIdle, { passive: true });
-  });
+  document.addEventListener("mousedown", bumpIdle, false);
+  document.addEventListener("keydown", bumpIdle, false);
+  document.addEventListener("touchstart", bumpIdle, false);
 
   showPopup();
 })();
