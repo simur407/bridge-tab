@@ -2,16 +2,27 @@
 <p>Status: {{ .Status }}</p>
 <p>Kod dla zawodników: <code>{{ .Code }}</code></p>
 {{ if not .Started }}
+<form method="post" action="/tournaments/{{ .TournamentId }}/settings" class="noprint">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <label>
+    <input type="checkbox" name="requireTeamMembers" value="1" {{ if .RequireTeamMembers }}checked{{ end }}>
+    Wymagaj co najmniej jednego zawodnika w każdej drużynie przed startem
+  </label>
+  <button type="submit">Zapisz ustawienie</button>
+</form>
 <form method="post" action="/tournaments/{{ .TournamentId }}/start" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <button type="submit">Rozpocznij</button>
 </form>
 <p class="hint">Rozpoczęcie tworzy rozdania z protokołów.</p>
-{{ else if not .Finished }}
+{{ else }}
+<p class="hint">Wymaganie zawodników w drużynach: {{ if .RequireTeamMembers }}tak{{ else }}nie{{ end }}</p>
+{{ if not .Finished }}
 <form method="post" action="/tournaments/{{ .TournamentId }}/finish" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <button type="submit">Zakończ</button>
 </form>
+{{ end }}
 {{ end }}
 <h2>Zawodnicy</h2>
 {{ if .Contestants }}

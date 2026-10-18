@@ -1,0 +1,24 @@
+package tournament_management
+
+import (
+	domain "bridge-tab/internal/tournament-management/domain"
+)
+
+type SetRequireTeamMembersCommand struct {
+	TournamentId       string
+	RequireTeamMembers bool
+}
+
+func (c *SetRequireTeamMembersCommand) Execute(repo domain.TournamentRepository) error {
+	tournamentId := domain.TournamentId(c.TournamentId)
+	t, err := repo.Load(&tournamentId)
+	if err != nil {
+		return err
+	}
+
+	if err := t.SetRequireTeamMembers(c.RequireTeamMembers); err != nil {
+		return err
+	}
+
+	return repo.Save(t)
+}

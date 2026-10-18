@@ -1,0 +1,29 @@
+<header class="play-meta">
+  <h1>Stół {{ .TableNumber }}</h1>
+  <p>Runda {{ .RoundNo }} · rozdanie {{ .DealNo }}</p>
+</header>
+
+<table class="result">
+  <tr>
+    <th>Kontrakt</th>
+    <th>Rozgrywa</th>
+    <th>Lew</th>
+    <th>Wist</th>
+  </tr>
+  <tr>
+    <td>{{ .ContractHTML }}</td>
+    <td>{{ if .Declarer }}{{ .Declarer }}{{ else }}—{{ end }}</td>
+    <td>{{ .Tricks }}</td>
+    <td>{{ .LeadHTML }}</td>
+  </tr>
+</table>
+<div class="actions">
+  <a class="button-link" href="/play">Wróć</a>
+  <button type="button"
+          hx-get="/play/boards/{{ .DealNo }}/results"
+          hx-target="#other-results"
+          hx-swap="innerHTML">
+    Pokaż wyniki
+  </button>
+</div>
+<div id="other-results"></div>

@@ -1,0 +1,296 @@
+<header class="play-meta">
+  <h1>Stół {{ .TableNumber }}</h1>
+  <p>Runda {{ .RoundNo }} · rozdanie {{ .DealNo }}</p>
+</header>
+
+<div id="dialog"></div>
+
+<form id="board-form">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <input type="hidden" name="dealNo" value="{{ .DealNo }}">
+  <input type="hidden" name="openingLeadFigure" id="openingLeadFigure" value="">
+  <input type="hidden" name="openingLeadSuit" id="openingLeadSuit" value="">
+  <input type="hidden" name="contractLevel" id="contractLevel" value="">
+  <input type="hidden" name="contractSuit" id="contractSuit" value="">
+  <input type="hidden" name="contractModifier" id="contractModifier" value="">
+  <input type="hidden" name="declarer" id="declarer" value="">
+  <input type="hidden" name="tricks" id="tricks" value="">
+
+  <section class="step" id="step-lead">
+    <h2>Wist</h2>
+    <div id="lead-grid" class="combo-grid"></div>
+    <div class="actions">
+      <a class="button-link" href="/play">Wróć</a>
+      <button type="button" id="pass-button">4 x PAS</button>
+      <button type="button" class="accept" id="lead-next">Dalej</button>
+    </div>
+  </section>
+
+  <section class="step" id="step-contract" hidden>
+    <h2>Kontrakt</h2>
+    <div id="contract-grid" class="combo-grid"></div>
+    <div class="actions">
+      <button type="button" id="contract-back">Wstecz</button>
+      <button type="button" class="accept" id="contract-next">Dalej</button>
+    </div>
+  </section>
+
+  <section class="step" id="step-double" hidden>
+    <h2>Kontra</h2>
+    <div class="choice-row">
+      <input type="radio" id="double-none" name="doubleChoice" value=""/>
+      <label for="double-none">Bez kontry</label>
+      <input type="radio" id="double-x" name="doubleChoice" value="x"/>
+      <label for="double-x">Kontra</label>
+      <input type="radio" id="double-xx" name="doubleChoice" value="xx"/>
+      <label for="double-xx">Rekontra</label>
+    </div>
+    <div class="actions">
+      <button type="button" id="double-back">Wstecz</button>
+      <button type="button" class="accept" id="double-next">Dalej</button>
+    </div>
+  </section>
+
+  <section class="step" id="step-declarer" hidden>
+    <h2>Rozgrywający</h2>
+    <div class="choice-row">
+      <input type="radio" id="declarer-n" name="declarerChoice" value="N"/>
+      <label for="declarer-n">N</label>
+      <input type="radio" id="declarer-s" name="declarerChoice" value="S"/>
+      <label for="declarer-s">S</label>
+      <input type="radio" id="declarer-e" name="declarerChoice" value="E"/>
+      <label for="declarer-e">E</label>
+      <input type="radio" id="declarer-w" name="declarerChoice" value="W"/>
+      <label for="declarer-w">W</label>
+    </div>
+    <div class="actions">
+      <button type="button" id="declarer-back">Wstecz</button>
+      <button type="button" class="accept" id="declarer-next">Dalej</button>
+    </div>
+  </section>
+
+  <section class="step" id="step-tricks" hidden>
+    <h2>Ugrano lew</h2>
+    <div id="tricks-grid" class="combo-grid"></div>
+    <div class="actions">
+      <button type="button" id="tricks-back">Wstecz</button>
+      <button type="button" class="accept" id="tricks-next">Dalej</button>
+    </div>
+  </section>
+</form>
+
+<script>
+(function () {
+  var form = document.getElementById("board-form");
+  var steps = ["step-lead", "step-contract", "step-double", "step-declarer", "step-tricks"];
+  var ranks = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
+  var leadSuits = [
+    { code: "S", symbol: "♠", cls: "club" },
+    { code: "H", symbol: "♥", cls: "red" },
+    { code: "D", symbol: "♦", cls: "red" },
+    { code: "C", symbol: "♣", cls: "club" }
+  ];
+  var contractSuits = [
+    { code: "NT", symbol: "NT", cls: "" },
+    { code: "S", symbol: "♠", cls: "club" },
+    { code: "H", symbol: "♥", cls: "red" },
+    { code: "D", symbol: "♦", cls: "red" },
+    { code: "C", symbol: "♣", cls: "club" }
+  ];
+
+  function showStep(id) {
+    steps.forEach(function (stepId) {
+      document.getElementById(stepId).hidden = stepId !== id;
+    });
+  }
+
+  function selected(name) {
+    var el = form.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : "";
+  }
+
+  function radioRow(container, name, items) {
+    var row = document.createElement("div");
+    row.className = "combo-row";
+    items.forEach(function (item) {
+      var id = name + "-" + item.id;
+      var input = document.createElement("input");
+      input.type = "radio";
+      input.name = name;
+      input.id = id;
+      input.value = item.value;
+      var label = document.createElement("label");
+      label.htmlFor = id;
+      label.innerHTML = item.label;
+      if (item.cls) {
+        label.classList.add(item.cls);
+      }
+      row.appendChild(input);
+      row.appendChild(label);
+    });
+    container.appendChild(row);
+  }
+
+  var leadGrid = document.getElementById("lead-grid");
+  leadSuits.forEach(function (suit) {
+    radioRow(leadGrid, "leadCard", ranks.map(function (rank) {
+      return {
+        id: rank + suit.code,
+        value: rank + "|" + suit.code,
+        label: rank + '<span class="suit ' + suit.cls + '">' + suit.symbol + "</span>",
+        cls: suit.cls
+      };
+    }));
+  });
+
+  var contractGrid = document.getElementById("contract-grid");
+  contractSuits.forEach(function (suit) {
+    radioRow(contractGrid, "contractCall", [1, 2, 3, 4, 5, 6, 7].map(function (level) {
+      var symbol = suit.cls
+        ? '<span class="suit ' + suit.cls + '">' + suit.symbol + "</span>"
+        : suit.symbol;
+      return {
+        id: level + suit.code,
+        value: level + "|" + suit.code,
+        label: level + symbol,
+        cls: suit.cls
+      };
+    }));
+  });
+
+  var tricksGrid = document.getElementById("tricks-grid");
+  [[0, 1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12, 13]].forEach(function (row) {
+    radioRow(tricksGrid, "tricksChoice", row.map(function (n) {
+      return { id: String(n), value: String(n), label: String(n) };
+    }));
+  });
+
+  function fillFromLead() {
+    var value = selected("leadCard");
+    if (!value) {
+      return false;
+    }
+    var parts = value.split("|");
+    document.getElementById("openingLeadFigure").value = parts[0];
+    document.getElementById("openingLeadSuit").value = parts[1];
+    return true;
+  }
+
+  function fillFromContract() {
+    var value = selected("contractCall");
+    if (!value) {
+      return false;
+    }
+    var parts = value.split("|");
+    document.getElementById("contractLevel").value = parts[0];
+    document.getElementById("contractSuit").value = parts[1];
+    return true;
+  }
+
+  function fillFromDouble() {
+    var choice = form.querySelector("input[name='doubleChoice']:checked");
+    if (!choice) {
+      return false;
+    }
+    document.getElementById("contractModifier").value = choice.value;
+    return true;
+  }
+
+  function fillFromDeclarer() {
+    var value = selected("declarerChoice");
+    if (!value) {
+      return false;
+    }
+    document.getElementById("declarer").value = value;
+    return true;
+  }
+
+  function fillFromTricks() {
+    var value = selected("tricksChoice");
+    if (value === "") {
+      return false;
+    }
+    document.getElementById("tricks").value = value;
+    return true;
+  }
+
+  function submitVerify() {
+    if (!window.htmx) {
+      return;
+    }
+    htmx.ajax("POST", "/play/verify", {
+      source: form,
+      target: "#dialog",
+      swap: "innerHTML"
+    });
+  }
+
+  document.getElementById("lead-next").addEventListener("click", function () {
+    if (!fillFromLead()) {
+      alert("Wybierz wist");
+      return;
+    }
+    document.getElementById("contractModifier").value = "";
+    showStep("step-contract");
+  });
+
+  document.getElementById("contract-back").addEventListener("click", function () {
+    showStep("step-lead");
+  });
+  document.getElementById("contract-next").addEventListener("click", function () {
+    if (!fillFromContract()) {
+      alert("Wybierz kontrakt");
+      return;
+    }
+    showStep("step-double");
+  });
+
+  document.getElementById("double-back").addEventListener("click", function () {
+    showStep("step-contract");
+  });
+  document.getElementById("double-next").addEventListener("click", function () {
+    if (!fillFromDouble()) {
+      alert("Wybierz kontrę");
+      return;
+    }
+    showStep("step-declarer");
+  });
+
+  document.getElementById("declarer-back").addEventListener("click", function () {
+    showStep("step-double");
+  });
+  document.getElementById("declarer-next").addEventListener("click", function () {
+    if (!fillFromDeclarer()) {
+      alert("Wybierz rozgrywającego");
+      return;
+    }
+    showStep("step-tricks");
+  });
+
+  document.getElementById("tricks-back").addEventListener("click", function () {
+    showStep("step-declarer");
+  });
+  document.getElementById("tricks-next").addEventListener("click", function () {
+    if (!fillFromLead() || !fillFromContract() || !fillFromDouble() || !fillFromDeclarer() || !fillFromTricks()) {
+      alert("Uzupełnij wszystkie pola");
+      return;
+    }
+    submitVerify();
+  });
+
+  document.getElementById("pass-button").addEventListener("click", function () {
+    document.getElementById("openingLeadFigure").value = "";
+    document.getElementById("openingLeadSuit").value = "";
+    document.getElementById("contractLevel").value = "";
+    document.getElementById("contractSuit").value = "";
+    document.getElementById("contractModifier").value = "Pass";
+    document.getElementById("declarer").value = "";
+    document.getElementById("tricks").value = "0";
+    submitVerify();
+  });
+
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+  });
+})();
+</script>

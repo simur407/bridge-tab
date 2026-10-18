@@ -15,6 +15,7 @@ func Migrate(db *sql.DB) {
 	m0006_sets_and_finish(db)
 	m0007_schedule(db)
 	m0008_protocol_without_round(db)
+	m0009_require_team_members(db)
 }
 
 func m0001_initial(db *sql.DB) {
@@ -224,6 +225,16 @@ func m0008_protocol_without_round(db *sql.DB) {
 	_, err := db.Exec(`
 		ALTER TABLE tournament_management.board_protocol
 		DROP COLUMN IF EXISTS round_no;
+	`)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func m0009_require_team_members(db *sql.DB) {
+	_, err := db.Exec(`
+		ALTER TABLE tournament_management.tournament
+		ADD COLUMN IF NOT EXISTS require_team_members BOOLEAN NOT NULL DEFAULT true;
 	`)
 	if err != nil {
 		panic(err)

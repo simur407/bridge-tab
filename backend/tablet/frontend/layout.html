@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex">
+    <title>{{ if .Title }}{{ .Title }} — {{ end }}Bridge Tab</title>
+    <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
+    <script src="/script/layout.js"></script>
+    <link rel="stylesheet" href="/css/tablet.css">
+  </head>
+  <body>
+    {{ if .Error }}
+    <p class="error">{{ .Error }}</p>
+    {{ end }}
+    {{ if .Success }}
+    <p class="success">{{ .Success }}</p>
+    {{ end }}
+    {{embed}}
+  </body>
+</html>

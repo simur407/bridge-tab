@@ -12,7 +12,7 @@ type PostgresTournamentReadRepository struct {
 }
 
 func (r *PostgresTournamentReadRepository) FindAll() ([]domain.TournamentDto, error) {
-	rows, err := r.Tx.QueryContext(r.Ctx, "SELECT id, name, started_at, finished_at FROM tournament_management.tournament")
+	rows, err := r.Tx.QueryContext(r.Ctx, "SELECT id, name, started_at, finished_at, require_team_members FROM tournament_management.tournament")
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +22,7 @@ func (r *PostgresTournamentReadRepository) FindAll() ([]domain.TournamentDto, er
 		var Tournament domain.TournamentDto
 		var StartedAt sql.NullString
 		var FinishedAt sql.NullString
-		err := rows.Scan(&Tournament.Id, &Tournament.Name, &StartedAt, &FinishedAt)
+		err := rows.Scan(&Tournament.Id, &Tournament.Name, &StartedAt, &FinishedAt, &Tournament.RequireTeamMembers)
 		if err != nil {
 			return nil, err
 		}
@@ -57,12 +57,12 @@ func (r *PostgresTournamentReadRepository) FindAllContestants(id *domain.Tournam
 }
 
 func (r *PostgresTournamentReadRepository) FindById(id string) (*domain.TournamentDto, error) {
-	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name, started_at, finished_at FROM tournament_management.tournament WHERE id = $1", id)
+	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name, started_at, finished_at, require_team_members FROM tournament_management.tournament WHERE id = $1", id)
 
 	var Tournament domain.TournamentDto
 	var StartedAt sql.NullString
 	var FinishedAt sql.NullString
-	err := row.Scan(&Tournament.Id, &Tournament.Name, &StartedAt, &FinishedAt)
+	err := row.Scan(&Tournament.Id, &Tournament.Name, &StartedAt, &FinishedAt, &Tournament.RequireTeamMembers)
 	if err != nil {
 		return nil, err
 	}

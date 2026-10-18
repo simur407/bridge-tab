@@ -140,6 +140,64 @@ func TestStartTournamentWithTeamsThatHasNoMembers(t *testing.T) {
 	assertError(t, err, ErrSomeTeamHasNoMembers)
 }
 
+func TestStartTournamentWithoutRequiringTeamMembers(t *testing.T) {
+	Tournament := scheduledTournament(t)
+	assertNoError(t, Tournament.SetRequireTeamMembers(false))
+	Tournament.Commit()
+
+	err := Tournament.Start()
+
+	assertNoError(t, err)
+	assertEvent(t, Tournament.GetEvents(), TournamentStarted{TournamentId: id, StartedAt: *Tournament.State.StartedAt})
+}
+
+func TestSetRequireTeamMembers(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	Tournament.Commit()
+
+	err := Tournament.SetRequireTeamMembers(false)
+
+	assertNoError(t, err)
+	if Tournament.State.RequireTeamMembers {
+		t.Errorf("expected RequireTeamMembers to be false")
+	}
+	assertEvent(t, Tournament.GetEvents(), TournamentRequireTeamMembersChanged{
+		TournamentId:       id,
+		RequireTeamMembers: false,
+	})
+}
+
+func TestSetRequireTeamMembersUnchangedEmitsNothing(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	Tournament.Commit()
+
+	err := Tournament.SetRequireTeamMembers(true)
+
+	assertNoError(t, err)
+	assertNoEvents(t, Tournament.GetEvents())
+}
+
+func TestSetRequireTeamMembersAfterStart(t *testing.T) {
+	Tournament := startableTournament(t)
+	assertNoError(t, Tournament.Start())
+	Tournament.Commit()
+
+	err := Tournament.SetRequireTeamMembers(false)
+
+	assertError(t, err, ErrTournamentAlreadyStarted)
+	assertNoEvents(t, Tournament.GetEvents())
+}
+
+func TestSetRequireTeamMembersOnRemovedTournament(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	assertNoError(t, Tournament.Remove())
+	Tournament.Commit()
+
+	err := Tournament.SetRequireTeamMembers(false)
+
+	assertError(t, err, ErrTournamentRemoved)
+}
+
 // ------ Join Tournament ------
 func TestJoinTournament(t *testing.T) {
 	// given

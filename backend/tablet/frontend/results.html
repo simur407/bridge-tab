@@ -1,0 +1,27 @@
+<h2>Inne stoły · rozdanie {{ .DealNo }}</h2>
+{{ if .Results }}
+<table class="result">
+  <tr>
+    <th>Stół</th>
+    <th>NS</th>
+    <th>EW</th>
+    <th>Kontrakt</th>
+    <th>Rozgrywa</th>
+    <th>Lew</th>
+    <th>Wist</th>
+  </tr>
+  {{ range .Results }}
+  <tr>
+    <td>{{ .TableNumber }}</td>
+    <td>{{ .NsTeamNumber }}</td>
+    <td>{{ .EwTeamNumber }}</td>
+    <td>{{ .ContractHTML }}</td>
+    <td>{{ if .Declarer }}{{ .Declarer }}{{ else }}—{{ end }}</td>
+    <td>{{ .Tricks }}</td>
+    <td>{{ .LeadHTML }}</td>
+  </tr>
+  {{ end }}
+</table>
+{{ else }}
+<p class="hint">Brak innych wyników dla tego rozdania.</p>
+{{ end }}
