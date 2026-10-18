@@ -10,7 +10,8 @@
     <link rel="stylesheet" href="/css/tablet.css">
   </head>
   <body class="play-body">
-    <div class="play-frame" aria-label="Stół, północ u góry">
+    <div class="play-frame{{ if or .Finished .AllDone }} ended{{ end }}" aria-label="{{ if .Finished }}Turniej zakończony{{ else if .AllDone }}Wszystkie rundy zakończone{{ else }}Stół, północ u góry{{ end }}">
+      {{ if not (or .Finished .AllDone) }}
       <div class="dir n{{ if .ShowVulnerability }} {{ if .NsVulnerable }}vul{{ else }}nv{{ end }}{{ end }}">
         <span class="seat">N</span>
         {{ if .NsTeamLabel }}<span class="team">{{ .NsTeamLabel }}</span>{{ end }}
@@ -19,6 +20,7 @@
         <span class="seat">W</span>
         {{ if .EwTeamLabel }}<span class="team">{{ .EwTeamLabel }}</span>{{ end }}
       </div>
+      {{ end }}
       <main class="play-center">
         {{ if .Error }}
         <p class="error">{{ .Error }}</p>
@@ -28,6 +30,7 @@
         {{ end }}
         {{embed}}
       </main>
+      {{ if not (or .Finished .AllDone) }}
       <div class="dir e{{ if .ShowVulnerability }} {{ if .EwVulnerable }}vul{{ else }}nv{{ end }}{{ end }}">
         <span class="seat">E</span>
         {{ if .EwTeamLabel }}<span class="team">{{ .EwTeamLabel }}</span>{{ end }}
@@ -36,6 +39,7 @@
         <span class="seat">S</span>
         {{ if .NsTeamLabel }}<span class="team">{{ .NsTeamLabel }}</span>{{ end }}
       </div>
+      {{ end }}
     </div>
     <script src="/script/play.js"></script>
   </body>

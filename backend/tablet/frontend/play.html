@@ -1,17 +1,24 @@
 <div id="play">
   {{ if .Finished }}
-  <p class="status">Turniej zakończony.</p>
+  <div class="end-screen">
+    <p class="end-kicker">Stół {{ .TableNumber }}</p>
+    <h1 class="end-title">Turniej zakończony</h1>
+    {{ if .TournamentName }}
+    <p class="end-name">{{ .TournamentName }}</p>
+    {{ end }}
+  </div>
   {{ else if .Empty }}
   <p class="status">Ten stół nie jest w rozgrywce.</p>
+  {{ else if .AllDone }}
+  <div class="end-screen">
+    <p class="end-kicker">Stół {{ .TableNumber }}</p>
+    <h1>Wszystkie rundy na tym stole są zakończone</h1>
+  </div>
   {{ else }}
   <header class="play-meta">
     <h1>Stół {{ .TableNumber }}</h1>
     <p>Runda {{ .RoundNo }}</p>
   </header>
-
-  {{ if .AllDone }}
-  <p class="status">Wszystkie rundy na tym stole są zakończone.</p>
-  {{ end }}
 
   <div class="boards">
     {{ range .Boards }}

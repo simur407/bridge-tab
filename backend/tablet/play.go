@@ -224,8 +224,6 @@ func getResults(c *fiber.Ctx) error {
 		}
 		others = append(others, otherResult{
 			TableNumber:  match.TableNumber,
-			NsTeamNumber: match.NsTeamNumber,
-			EwTeamNumber: match.EwTeamNumber,
 			ContractHTML: formatCallHTML(match.Contract),
 			Declarer:     match.Declarer,
 			Tricks:       match.Tricks,
@@ -641,8 +639,6 @@ func spanSuit(symbol, class string) string {
 
 type otherResult struct {
 	TableNumber  int
-	NsTeamNumber int
-	EwTeamNumber int
 	ContractHTML template.HTML
 	Declarer     string
 	Tricks       int

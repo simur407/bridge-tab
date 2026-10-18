@@ -161,6 +161,51 @@ button.accept {
   text-align: center;
 }
 
+.play-frame.ended .play-center {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+.end-screen {
+  position: absolute;
+  top: 50%;
+  right: 1.5rem;
+  left: 1.5rem;
+  margin: 0;
+  text-align: center;
+  -webkit-transform: translateY(-50%);
+  transform: translateY(-50%);
+}
+
+.end-kicker {
+  margin: 0;
+  color: #444;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.end-screen h1 {
+  margin: 0.45rem 0 0;
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.end-screen h1.end-title {
+  font-size: 3rem;
+  line-height: 1.1;
+}
+
+.end-name {
+  margin: 0.85rem 0 0;
+  font-size: 1.45rem;
+}
+
 /* The entry fills the center. Each step grows so its buttons share the bottom
    edge. A step taller than the center grows the entry and the center scrolls. */
 .entry {
@@ -202,7 +247,8 @@ button.accept {
   margin-right: auto;
 }
 
-.step-body {
+.step-body,
+.entry-body {
   -webkit-box-flex: 1;
   flex: 1 0 auto;
 }
@@ -212,14 +258,8 @@ button.accept {
   flex: 0 0 auto;
 }
 
-.step .actions button,
-.step .actions .button-link {
-  margin: 0;
-  vertical-align: middle;
-}
-
 .step .actions .pass-action {
-  margin-bottom: 0.75rem;
+  margin: 0 0 0.75rem;
 }
 
 .actions-nav {
@@ -231,12 +271,19 @@ button.accept {
   align-items: center;
 }
 
-.step .actions .actions-nav > * + * {
+.actions-nav button,
+.actions-nav .button-link {
+  margin: 0;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.actions .actions-nav > * + * {
   margin-left: 0.5rem;
 }
 
 .actions-nav > * {
-  min-width: 9rem;
+  min-width: 7rem;
 }
 
 .combo-grid {
