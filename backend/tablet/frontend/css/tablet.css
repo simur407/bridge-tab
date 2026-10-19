@@ -253,6 +253,14 @@ button.accept {
   flex: 1 0 auto;
 }
 
+#step-declarer .step-body {
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
+}
+
 .step .actions {
   -webkit-box-flex: 0;
   flex: 0 0 auto;
@@ -375,6 +383,72 @@ button.accept {
 .choice-row .suit {
   font-size: 1.6rem;
   line-height: 1;
+}
+
+/* North above, West and East at the sides, South below. No grid: KitKat has none. */
+.compass {
+  -webkit-box-flex: 1;
+  flex: 1 1 auto;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
+  width: 100%;
+  min-height: 16rem;
+  margin: 0.35rem auto 0;
+}
+
+.compass-row {
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-align: center;
+  align-items: center;
+}
+
+.compass-end {
+  -webkit-box-pack: center;
+  justify-content: center;
+}
+
+.compass-mid {
+  -webkit-box-flex: 1;
+  flex: 1 1 auto;
+  -webkit-box-pack: justify;
+  justify-content: space-between;
+}
+
+.compass input {
+  position: absolute !important;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  width: 1px;
+  border: 0;
+  overflow: hidden;
+}
+
+.compass label {
+  display: block;
+  width: 7rem;
+  max-width: 34%;
+  height: 5.2rem;
+  margin: 0;
+  background: #f0f0f0;
+  color: #111;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 5.2rem;
+}
+
+.compass input:checked + label {
+  background: rgb(0, 90, 215);
+  color: white;
 }
 
 .dir {

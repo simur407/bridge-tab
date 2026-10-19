@@ -68,15 +68,21 @@
   <section class="step" id="step-declarer" hidden>
     <div class="step-body">
       <h2>Rozgrywający</h2>
-      <div class="choice-row">
-        <input type="radio" id="declarer-n" name="declarerChoice" value="N"/>
-        <label for="declarer-n">N</label>
-        <input type="radio" id="declarer-s" name="declarerChoice" value="S"/>
-        <label for="declarer-s">S</label>
-        <input type="radio" id="declarer-e" name="declarerChoice" value="E"/>
-        <label for="declarer-e">E</label>
-        <input type="radio" id="declarer-w" name="declarerChoice" value="W"/>
-        <label for="declarer-w">W</label>
+      <div class="compass">
+        <div class="compass-row compass-end">
+          <input type="radio" id="declarer-n" name="declarerChoice" value="N"/>
+          <label for="declarer-n">N</label>
+        </div>
+        <div class="compass-row compass-mid">
+          <input type="radio" id="declarer-w" name="declarerChoice" value="W"/>
+          <label for="declarer-w">W</label>
+          <input type="radio" id="declarer-e" name="declarerChoice" value="E"/>
+          <label for="declarer-e">E</label>
+        </div>
+        <div class="compass-row compass-end">
+          <input type="radio" id="declarer-s" name="declarerChoice" value="S"/>
+          <label for="declarer-s">S</label>
+        </div>
       </div>
     </div>
     <div class="actions">

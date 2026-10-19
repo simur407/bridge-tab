@@ -9,8 +9,8 @@
   </div>
   {{ else if .Empty }}
   <p class="status">Ten stół nie jest w rozgrywce.</p>
-  {{ else if .AllDone }}
-  <div class="end-screen">
+  {{ else if and .AllDone (not .Held) }}
+  <div class="end-screen" hx-get="/play" hx-trigger="every 3s" hx-swap="none">
     <p class="end-kicker">Stół {{ .TableNumber }}</p>
     <h1>Wszystkie rundy na tym stole są zakończone</h1>
   </div>
@@ -36,22 +36,34 @@
   {{ end }}
 </div>
 
-{{ if and .RoundComplete .HasNextRound }}
+{{ if and .RoundComplete (or .HasNextRound .Held) }}
 <form id="advance-form" method="post" action="/play/advance">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <p class="status">Runda {{ .RoundNo }} jest zakończona.</p>
   <div class="actions">
+    {{ if .HasNextRound }}
     <button type="submit" class="accept">Przejdź do rundy {{ .NextRoundNo }}</button>
+    {{ else }}
+    <button type="submit" class="accept">Zakończ</button>
+    {{ end }}
   </div>
 </form>
 <div id="next-round-popup" class="confirm-overlay" hidden>
   <div class="confirm-card">
     <h3 class="warn">Runda {{ .RoundNo }} jest zakończona</h3>
+    {{ if .HasNextRound }}
     <p>Za chwilę stół przejdzie do rundy {{ .NextRoundNo }}. Drużyny przy stole się zmienią.</p>
+    {{ else }}
+    <p>Za chwilę stół pokaże, że wszystkie rundy są zakończone.</p>
+    {{ end }}
     <p class="hint">Automatyczne przejście za <span id="next-round-timer">20</span> s.</p>
     <div class="actions">
       <button type="button" id="next-round-stay">Zostań</button>
+      {{ if .HasNextRound }}
       <button type="submit" class="accept" id="next-round-go" form="advance-form">Przejdź</button>
+      {{ else }}
+      <button type="submit" class="accept" id="next-round-go" form="advance-form">Zakończ</button>
+      {{ end }}
     </div>
   </div>
 </div>

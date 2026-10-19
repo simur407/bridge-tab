@@ -39,8 +39,8 @@ func TestBuildTablePlayHoldsCompletedRound(t *testing.T) {
 	if play.RoundNo != 1 {
 		t.Fatalf("round %d", play.RoundNo)
 	}
-	if !play.RoundComplete || !play.HasNextRound || play.NextRoundNo != 2 {
-		t.Fatalf("complete=%v next=%v no=%d", play.RoundComplete, play.HasNextRound, play.NextRoundNo)
+	if !play.RoundComplete || !play.HasNextRound || play.NextRoundNo != 2 || !play.Held {
+		t.Fatalf("complete=%v next=%v no=%d held=%v", play.RoundComplete, play.HasNextRound, play.NextRoundNo, play.Held)
 	}
 	if play.NsTeamNumber != 1 {
 		t.Fatalf("ns %d", play.NsTeamNumber)
@@ -58,8 +58,21 @@ func TestBuildTablePlayAllDoneUsesLastRound(t *testing.T) {
 	if play.RoundNo != 2 {
 		t.Fatalf("round %d", play.RoundNo)
 	}
-	if play.HasNextRound {
-		t.Fatal("no next round")
+	if play.HasNextRound || play.Held {
+		t.Fatal("no next round and not held")
+	}
+}
+
+func TestBuildTablePlayHoldKeepsLastRoundOpen(t *testing.T) {
+	play := buildTablePlay(3, false, []play_query.ScheduledMatchDto{
+		{DealNo: 1, RoundNo: 1, TableNumber: 3, NsTeamNumber: 1, EwTeamNumber: 2, Contract: "1N"},
+		{DealNo: 3, RoundNo: 2, TableNumber: 3, NsTeamNumber: 4, EwTeamNumber: 5, Contract: "Pass"},
+	}, 2)
+	if !play.AllDone || !play.Held || play.HasNextRound || play.RoundNo != 2 {
+		t.Fatalf("all=%v held=%v next=%v round=%d", play.AllDone, play.Held, play.HasNextRound, play.RoundNo)
+	}
+	if len(play.Boards) != 1 || play.Boards[0].DealNo != 3 {
+		t.Fatalf("boards %+v", play.Boards)
 	}
 }
 

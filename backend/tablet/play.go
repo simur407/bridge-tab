@@ -56,15 +56,26 @@ type tablePlayView struct {
 	RoundComplete  bool
 	HasNextRound   bool
 	NextRoundNo    int
+	Held           bool
 }
 
 func getPlay(c *fiber.Ctx) error {
 	viewData, err := loadPlay(c)
 	if err != nil {
 		if redirect, ok := err.(redirectError); ok {
+			if isHTMX(c) {
+				c.Set("HX-Redirect", redirect.To)
+				return c.SendStatus(fiber.StatusNoContent)
+			}
 			return c.Redirect(redirect.To, fiber.StatusSeeOther)
 		}
 		return err
+	}
+	if isHTMX(c) {
+		if finished, _ := viewData["Finished"].(bool); finished {
+			c.Set("HX-Redirect", "/play")
+		}
+		return c.SendStatus(fiber.StatusNoContent)
 	}
 	return playView(c, "play", viewData)
 }
@@ -186,10 +197,7 @@ func postAdd(c *fiber.Ctx) error {
 		return rejectFragment(c, "error", fiber.Map{}, err)
 	}
 	if roundCompleteFor(matches, a.TableNumber, play.RoundNo) {
-		after := buildTablePlay(a.TableNumber, false, matches, 0)
-		if !after.AllDone {
-			setHoldRound(c, play.RoundNo)
-		}
+		setHoldRound(c, play.RoundNo)
 	}
 
 	c.Set("HX-Redirect", "/play/boards/"+strconv.Itoa(body.DealNo))
@@ -264,6 +272,7 @@ func playMap(tournamentName string, play tablePlayView, a assignment) fiber.Map 
 		"RoundComplete":  play.RoundComplete,
 		"HasNextRound":   play.HasNextRound,
 		"NextRoundNo":    play.NextRoundNo,
+		"Held":           play.Held,
 		"PlayScreen":     true,
 	}
 }
@@ -383,6 +392,7 @@ func buildTablePlay(tableNumber int, finished bool, matches []play_query.Schedul
 	if holdRound > 0 {
 		if held, ok := byRound[holdRound]; ok && roundComplete(held) {
 			chosen = holdRound
+			view.Held = true
 		}
 	}
 
