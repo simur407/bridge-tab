@@ -1,0 +1,35 @@
+<div class="entry">
+<header class="play-meta">
+  <h1>Stół {{ .TableNumber }}</h1>
+  <p>Runda {{ .RoundNo }} · rozdanie {{ .DealNo }}</p>
+</header>
+
+<div class="entry-body">
+<table class="result">
+  <tr>
+    <th>Wist</th>
+    <th>Kontrakt</th>
+    <th>Rozgrywa</th>
+    <th>Lew</th>
+  </tr>
+  <tr>
+    <td data-label="Wist">{{ .LeadHTML }}</td>
+    <td data-label="Kontrakt">{{ .ContractHTML }}</td>
+    <td data-label="Rozgrywa">{{ if .Declarer }}{{ .Declarer }}{{ else }}—{{ end }}</td>
+    <td data-label="Lew">{{ .Tricks }}</td>
+  </tr>
+</table>
+<div id="other-results"></div>
+</div>
+<div class="actions">
+  <div class="actions-nav">
+    <a class="button-link" href="/play">Wróć</a>
+    <button type="button"
+            hx-get="/play/boards/{{ .DealNo }}/results"
+            hx-target="#other-results"
+            hx-swap="innerHTML">
+      Pokaż wyniki
+    </button>
+  </div>
+</div>
+</div>

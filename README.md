@@ -85,6 +85,29 @@ To only build it:
 make build-admin
 ```
 
+#### Tablet
+
+The table-tablet frontend is a separate server for devices that stay at a table and record results.
+
+```bash
+export DATABASE_STRING=<your string here>
+export TABLET_PASSWORD=<long random password>
+```
+
+`TABLET_PORT` defaults to `3002`. Set `TABLET_COOKIE_SECURE=1` when the panel is served over HTTPS.
+
+```bash
+make tablet
+```
+
+To only build it:
+
+```bash
+make build-tablet
+```
+
+After login, each device is assigned a tournament and table. Once that tournament is live, the assignment cannot be changed on that device. A replacement device can still be set up.
+
 #### CLI
 
 Run the CLI tool with the following command:

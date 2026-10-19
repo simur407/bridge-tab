@@ -1,0 +1,44 @@
+<h1>Konfiguracja stołu</h1>
+{{ if .Locked }}
+<p class="hint">To urządzenie jest przypisane i turniej już trwa. Nie można zmienić stołu.</p>
+<p>Turniej: <b>{{ .TournamentName }}</b></p>
+<p>Stół: <b>{{ .TableNumber }}</b></p>
+<p><a href="/">Dalej</a></p>
+{{ else }}
+<form method="post" action="/setup">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <label>
+    Turniej
+    <select name="tournamentId" required
+            hx-get="/setup/tables"
+            hx-target="#tables"
+            hx-swap="innerHTML"
+            hx-trigger="change"
+            hx-include="[name='tournamentId']">
+      <option value="">wybierz</option>
+      {{ range .Tournaments }}
+      <option value="{{ .Id }}" {{ if .Selected }}selected{{ end }}>{{ .Name }} ({{ .Status }})</option>
+      {{ end }}
+    </select>
+  </label>
+  <div id="tables">
+    <label>
+      Stół
+      <select name="tableNumber" required>
+        <option value="">wybierz</option>
+        {{ range .Tables }}
+        <option value="{{ .Number }}" {{ if eq $.TableNumber .Number }}selected{{ end }}>{{ .Number }}</option>
+        {{ end }}
+      </select>
+    </label>
+    {{ if not .Tables }}
+    <p class="hint">Wybierz turniej, aby zobaczyć stoły.</p>
+    {{ end }}
+  </div>
+  <button type="submit">Połącz</button>
+</form>
+{{ end }}
+<form method="post" action="/logout" class="logout">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <button type="submit">Wyloguj</button>
+</form>

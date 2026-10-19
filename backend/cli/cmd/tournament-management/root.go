@@ -37,6 +37,7 @@ var TournamentManagementCmd = func(
 		removeTournamentCmd(tournamentRepository),
 		listTournamentsCmd(tournamentReadRepository),
 		startTournamentCmd(tournamentRepository, playSessionRepository),
+		requireTeamMembersCmd(tournamentRepository),
 		finishTournamentCmd(tournamentRepository, playSessionRepository, boardResultReadRepository, playedResultRepository, tournamentScoreRepository),
 		joinTournamentCmd(tournamentRepository),
 		leaveTournamentCmd(tournamentRepository),

@@ -1,0 +1,12 @@
+<label>
+  Stół
+  <select name="tableNumber" required>
+    <option value="">wybierz</option>
+    {{ range .Tables }}
+    <option value="{{ .Number }}" {{ if eq $.TableNumber .Number }}selected{{ end }}>{{ .Number }}</option>
+    {{ end }}
+  </select>
+</label>
+{{ if not .Tables }}
+<p class="hint">Wybierz turniej, aby zobaczyć stoły.</p>
+{{ end }}

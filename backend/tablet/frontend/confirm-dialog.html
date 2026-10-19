@@ -1,0 +1,42 @@
+<div class="confirm-overlay">
+  <div class="confirm-card">
+    <h3 class="warn">To okno obsługuje drużyna przeciwna.</h3>
+    <p>Potwierdź czy wynik rozdania się zgadza:</p>
+    <p>Rozdanie: <b>{{ .DealNo }}</b></p>
+    <table class="result">
+      <tr>
+        <th>NS</th>
+        <th>EW</th>
+        <th>Wist</th>
+        <th>Kontrakt</th>
+        <th>Rozgrywa</th>
+        <th>Lew</th>
+      </tr>
+      <tr>
+        <td data-label="NS">{{ .NSTeamNumber }}</td>
+        <td data-label="EW">{{ .EWTeamNumber }}</td>
+        <td data-label="Wist">{{ .LeadHTML }}</td>
+        <td data-label="Kontrakt">{{ .ContractHTML }}</td>
+        <td data-label="Rozgrywa">{{ if .Declarer }}{{ .Declarer }}{{ else }}—{{ end }}</td>
+        <td data-label="Lew">{{ .Tricks }}</td>
+      </tr>
+    </table>
+    <div class="actions">
+      <form method="dialog">
+        <button type="button" onclick="htmx.remove(htmx.closest(this, '.confirm-overlay'))">Nie zgadza się/Anuluj</button>
+      </form>
+      <form hx-post="/play/add" hx-swap="none">
+        <input type="hidden" name="csrf" value="{{ .CSRF }}">
+        <input type="hidden" name="dealNo" value="{{ .DealNo }}"/>
+        <input type="hidden" name="contractLevel" value="{{ .ContractLevel }}"/>
+        <input type="hidden" name="contractSuit" value="{{ .ContractSuit }}"/>
+        <input type="hidden" name="contractModifier" value="{{ .ContractModifier }}"/>
+        <input type="hidden" name="tricks" value="{{ .Tricks }}"/>
+        <input type="hidden" name="declarer" value="{{ .Declarer }}"/>
+        <input type="hidden" name="openingLeadFigure" value="{{ .OpeningLeadFigure }}"/>
+        <input type="hidden" name="openingLeadSuit" value="{{ .OpeningLeadSuit }}"/>
+        <button type="submit" class="accept">Zgadza się</button>
+      </form>
+    </div>
+  </div>
+</div>

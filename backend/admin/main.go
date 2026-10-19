@@ -79,6 +79,7 @@ func main() {
 	authed.Get("/tournaments", getTournaments)
 	authed.Post("/tournaments", postTournament)
 	authed.Get("/tournaments/:id", getTournament)
+	authed.Post("/tournaments/:id/settings", postSettings)
 	authed.Post("/tournaments/:id/start", postStart)
 	authed.Post("/tournaments/:id/finish", postFinish)
 

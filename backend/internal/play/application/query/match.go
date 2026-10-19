@@ -11,6 +11,7 @@ type ScheduledMatchDto struct {
 	TableNumber  int
 	NsTeamNumber int
 	EwTeamNumber int
+	Vulnerable   string
 	Contract     string
 	Tricks       int
 	Declarer     string
@@ -24,6 +25,7 @@ func scheduledMatch(session *domain.PlaySession, match *domain.Match) ScheduledM
 		TableNumber:  match.TableNumber,
 		NsTeamNumber: teamNumber(session, match.NsTeamId),
 		EwTeamNumber: teamNumber(session, match.EwTeamId),
+		Vulnerable:   match.Vulnerable,
 	}
 }
 

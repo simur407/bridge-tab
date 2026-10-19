@@ -1,0 +1,796 @@
+* {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Firefox 68 ignores dvh, so the compass fills the layout viewport instead. */
+.play-root {
+  height: 100%;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  color: #111;
+  background: #fafafa;
+  margin: 0;
+  padding: 1rem;
+  line-height: 1.4;
+  font-size: 1.1rem;
+}
+
+.play-body {
+  padding: 0;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: #eee;
+}
+
+h1, h2, h3 {
+  font-weight: 600;
+  margin: 0.4rem 0;
+}
+
+h1 {
+  font-size: 1.6rem;
+}
+
+h2 {
+  font-size: 1.2rem;
+}
+
+label {
+  display: block;
+  margin: 0.75rem 0;
+}
+
+input, select, textarea, button {
+  font: inherit;
+}
+
+select, input[type="password"], input[type="text"] {
+  width: 100%;
+  max-width: 28rem;
+  padding: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+button {
+  margin-top: 0.75rem;
+  margin-right: 0.5rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  padding: 0.7rem 1.1rem;
+  min-height: 48px;
+}
+
+button.accept {
+  background: #005ad7;
+  color: white;
+  border: 0;
+}
+
+.error {
+  background: #ff5555;
+  color: white;
+  padding: 0.6rem 0.8rem;
+}
+
+.success {
+  background: #54bb00;
+  color: white;
+  padding: 0.6rem 0.8rem;
+}
+
+.hint, .crumb {
+  color: #444;
+}
+
+.status {
+  font-size: 1.2rem;
+}
+
+.logout {
+  margin-top: 2rem;
+}
+
+/* Absolute boxes: KitKat WebView and Crosswalk have no CSS grid. */
+.play-frame {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  background: white;
+}
+
+.play-frame .n,
+.play-frame .s,
+.play-frame .w,
+.play-frame .e,
+.play-center {
+  position: absolute;
+}
+
+.play-frame .n {
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 6.75rem;
+  border-bottom: 3px solid #111;
+}
+
+.play-frame .s {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 6.75rem;
+  border-top: 3px solid #111;
+}
+
+.play-frame .w {
+  top: 6.75rem;
+  bottom: 6.75rem;
+  left: 0;
+  width: 6.75rem;
+  border-right: 3px solid #111;
+}
+
+.play-frame .e {
+  top: 6.75rem;
+  right: 0;
+  bottom: 6.75rem;
+  width: 6.75rem;
+  border-left: 3px solid #111;
+}
+
+.play-center {
+  top: 6.75rem;
+  right: 6.75rem;
+  bottom: 6.75rem;
+  left: 6.75rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.play-frame.ended .play-center {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+.end-screen {
+  position: absolute;
+  top: 50%;
+  right: 1.5rem;
+  left: 1.5rem;
+  margin: 0;
+  text-align: center;
+  -webkit-transform: translateY(-50%);
+  transform: translateY(-50%);
+}
+
+.end-kicker {
+  margin: 0;
+  color: #444;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.end-screen h1 {
+  margin: 0.45rem 0 0;
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.end-screen h1.end-title {
+  font-size: 3rem;
+  line-height: 1.1;
+}
+
+.end-name {
+  margin: 0.85rem 0 0;
+  font-size: 1.45rem;
+}
+
+/* The entry fills the center. Each step grows so its buttons share the bottom
+   edge. A step taller than the center grows the entry and the center scrolls. */
+.entry {
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+#board-form {
+  -webkit-box-flex: 1;
+  flex: 1 0 auto;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
+  width: 100%;
+  max-width: 44rem;
+  min-width: 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.step {
+  -webkit-box-flex: 1;
+  flex: 1 0 auto;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
+  width: 100%;
+  max-width: 44rem;
+  min-width: 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.step-body,
+.entry-body {
+  -webkit-box-flex: 1;
+  flex: 1 0 auto;
+}
+
+#step-declarer .step-body {
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
+}
+
+.step .actions {
+  -webkit-box-flex: 0;
+  flex: 0 0 auto;
+}
+
+.step .actions .pass-action {
+  margin: 0 0 0.75rem;
+}
+
+.actions-nav {
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-pack: center;
+  -webkit-box-align: center;
+  justify-content: center;
+  align-items: center;
+}
+
+.actions-nav button,
+.actions-nav .button-link {
+  margin: 0;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.actions .actions-nav > * + * {
+  margin-left: 0.5rem;
+}
+
+.actions-nav > * {
+  min-width: 7rem;
+}
+
+.combo-grid {
+  width: 100%;
+}
+
+.combo-label {
+  margin: 0.85rem 0 0.35rem;
+  font-weight: 600;
+}
+
+.combo-grid > .combo-label:first-child {
+  margin-top: 0;
+}
+
+.combo-row + .combo-row {
+  margin-top: 0.35rem;
+}
+
+.combo-row,
+.choice-row {
+  display: -webkit-box;
+  display: flex;
+  width: 100%;
+}
+
+.combo-row input,
+.choice-row input {
+  position: absolute !important;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  width: 1px;
+  border: 0;
+  overflow: hidden;
+}
+
+.combo-row label,
+.choice-row label {
+  -webkit-box-flex: 1;
+  flex: 1 1 0%;
+  min-width: 0;
+  margin: 0 0.125rem;
+  background: #f0f0f0;
+  color: #111;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  display: block;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-box-pack: center;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.6rem;
+  padding: 0.35rem 0.15rem;
+  font-size: 0.85rem;
+  font-size: clamp(0.7rem, 2.1vw, 1.05rem);
+  line-height: 1.1;
+}
+
+.choice-row label {
+  min-height: 3.4rem;
+  font-size: 1.1rem;
+  padding: 0.6rem 0.4rem;
+}
+
+.combo-row input:checked + label,
+.choice-row input:checked + label {
+  background: rgb(0, 90, 215);
+  color: white;
+}
+
+.combo-row input:checked + label .suit,
+.choice-row input:checked + label .suit {
+  color: white;
+}
+
+.combo-spacer {
+  -webkit-box-flex: 1;
+  flex: 1 1 0%;
+  min-width: 0;
+  margin: 0 0.125rem;
+}
+
+.choice-row .suit {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+/* North above, West and East at the sides, South below. No grid: KitKat has none. */
+.compass {
+  -webkit-box-flex: 1;
+  flex: 1 1 auto;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
+  width: 100%;
+  min-height: 16rem;
+  margin: 0.35rem auto 0;
+}
+
+.compass-row {
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-align: center;
+  align-items: center;
+}
+
+.compass-end {
+  -webkit-box-pack: center;
+  justify-content: center;
+}
+
+.compass-mid {
+  -webkit-box-flex: 1;
+  flex: 1 1 auto;
+  -webkit-box-pack: justify;
+  justify-content: space-between;
+}
+
+.compass input {
+  position: absolute !important;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  width: 1px;
+  border: 0;
+  overflow: hidden;
+}
+
+.compass label {
+  display: block;
+  width: 7rem;
+  max-width: 34%;
+  height: 5.2rem;
+  margin: 0;
+  background: #f0f0f0;
+  color: #111;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 5.2rem;
+}
+
+.compass input:checked + label {
+  background: rgb(0, 90, 215);
+  color: white;
+}
+
+.dir {
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-box-pack: center;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  background: #e9e9e9;
+  overflow: hidden;
+}
+
+.dir.vul {
+  background: #c62828;
+  color: white;
+}
+
+.dir.nv {
+  background: #2e7d32;
+  color: white;
+}
+
+.dir.w, .dir.e {
+  -webkit-box-orient: vertical;
+  flex-direction: column;
+}
+
+.dir .seat {
+  font-size: 2.4rem;
+  font-weight: 700;
+}
+
+.dir .team {
+  font-size: 1.15rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.15;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  margin: 0 0 0 0.6rem;
+}
+
+.dir.w .team,
+.dir.e .team {
+  margin: 0.35rem 0 0;
+}
+
+.play-meta {
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.play-meta h1 {
+  margin: 0;
+}
+
+.play-meta p {
+  margin: 0.2rem 0 0;
+}
+
+.entered {
+  margin-top: 0.45rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.entered-item {
+  display: inline-block;
+  margin: 0.15rem 0.55rem 0;
+}
+
+.entered-label {
+  display: block;
+  margin-bottom: 0.1rem;
+  color: #444;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.boards {
+  width: 100%;
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  font-size: 0;
+}
+
+.board {
+  display: inline-block;
+  vertical-align: top;
+  width: 6.5rem;
+  margin: 0.3rem 0.25rem;
+  min-height: 6rem;
+  padding: 0.55rem 0.4rem 0.45rem;
+  border: 3px solid #bbb;
+  background-color: white;
+  color: inherit;
+  text-decoration: none;
+  text-align: center;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.board.done {
+  background-color: #e8f6e8;
+}
+
+.board.vul-n {
+  border-top-color: #c62828;
+}
+
+.board.vul-s {
+  border-bottom-color: #c62828;
+}
+
+.board.vul-w {
+  border-left-color: #c62828;
+}
+
+.board.vul-e {
+  border-right-color: #c62828;
+}
+
+.board.vul-n.vul-s {
+  -webkit-box-shadow: inset 0 10px 0 rgba(198, 40, 40, 0.28), inset 0 -10px 0 rgba(198, 40, 40, 0.28);
+  box-shadow: inset 0 10px 0 rgba(198, 40, 40, 0.28), inset 0 -10px 0 rgba(198, 40, 40, 0.28);
+}
+
+.board.vul-e.vul-w {
+  -webkit-box-shadow: inset 10px 0 0 rgba(198, 40, 40, 0.28), inset -10px 0 0 rgba(198, 40, 40, 0.28);
+  box-shadow: inset 10px 0 0 rgba(198, 40, 40, 0.28), inset -10px 0 0 rgba(198, 40, 40, 0.28);
+}
+
+.board.vul-n.vul-s.vul-e.vul-w {
+  -webkit-box-shadow:
+    inset 0 10px 0 rgba(198, 40, 40, 0.28),
+    inset 0 -10px 0 rgba(198, 40, 40, 0.28),
+    inset 10px 0 0 rgba(198, 40, 40, 0.28),
+    inset -10px 0 0 rgba(198, 40, 40, 0.28);
+  box-shadow:
+    inset 0 10px 0 rgba(198, 40, 40, 0.28),
+    inset 0 -10px 0 rgba(198, 40, 40, 0.28),
+    inset 10px 0 0 rgba(198, 40, 40, 0.28),
+    inset -10px 0 0 rgba(198, 40, 40, 0.28);
+}
+
+.board-no,
+.board-vul,
+.board-mark {
+  display: block;
+}
+
+.board-no {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.board-vul {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-top: 0.1rem;
+}
+
+.board-mark {
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.suit.red {
+  color: #c00;
+}
+
+.suit.club {
+  color: #111;
+}
+
+.button-link {
+  display: inline-block;
+  vertical-align: middle;
+  margin-top: 0.75rem;
+  margin-right: 0.5rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  padding: 0.7rem 1.1rem;
+  min-height: 48px;
+  border: 1px solid #111;
+  background: #f0f0f0;
+  text-align: center;
+  text-decoration: none;
+}
+
+.confirm-overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(250, 250, 250, 0.97);
+  z-index: 20;
+  padding: 0.75rem;
+  overflow: auto;
+  text-align: center;
+}
+
+.confirm-overlay[hidden] {
+  display: none;
+}
+
+.confirm-card {
+  display: inline-block;
+  vertical-align: top;
+  width: 100%;
+  max-width: 32rem;
+  text-align: left;
+}
+
+.switch-field {
+  overflow: hidden;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.switch-field input {
+  position: absolute !important;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  width: 1px;
+  border: 0;
+  overflow: hidden;
+}
+
+.switch-field label {
+  background-color: #f0f0f0;
+  color: black;
+  font-size: 1.1rem;
+  line-height: 1;
+  text-align: center;
+  padding: 0.7rem 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  display: inline-block;
+  width: 3rem;
+  margin: 0 4px 4px 0;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.switch-field input:checked + label {
+  background-color: rgb(0, 90, 215);
+  color: white;
+}
+
+.switch-field .red {
+  color: #c00;
+}
+
+.switch-field input:checked + label.red {
+  color: white;
+}
+
+fieldset {
+  border: 1px solid #ccc;
+  margin: 0.75rem 0;
+  padding: 0.6rem;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  width: 100%;
+}
+
+th, td {
+  border: 1px solid #111;
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+}
+
+.warn {
+  color: #c00;
+}
+
+table.result td {
+  font-size: 1.15rem;
+}
+
+/* Center stage is the viewport minus the 6.75rem side bars. Below this width
+   a 7-column result row no longer fits, so each result stacks label over value. */
+@media (max-width: 880px) {
+  table.result,
+  table.result tbody,
+  table.result tr,
+  table.result td {
+    display: block;
+    width: 100%;
+  }
+
+  table.result {
+    border: 0;
+  }
+
+  table.result tr:first-child {
+    display: none;
+  }
+
+  table.result tr {
+    margin: 0 0 0.75rem;
+    border: 1px solid #111;
+  }
+
+  table.result td {
+    border: 0;
+    border-bottom: 1px solid #ccc;
+    text-align: left;
+  }
+
+  table.result tr td:last-child {
+    border-bottom: 0;
+  }
+
+  table.result td:before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.1rem;
+    color: #444;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+}
+
+.actions {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+a {
+  color: #111;
+}

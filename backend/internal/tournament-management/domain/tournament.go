@@ -11,17 +11,18 @@ import (
 type TournamentId string
 
 type TournamentState struct {
-	Id             TournamentId
-	Name           string
-	StartedAt      *time.Time
-	FinishedAt     *time.Time
-	Teams          []*Team
-	Tables         []*Table
-	Contestants    []*Contestant
-	BoardProtocols []*BoardProtocol
-	Sets           []*Set
-	Schedule       []*ScheduleEntry
-	removed        bool
+	Id                 TournamentId
+	Name               string
+	StartedAt          *time.Time
+	FinishedAt         *time.Time
+	RequireTeamMembers bool
+	Teams              []*Team
+	Tables             []*Table
+	Contestants        []*Contestant
+	BoardProtocols     []*BoardProtocol
+	Sets               []*Set
+	Schedule           []*ScheduleEntry
+	removed            bool
 }
 
 type Tournament struct {
@@ -48,6 +49,11 @@ type TournamentStarted struct {
 type TournamentFinished struct {
 	TournamentId TournamentId
 	FinishedAt   time.Time
+}
+
+type TournamentRequireTeamMembersChanged struct {
+	TournamentId       TournamentId
+	RequireTeamMembers bool
 }
 
 type SetCreated struct {
@@ -163,14 +169,15 @@ var ErrNoSuchSchedule = errors.New("no such schedule entry")
 func CreateTournament(id TournamentId, name string) *Tournament {
 	return &Tournament{
 		State: TournamentState{
-			Id:          id,
-			Name:        name,
-			removed:     false,
-			Teams:       []*Team{},
-			Tables:      []*Table{},
-			Contestants: []*Contestant{},
-			Sets:        []*Set{},
-			Schedule:    []*ScheduleEntry{},
+			Id:                 id,
+			Name:               name,
+			RequireTeamMembers: true,
+			removed:            false,
+			Teams:              []*Team{},
+			Tables:             []*Table{},
+			Contestants:        []*Contestant{},
+			Sets:               []*Set{},
+			Schedule:           []*ScheduleEntry{},
 		},
 		events: []any{TournamentCreated{TournamentId: id, Name: name}},
 	}
@@ -229,9 +236,11 @@ func (t *Tournament) Start() error {
 		return nil
 	}
 
-	for _, team := range t.State.Teams {
-		if len(team.State.Members) == 0 {
-			return ErrSomeTeamHasNoMembers
+	if t.State.RequireTeamMembers {
+		for _, team := range t.State.Teams {
+			if len(team.State.Members) == 0 {
+				return ErrSomeTeamHasNoMembers
+			}
 		}
 	}
 
@@ -254,6 +263,24 @@ func (t *Tournament) Start() error {
 	now := time.Now()
 	t.State.StartedAt = &now
 	t.events = append(t.events, TournamentStarted{TournamentId: t.State.Id, StartedAt: now})
+	return nil
+}
+
+func (t *Tournament) SetRequireTeamMembers(require bool) error {
+	if t.State.removed {
+		return ErrTournamentRemoved
+	}
+	if t.State.StartedAt != nil {
+		return ErrTournamentAlreadyStarted
+	}
+	if t.State.RequireTeamMembers == require {
+		return nil
+	}
+	t.State.RequireTeamMembers = require
+	t.events = append(t.events, TournamentRequireTeamMembersChanged{
+		TournamentId:       t.State.Id,
+		RequireTeamMembers: require,
+	})
 	return nil
 }
 
@@ -833,10 +860,11 @@ type TournamentRepository interface {
 }
 
 type TournamentDto struct {
-	Id         string
-	Name       string
-	StartedAt  string
-	FinishedAt string
+	Id                 string
+	Name               string
+	StartedAt          string
+	FinishedAt         string
+	RequireTeamMembers bool
 }
 
 type TournamentReadRepository interface {
