@@ -3,28 +3,36 @@
 ## Overview
 
 Bridge Tab is a tool designed to manage duplicate bridge tournaments. It provides functionalities for organizers or umpires to prepare and manage tournaments, check scores, and manage users.
-It also provides a http server that allows contestants to record scores for rounds they play in.
+It also provides a http server that allows contestants to record scores for rounds they play in, a http server that allows administrating a tournament and a http server for tablet kiosk setup per table.
+
 
 **Notice** This project is still work in progress.
 
 ## Features
 
 - Manage duplicate bridge tournaments
-- Round registration by contestants
-- Rounds summary in CSV
+- Play registration by contestants
+- Play summary in CSV
+- Calculating scores in Matchpoints
+- Tournament schedule
+- Frontend for tables
+- Admin panel
+- CLI
 
 ## Current roadmap
 
-- [x] More tests, especially integration/e2e
-- [ ] Adding better frontend for contestants
-- [x] Tournament scoring
-- [ ] Admin panel
+- [ ] Collecting cards per hand for a board
+- [ ] Creating prettier frontends
+- [ ] Implementing IMPs
+- [ ] More QoL features
+- [ ] Boards analysis engine
 
 ## Getting Started
 
 ### Prerequisites
 
 - Go (latest version)
+- Postgres
 
 ### Installation
 
@@ -113,6 +121,11 @@ After login, each device is assigned a tournament and table. Once that tournamen
 Run the CLI tool with the following command:
 ```bash
 make build-cli
+```
+
+Set up the database connection string:
+```bash
+EXPORT DATABASE_STRING=<your string here>
 ```
 
 Then you can run it with the following command:
