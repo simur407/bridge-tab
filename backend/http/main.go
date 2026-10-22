@@ -13,6 +13,7 @@ import (
 	tournament_management_query "bridge-tab/internal/tournament-management/application/query"
 	tournament_management_domain "bridge-tab/internal/tournament-management/domain"
 	tournament_management_infra "bridge-tab/internal/tournament-management/infrastructure"
+	umpirecall "bridge-tab/internal/umpire-call"
 	users "bridge-tab/internal/user/application"
 	users_infra "bridge-tab/internal/user/infrastructure"
 	"database/sql"
@@ -73,6 +74,7 @@ func main() {
 	users_infra.Migrate(db)
 	play_infra.Migrate(db)
 	score_registration_infra.Migrate(db)
+	umpirecall.Migrate(db)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Render("index", nil, "layout")
@@ -107,6 +109,16 @@ func main() {
 		middleware.JwtGuard(),
 		middleware.Transaction(db, nil),
 		LeaveTeam,
+	)
+	app.Get("/tournaments/:tournamentId/umpire-call",
+		middleware.JwtGuard(),
+		middleware.Transaction(db, &sql.TxOptions{ReadOnly: true}),
+		getUmpireCall,
+	)
+	app.Post("/tournaments/:tournamentId/umpire-call",
+		middleware.JwtGuard(),
+		middleware.Transaction(db, nil),
+		postUmpireCall,
 	)
 	app.Get("/round-registration/:gameSessionId/add-round",
 		middleware.JwtGuard(),
@@ -331,6 +343,16 @@ func GetTournamentTeams(c *fiber.Ctx) error {
 		return notFound(c, "Błąd przy pobieraniu drużyn")
 	}
 
+	canCall := false
+	if tournament.StartedAt != "" {
+		var err error
+		canCall, err = umpireAvailable(c, tournamentId)
+		if err != nil {
+			log.Debug(err)
+			return notFound(c, "Błąd przy pobieraniu wezwania")
+		}
+	}
+
 	return c.Render("teams", fiber.Map{
 		"Title":          tournament.Name,
 		"TournamentId":   tournament.Id,
@@ -338,6 +360,7 @@ func GetTournamentTeams(c *fiber.Ctx) error {
 		"Teams":          teams,
 		"JoinedTeam":     joinedTeam,
 		"Started":        tournament.StartedAt != "",
+		"CanCallUmpire":  canCall,
 		"UserId":         c.Locals("user").(middleware.UserMetadata).Id,
 	}, "layout")
 }
@@ -530,11 +553,18 @@ func GetAddRoundForm(c *fiber.Ctx) error {
 		success = "Pomyślnie zapisano rozdanie"
 	}
 
+	canCall, err := umpireAvailable(c, playSessionId)
+	if err != nil {
+		log.Debug(err)
+		return notFound(c, "Błąd przy pobieraniu wezwania")
+	}
+
 	return c.Render("add-round", fiber.Map{
 		"Success":       success,
 		"Title":         "Dodaj rundę",
 		"GameSessionId": c.Params("gameSessionId"),
 		"PlayerTeam":    playerTeamNumber,
+		"CanCallUmpire": canCall,
 		"UserId":        playerId,
 	}, "layout")
 }

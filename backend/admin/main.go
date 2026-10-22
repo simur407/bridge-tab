@@ -10,6 +10,7 @@ import (
 	play_infra "bridge-tab/internal/play/infrastructure"
 	score_infra "bridge-tab/internal/score-registration/infrastructure"
 	tournament_infra "bridge-tab/internal/tournament-management/infrastructure"
+	umpirecall "bridge-tab/internal/umpire-call"
 	user_infra "bridge-tab/internal/user/infrastructure"
 
 	"github.com/gofiber/fiber/v2"
@@ -67,6 +68,7 @@ func main() {
 	user_infra.Migrate(db)
 	play_infra.Migrate(db)
 	score_infra.Migrate(db)
+	umpirecall.Migrate(db)
 
 	app.Get("/login", getLogin)
 	app.Post("/login", postLogin)
@@ -107,6 +109,10 @@ func main() {
 	authed.Get("/tournaments/:id/rounds", getRounds)
 	authed.Get("/tournaments/:id/rounds/:deal/:ns/:ew", getRound)
 	authed.Post("/tournaments/:id/rounds/:deal/:ns/:ew", postRound)
+
+	authed.Get("/tournaments/:id/umpire-calls", getUmpireCalls)
+	authed.Get("/tournaments/:id/umpire-calls/open", getOpenUmpireCalls)
+	authed.Post("/tournaments/:id/umpire-calls/:callId/answer", postAnswerUmpireCall)
 
 	authed.Get("/tournaments/:id/scores", getScores)
 	authed.Post("/tournaments/:id/scores/calculate", postCalculate)

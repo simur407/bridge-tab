@@ -20,16 +20,52 @@
       <a href="/tournaments/{{ .TournamentId }}/schedule">Harmonogram</a>
       <a href="/tournaments/{{ .TournamentId }}/rounds">Rozdania</a>
       <a href="/tournaments/{{ .TournamentId }}/scores">Wyniki</a>
+      <a id="umpire-nav" href="/tournaments/{{ .TournamentId }}/umpire-calls" data-open-url="/tournaments/{{ .TournamentId }}/umpire-calls/open">Wezwania</a>
       {{ end }}
       <form method="post" action="/logout">
         <input type="hidden" name="csrf" value="{{ .CSRF }}">
         <button type="submit">Wyloguj</button>
       </form>
     </nav>
+    {{ if .TournamentId }}
+    <div id="umpire-stack"></div>
+    {{ end }}
     {{ end }}
     {{ if .Error }}
     <p class="error">{{ .Error }}</p>
     {{ end }}
     {{embed}}
+    {{ if .TournamentId }}
+    <script>
+      (function () {
+        var link = document.getElementById("umpire-nav");
+        var stack = document.getElementById("umpire-stack");
+        if (!link || !stack) return;
+        function apply(html) {
+          stack.innerHTML = html;
+          var root = stack.querySelector("[data-open]");
+          var count = root ? parseInt(root.getAttribute("data-open"), 10) : 0;
+          if (count > 0) {
+            link.className = "open-calls";
+            link.textContent = "Wezwania (" + count + ")";
+          } else {
+            link.className = "";
+            link.textContent = "Wezwania";
+          }
+        }
+        function poll() {
+          fetch(link.getAttribute("data-open-url"), { credentials: "same-origin" }).then(function (res) {
+            if (!res.ok) return null;
+            return res.text();
+          }).then(function (html) {
+            if (html == null) return;
+            apply(html);
+          }).catch(function () {});
+        }
+        poll();
+        setInterval(poll, 5000);
+      })();
+    </script>
+    {{ end }}
   </body>
 </html>

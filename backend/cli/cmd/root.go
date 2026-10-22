@@ -17,6 +17,7 @@ import (
 	score_registration_infra "bridge-tab/internal/score-registration/infrastructure"
 	tournament "bridge-tab/internal/tournament-management/domain"
 	tournament_infra "bridge-tab/internal/tournament-management/infrastructure"
+	umpirecall "bridge-tab/internal/umpire-call"
 	user "bridge-tab/internal/user/domain"
 	user_infra "bridge-tab/internal/user/infrastructure"
 
@@ -67,6 +68,7 @@ func Execute() error {
 	tournament_infra.Migrate(db)
 	play_infra.Migrate(db)
 	score_registration_infra.Migrate(db)
+	umpirecall.Migrate(db)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()

@@ -1,0 +1,11 @@
+<div id="umpire-call" class="umpire-call {{ .State }}"{{ if .Polling }} hx-get="{{ .PollURL }}" hx-trigger="every 2s" hx-swap="outerHTML"{{ end }} aria-live="polite"{{ if .EnableInMs }} data-enable-in-ms="{{ .EnableInMs }}"{{ end }}>
+  {{ if .Waiting }}<p class="umpire-status">Czekamy na sędziego</p>{{ end }}
+  {{ if .Coming }}<p class="umpire-status">Sędzia idzie</p>{{ end }}
+  <form method="post" action="{{ .PostURL }}" hx-post="{{ .PostURL }}" hx-target="#umpire-call" hx-swap="outerHTML">
+    {{ if .CSRF }}<input type="hidden" name="csrf" value="{{ .CSRF }}">{{ end }}
+    <button type="submit"{{ if .Disabled }} disabled{{ end }}>
+      <span class="umpire-label">{{ if .Coming }}Ponowne wezwanie za <span class="umpire-seconds">{{ .Seconds }}</span> s{{ else }}{{ .Label }}{{ end }}</span>
+      <span class="umpire-loading">Wzywanie…</span>
+    </button>
+  </form>
+</div>
