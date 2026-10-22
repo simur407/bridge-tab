@@ -786,6 +786,68 @@ table.result td {
   }
 }
 
+.dir.n .umpire-call {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.4rem;
+  z-index: 3;
+  max-width: 11.5rem;
+  padding: 0.25rem;
+  background: #fff8d6;
+  border: 2px solid #111;
+  color: #111;
+  text-align: left;
+}
+
+.umpire-call.waiting {
+  background: #fff4cc;
+}
+
+.umpire-call.coming {
+  background: #e7f6e7;
+  border-color: #1d6b1d;
+}
+
+.umpire-call button {
+  width: auto;
+  margin: 0;
+  min-height: 0;
+  padding: 0.28rem 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.umpire-call button:disabled {
+  opacity: 0.72;
+}
+
+.umpire-call .umpire-loading {
+  display: none;
+}
+
+.umpire-call form.htmx-request .umpire-label {
+  display: none;
+}
+
+.umpire-call form.htmx-request .umpire-loading {
+  display: inline;
+}
+
+.umpire-call form.htmx-request button {
+  opacity: 0.72;
+}
+
+.umpire-status {
+  margin: 0 0 0.2rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.umpire-call.coming .umpire-status {
+  color: #145214;
+}
+
 .actions {
   margin-top: 1rem;
   text-align: center;

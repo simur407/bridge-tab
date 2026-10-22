@@ -170,7 +170,7 @@ func TestTeamLabel(t *testing.T) {
 		{Number: 2, Name: "  "},
 		{Number: 3, Name: ""},
 	}
-	if got := teamLabel(teams, 1); got != "Mostostal" {
+	if got := teamLabel(teams, 1); got != "1 Mostostal" {
 		t.Fatalf("named %q", got)
 	}
 	if got := teamLabel(teams, 2); got != "Drużyna 2" {

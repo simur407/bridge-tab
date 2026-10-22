@@ -42,6 +42,59 @@
   padding-bottom: 20px;
 }
 
+.umpire-call {
+  position: sticky;
+  bottom: 28px;
+  z-index: 5;
+  max-width: 28rem;
+  margin: 0.75rem 0;
+  padding: 0.65rem 0.75rem;
+  border: 2px solid #111;
+  background: #fff8d6;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+}
+
+.umpire-call.waiting {
+  background: #fff4cc;
+}
+
+.umpire-call.coming {
+  background: #e7f6e7;
+  border-color: #1d6b1d;
+}
+
+.umpire-call button {
+  width: 100%;
+  margin-top: 0;
+  min-height: 44px;
+  font-weight: 700;
+}
+
+.umpire-call button:disabled {
+  opacity: 0.72;
+}
+
+.umpire-call .umpire-loading {
+  display: none;
+}
+
+.umpire-call form.htmx-request .umpire-label {
+  display: none;
+}
+
+.umpire-call form.htmx-request .umpire-loading {
+  display: inline;
+}
+
+.umpire-status {
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+}
+
+.umpire-call.coming .umpire-status {
+  color: #145214;
+}
+
 /* Tooltip container */
 .tooltip {
   position: relative;

@@ -1,0 +1,70 @@
+<h1>Wezwania</h1>
+
+<h2>Otwarte</h2>
+{{ if .Open }}
+<table>
+  <thead>
+    <tr>
+      <th>Stół</th>
+      <th>Runda</th>
+      <th>NS</th>
+      <th>EW</th>
+      <th>Źródło</th>
+      <th>Czas</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Open }}
+    <tr>
+      <td>{{ .TableNumber }}</td>
+      <td>{{ .RoundNo }}</td>
+      <td>{{ .Ns }}</td>
+      <td>{{ .Ew }}</td>
+      <td>{{ .Source }}</td>
+      <td>{{ .When }}</td>
+      <td>
+        <form method="post" action="/tournaments/{{ $.TournamentId }}/umpire-calls/{{ .Id }}/answer">
+          <input type="hidden" name="csrf" value="{{ $.CSRF }}">
+          <button type="submit">Odebrano</button>
+        </form>
+      </td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+{{ else }}
+<p>Brak otwartych wezwań.</p>
+{{ end }}
+
+<h2>Historia</h2>
+{{ if .Answered }}
+<table>
+  <thead>
+    <tr>
+      <th>Stół</th>
+      <th>Runda</th>
+      <th>NS</th>
+      <th>EW</th>
+      <th>Źródło</th>
+      <th>Wezwano</th>
+      <th>Odebrano</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Answered }}
+    <tr>
+      <td>{{ .TableNumber }}</td>
+      <td>{{ .RoundNo }}</td>
+      <td>{{ .Ns }}</td>
+      <td>{{ .Ew }}</td>
+      <td>{{ .Source }}</td>
+      <td>{{ .When }}</td>
+      <td>{{ .Answered }}</td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+{{ else }}
+<p>Brak odebranych wezwań.</p>
+{{ end }}

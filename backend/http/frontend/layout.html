@@ -25,5 +25,71 @@
       {{ .UserId }}
     </div>
     {{ end }}
+    <script>
+      (function () {
+        var timer;
+        function enable(el) {
+          if (timer) {
+            clearInterval(timer);
+            timer = null;
+          }
+          if (!el || !el.parentNode) return;
+          el.className = "umpire-call idle";
+          el.removeAttribute("data-enable-in-ms");
+          el.removeAttribute("data-deadline");
+          var status = el.querySelector(".umpire-status");
+          if (status && status.parentNode) status.parentNode.removeChild(status);
+          var button = el.querySelector("button");
+          if (!button) return;
+          button.disabled = false;
+          var label = button.querySelector(".umpire-label");
+          if (label) label.textContent = "Wezwij sędziego";
+        }
+        function tick() {
+          var el = document.getElementById("umpire-call");
+          if (!el) return;
+          var deadline = parseInt(el.getAttribute("data-deadline") || "0", 10);
+          if (!deadline) return;
+          var left = deadline - Date.now();
+          if (left <= 0) {
+            enable(el);
+            return;
+          }
+          var secondsEl = el.querySelector(".umpire-seconds");
+          if (secondsEl) {
+            var secs = Math.ceil(left / 1000);
+            if (secs < 1) secs = 1;
+            secondsEl.textContent = String(secs);
+          }
+        }
+        function arm() {
+          if (timer) {
+            clearInterval(timer);
+            timer = null;
+          }
+          var el = document.getElementById("umpire-call");
+          if (!el) return;
+          var raw = el.getAttribute("data-enable-in-ms");
+          if (!raw) return;
+          var ms = parseInt(raw, 10);
+          if (!(ms > 0)) {
+            enable(el);
+            return;
+          }
+          var deadline = Date.now() + ms;
+          var stamped = el.getAttribute("data-deadline");
+          if (stamped) {
+            var prev = parseInt(stamped, 10);
+            if (prev < deadline) deadline = prev;
+          } else {
+            el.setAttribute("data-deadline", String(deadline));
+          }
+          tick();
+          timer = setInterval(tick, 250);
+        }
+        document.addEventListener("DOMContentLoaded", arm);
+        document.body.addEventListener("htmx:afterSwap", arm);
+      })();
+    </script>
   </body>
 </html>

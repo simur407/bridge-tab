@@ -356,7 +356,7 @@ func teamLabel(teams []tournament_domain.TeamDto, number int) string {
 		if team.Number == number {
 			name := strings.TrimSpace(team.Name)
 			if name != "" {
-				return name
+				return strconv.Itoa(number) + " " + name
 			}
 			break
 		}

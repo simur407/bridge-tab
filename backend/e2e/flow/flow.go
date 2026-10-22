@@ -19,6 +19,7 @@ import (
 	tournament_query "bridge-tab/internal/tournament-management/application/query"
 	tournament_domain "bridge-tab/internal/tournament-management/domain"
 	tournament_infra "bridge-tab/internal/tournament-management/infrastructure"
+	umpirecall "bridge-tab/internal/umpire-call"
 	user_app "bridge-tab/internal/user/application"
 	user_infra "bridge-tab/internal/user/infrastructure"
 
@@ -65,6 +66,7 @@ func New(t *testing.T) *Flow {
 	tournament_infra.Migrate(db)
 	play_infra.Migrate(db)
 	score_registration_infra.Migrate(db)
+	umpirecall.Migrate(db)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	t.Cleanup(cancel)
