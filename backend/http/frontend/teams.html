@@ -10,11 +10,13 @@
   {{ end }}
   {{ if .JoinedTeam.Number }}
   <h3>Drużyna {{ .JoinedTeam.Number }}{{ if .JoinedTeam.Name }} - {{ .JoinedTeam.Name }}{{ end }}</h3>
-  <form method="get" action="/round-registration/{{ .TournamentId }}/add-round">
-    <input type="submit" value="Wpisz rozdanie"/>
+  <form method="get" action="/round-registration/{{ .TournamentId }}">
+    <input type="submit" value="Rozdania"/>
   </form>
   {{ end }}
 {{ else }}
+<p>Strona przełączy się automatycznie po starcie turnieju.</p>
+<div id="team-wait" hx-get="/tournaments/{{ .TournamentId }}/teams" hx-trigger="every 3s" hx-swap="none">
   <h2>Drużyny</h2>
   {{ range .Teams }}
     {{ if eq .Id $.JoinedTeam.Id }}
@@ -45,4 +47,5 @@
       {{ end }}
     {{ end }}
   {{ end }}
+</div>
 {{ end }}

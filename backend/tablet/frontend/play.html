@@ -1,4 +1,10 @@
-<div id="play">
+<div id="play"{{ if not .CanRegister }} hx-get="/play" hx-trigger="every 15s" hx-target="#play" hx-swap="outerHTML"{{ end }}>
+  {{ if and .Fragment (not .CanRegister) }}
+  <span id="ns-team-n" class="team" hx-swap-oob="true">{{ .NsTeamLabel }}</span>
+  <span id="ew-team-w" class="team" hx-swap-oob="true">{{ .EwTeamLabel }}</span>
+  <span id="ew-team-e" class="team" hx-swap-oob="true">{{ .EwTeamLabel }}</span>
+  <span id="ns-team-s" class="team" hx-swap-oob="true">{{ .NsTeamLabel }}</span>
+  {{ end }}
   {{ if .Finished }}
   <div class="end-screen">
     <p class="end-kicker">Stół {{ .TableNumber }}</p>
@@ -9,7 +15,7 @@
   </div>
   {{ else if .Empty }}
   <p class="status">Ten stół nie jest w rozgrywce.</p>
-  {{ else if and .AllDone (not .Held) }}
+  {{ else if and .AllDone (not .Held) .CanRegister }}
   <div class="end-screen" hx-get="/play" hx-trigger="every 3s" hx-swap="none">
     <p class="end-kicker">Stół {{ .TableNumber }}</p>
     <h1>Wszystkie rundy na tym stole są zakończone</h1>
@@ -18,10 +24,19 @@
   <header class="play-meta">
     <h1>Stół {{ .TableNumber }}</h1>
     <p>Runda {{ .RoundNo }}</p>
+    {{ if not .CanRegister }}
+    {{ if or .NsTeamLabel .EwTeamLabel }}
+    <p>{{ .NsTeamLabel }} – {{ .EwTeamLabel }}</p>
+    {{ end }}
+    {{ if .AllDone }}
+    <p>Wszystkie rundy na tym stole są zakończone.</p>
+    {{ end }}
+    {{ end }}
   </header>
 
   <div class="boards">
     {{ range .Boards }}
+    {{ if .CanRegister }}
     <a class="board {{ if .Recorded }}done{{ end }}{{ if .NsVulnerable }} vul-n vul-s{{ end }}{{ if .EwVulnerable }} vul-e vul-w{{ end }}" href="/play/boards/{{ .DealNo }}">
       <span class="board-no">{{ .DealNo }}</span>
       <span class="board-vul">{{ .VulnerableLabel }}</span>
@@ -31,40 +46,50 @@
       <span class="board-mark">wpisz</span>
       {{ end }}
     </a>
-    {{ end }}
-  </div>
-  {{ end }}
-</div>
-
-{{ if and .RoundComplete (or .HasNextRound .Held) }}
-<form id="advance-form" method="post" action="/play/advance">
-  <input type="hidden" name="csrf" value="{{ .CSRF }}">
-  <p class="status">Runda {{ .RoundNo }} jest zakończona.</p>
-  <div class="actions">
-    {{ if .HasNextRound }}
-    <button type="submit" class="accept">Przejdź do rundy {{ .NextRoundNo }}</button>
     {{ else }}
-    <button type="submit" class="accept">Zakończ</button>
-    {{ end }}
-  </div>
-</form>
-<div id="next-round-popup" class="confirm-overlay" hidden>
-  <div class="confirm-card">
-    <h3 class="warn">Runda {{ .RoundNo }} jest zakończona</h3>
-    {{ if .HasNextRound }}
-    <p>Za chwilę stół przejdzie do rundy {{ .NextRoundNo }}. Drużyny przy stole się zmienią.</p>
-    {{ else }}
-    <p>Za chwilę stół pokaże, że wszystkie rundy są zakończone.</p>
-    {{ end }}
-    <p class="hint">Automatyczne przejście za <span id="next-round-timer">20</span> s.</p>
-    <div class="actions">
-      <button type="button" id="next-round-stay">Zostań</button>
-      {{ if .HasNextRound }}
-      <button type="submit" class="accept" id="next-round-go" form="advance-form">Przejdź</button>
+    <div class="board {{ if .Recorded }}done{{ end }}{{ if .NsVulnerable }} vul-n vul-s{{ end }}{{ if .EwVulnerable }} vul-e vul-w{{ end }}">
+      <span class="board-no">{{ .DealNo }}</span>
+      <span class="board-vul">{{ .VulnerableLabel }}</span>
+      {{ if .Recorded }}
+      <span class="board-mark">rozegrane</span>
       {{ else }}
-      <button type="submit" class="accept" id="next-round-go" form="advance-form">Zakończ</button>
+      <span class="board-mark">nierozgrane</span>
       {{ end }}
     </div>
+    {{ end }}
+    {{ end }}
   </div>
+  {{ if and .CanRegister .RoundComplete (or .HasNextRound .Held) }}
+  <form id="advance-form" method="post" action="/play/advance">
+    <input type="hidden" name="csrf" value="{{ .CSRF }}">
+    <p class="status">Runda {{ .RoundNo }} jest zakończona.</p>
+    <div class="actions">
+      {{ if .HasNextRound }}
+      <button type="submit" class="accept">Przejdź do rundy {{ .NextRoundNo }}</button>
+      {{ else }}
+      <button type="submit" class="accept">Zakończ</button>
+      {{ end }}
+    </div>
+  </form>
+  <div id="next-round-popup" class="confirm-overlay" hidden>
+    <div class="confirm-card">
+      <h3 class="warn">Runda {{ .RoundNo }} jest zakończona</h3>
+      {{ if .HasNextRound }}
+      <p>Za chwilę stół przejdzie do rundy {{ .NextRoundNo }}. Drużyny przy stole się zmienią.</p>
+      {{ else }}
+      <p>Za chwilę stół pokaże, że wszystkie rundy są zakończone.</p>
+      {{ end }}
+      <p class="hint">Automatyczne przejście za <span id="next-round-timer">20</span> s.</p>
+      <div class="actions">
+        <button type="button" id="next-round-stay">Zostań</button>
+        {{ if .HasNextRound }}
+        <button type="submit" class="accept" id="next-round-go" form="advance-form">Przejdź</button>
+        {{ else }}
+        <button type="submit" class="accept" id="next-round-go" form="advance-form">Zakończ</button>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+  {{ end }}
+  {{ end }}
 </div>
-{{ end }}

@@ -120,6 +120,36 @@ func main() {
 		middleware.Transaction(db, nil),
 		postUmpireCall,
 	)
+	app.Get("/round-registration/:gameSessionId",
+		middleware.JwtGuard(),
+		middleware.Transaction(db, &sql.TxOptions{ReadOnly: true}),
+		GetTeamPlay,
+	)
+	app.Post("/round-registration/:gameSessionId/advance",
+		middleware.JwtGuard(),
+		middleware.Transaction(db, nil),
+		PostTeamAdvance,
+	)
+	app.Get("/round-registration/:gameSessionId/boards/:dealNo/results",
+		middleware.JwtGuard(),
+		middleware.Transaction(db, &sql.TxOptions{ReadOnly: true}),
+		GetTeamResults,
+	)
+	app.Get("/round-registration/:gameSessionId/boards/:dealNo",
+		middleware.JwtGuard(),
+		middleware.Transaction(db, &sql.TxOptions{ReadOnly: true}),
+		GetTeamBoard,
+	)
+	app.Post("/round-registration/:gameSessionId/verify",
+		middleware.JwtGuard(),
+		middleware.Transaction(db, &sql.TxOptions{ReadOnly: true}),
+		PostTeamVerify,
+	)
+	app.Post("/round-registration/:gameSessionId/add",
+		middleware.JwtGuard(),
+		middleware.Transaction(db, nil),
+		PostTeamAdd,
+	)
 	app.Get("/round-registration/:gameSessionId/add-round",
 		middleware.JwtGuard(),
 		middleware.Transaction(db, nil),
@@ -353,6 +383,15 @@ func GetTournamentTeams(c *fiber.Ctx) error {
 		}
 	}
 
+	if isHTMX(c) && tournament.StartedAt != "" {
+		target := "/tournaments/" + tournamentId + "/teams"
+		if joinedTeam.Id != "" {
+			target = "/round-registration/" + tournamentId
+		}
+		c.Set("HX-Redirect", target)
+		return c.SendStatus(fiber.StatusNoContent)
+	}
+
 	return c.Render("teams", fiber.Map{
 		"Title":          tournament.Name,
 		"TournamentId":   tournament.Id,
@@ -522,51 +561,11 @@ func LeaveTeam(c *fiber.Ctx) error {
 
 func GetAddRoundForm(c *fiber.Ctx) error {
 	gameSessionId := c.Params("gameSessionId")
-	if gameSessionId == "" {
-		log.Debug("gameSessionId is empty")
-		return notFound(c, "Nie znaleziono rozgrywki")
-	}
 	if err := uuid.Validate(gameSessionId); err != nil {
 		log.Debug(err)
 		return notFound(c, "Niepoprawny identyfikator rozgrywki")
 	}
-
-	playerId := c.Locals("user").(middleware.UserMetadata).Id
-	playSessionId := gameSessionId
-	playerTeamNumber, err := (&play_query.GetTeamNumberByMemberQuery{
-		PlaySessionId: playSessionId,
-		PlayerId:      playerId,
-	}).Execute(&play_infra.PostgresPlaySessionRepository{
-		Ctx: c.UserContext(),
-		Tx:  middleware.GetTransaction(c),
-	})
-	if err != nil {
-		log.Debug(err)
-		if errors.Is(err, play_domain.ErrTeamNotFound) {
-			return notFound(c, "Nie dołączono do żadnego zespołu")
-		}
-		return notFound(c, translateError(err))
-	}
-
-	var success string
-	if c.Query("success") != "" {
-		success = "Pomyślnie zapisano rozdanie"
-	}
-
-	canCall, err := umpireAvailable(c, playSessionId)
-	if err != nil {
-		log.Debug(err)
-		return notFound(c, "Błąd przy pobieraniu wezwania")
-	}
-
-	return c.Render("add-round", fiber.Map{
-		"Success":       success,
-		"Title":         "Dodaj rundę",
-		"GameSessionId": c.Params("gameSessionId"),
-		"PlayerTeam":    playerTeamNumber,
-		"CanCallUmpire": canCall,
-		"UserId":        playerId,
-	}, "layout")
+	return c.Redirect("/round-registration/"+gameSessionId, fiber.StatusSeeOther)
 }
 
 type Round struct {
@@ -600,6 +599,14 @@ func VerifyRound(c *fiber.Ctx) error {
 	}
 
 	contestantId := c.Locals("user").(middleware.UserMetadata).Id
+	tournament, err := loadTournament(c, gameSessionId)
+	if err != nil {
+		log.Debug(err)
+		return c.Render("error", fiber.Map{"Error": translateError(err)})
+	}
+	if !tournament.ScoreEntryMode.ContestantsCanRegister() {
+		return c.Render("error", fiber.Map{"Error": scoreEntryDenied(tournament.ScoreEntryMode)})
+	}
 
 	playSessionId := gameSessionId
 	round, err := (&play_query.GetMatchQuery{
@@ -654,6 +661,14 @@ func SubmitRound(c *fiber.Ctx) error {
 	}
 
 	contestantId := c.Locals("user").(middleware.UserMetadata).Id
+	tournament, err := loadTournament(c, gameSessionId)
+	if err != nil {
+		log.Debug(err)
+		return c.Render("error", fiber.Map{"Error": translateError(err)})
+	}
+	if !tournament.ScoreEntryMode.ContestantsCanRegister() {
+		return c.Render("error", fiber.Map{"Error": scoreEntryDenied(tournament.ScoreEntryMode)})
+	}
 	contract := body.ContractLevel + body.ContractSuit + body.ContractModifier
 	openingLead := body.OpeningLeadFigure + body.OpeningLeadSuit
 
@@ -668,7 +683,7 @@ func SubmitRound(c *fiber.Ctx) error {
 		Declarer:         body.Declarer,
 		OpeningLead:      openingLead,
 	}
-	err := submitRound.Execute(
+	err = submitRound.Execute(
 		&play_infra.PostgresBoardResultRepository{
 			Ctx: c.UserContext(),
 			Tx:  middleware.GetTransaction(c),

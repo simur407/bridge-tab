@@ -12,7 +12,7 @@ type PostgresTournamentReadRepository struct {
 }
 
 func (r *PostgresTournamentReadRepository) FindAll() ([]domain.TournamentDto, error) {
-	rows, err := r.Tx.QueryContext(r.Ctx, "SELECT id, name, started_at, finished_at, require_team_members FROM tournament_management.tournament")
+	rows, err := r.Tx.QueryContext(r.Ctx, "SELECT id, name, started_at, finished_at, require_team_members, score_entry_mode FROM tournament_management.tournament")
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +22,8 @@ func (r *PostgresTournamentReadRepository) FindAll() ([]domain.TournamentDto, er
 		var Tournament domain.TournamentDto
 		var StartedAt sql.NullString
 		var FinishedAt sql.NullString
-		err := rows.Scan(&Tournament.Id, &Tournament.Name, &StartedAt, &FinishedAt, &Tournament.RequireTeamMembers)
+		var scoreEntryMode string
+		err := rows.Scan(&Tournament.Id, &Tournament.Name, &StartedAt, &FinishedAt, &Tournament.RequireTeamMembers, &scoreEntryMode)
 		if err != nil {
 			return nil, err
 		}
@@ -32,6 +33,10 @@ func (r *PostgresTournamentReadRepository) FindAll() ([]domain.TournamentDto, er
 		}
 		if FinishedAt.Valid {
 			Tournament.FinishedAt = FinishedAt.String
+		}
+		Tournament.ScoreEntryMode = domain.ScoreEntryMode(scoreEntryMode)
+		if Tournament.ScoreEntryMode == "" {
+			Tournament.ScoreEntryMode = domain.ScoreEntryBoth
 		}
 		Tournaments = append(Tournaments, Tournament)
 	}
@@ -57,12 +62,13 @@ func (r *PostgresTournamentReadRepository) FindAllContestants(id *domain.Tournam
 }
 
 func (r *PostgresTournamentReadRepository) FindById(id string) (*domain.TournamentDto, error) {
-	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name, started_at, finished_at, require_team_members FROM tournament_management.tournament WHERE id = $1", id)
+	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name, started_at, finished_at, require_team_members, score_entry_mode FROM tournament_management.tournament WHERE id = $1", id)
 
 	var Tournament domain.TournamentDto
 	var StartedAt sql.NullString
 	var FinishedAt sql.NullString
-	err := row.Scan(&Tournament.Id, &Tournament.Name, &StartedAt, &FinishedAt, &Tournament.RequireTeamMembers)
+	var scoreEntryMode string
+	err := row.Scan(&Tournament.Id, &Tournament.Name, &StartedAt, &FinishedAt, &Tournament.RequireTeamMembers, &scoreEntryMode)
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +81,10 @@ func (r *PostgresTournamentReadRepository) FindById(id string) (*domain.Tourname
 	}
 	if FinishedAt.Valid {
 		Tournament.FinishedAt = FinishedAt.String
+	}
+	Tournament.ScoreEntryMode = domain.ScoreEntryMode(scoreEntryMode)
+	if Tournament.ScoreEntryMode == "" {
+		Tournament.ScoreEntryMode = domain.ScoreEntryBoth
 	}
 
 	return &Tournament, nil

@@ -22,11 +22,11 @@
         </div>
         {{ end }}
         <span class="seat">N</span>
-        {{ if .NsTeamLabel }}<span class="team">{{ .NsTeamLabel }}</span>{{ end }}
+        <span class="team" id="ns-team-n">{{ .NsTeamLabel }}</span>
       </div>
       <div class="dir w{{ if .ShowVulnerability }} {{ if .EwVulnerable }}vul{{ else }}nv{{ end }}{{ end }}">
         <span class="seat">W</span>
-        {{ if .EwTeamLabel }}<span class="team">{{ .EwTeamLabel }}</span>{{ end }}
+        <span class="team" id="ew-team-w">{{ .EwTeamLabel }}</span>
       </div>
       {{ end }}
       <main class="play-center">
@@ -41,11 +41,11 @@
       {{ if not (or .Finished (and .AllDone (not .Held))) }}
       <div class="dir e{{ if .ShowVulnerability }} {{ if .EwVulnerable }}vul{{ else }}nv{{ end }}{{ end }}">
         <span class="seat">E</span>
-        {{ if .EwTeamLabel }}<span class="team">{{ .EwTeamLabel }}</span>{{ end }}
+        <span class="team" id="ew-team-e">{{ .EwTeamLabel }}</span>
       </div>
       <div class="dir s{{ if .ShowVulnerability }} {{ if .NsVulnerable }}vul{{ else }}nv{{ end }}{{ end }}">
         <span class="seat">S</span>
-        {{ if .NsTeamLabel }}<span class="team">{{ .NsTeamLabel }}</span>{{ end }}
+        <span class="team" id="ns-team-s">{{ .NsTeamLabel }}</span>
       </div>
       {{ end }}
     </div>

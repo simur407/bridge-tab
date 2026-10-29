@@ -198,6 +198,91 @@ func TestSetRequireTeamMembersOnRemovedTournament(t *testing.T) {
 	assertError(t, err, ErrTournamentRemoved)
 }
 
+func TestSetScoreEntryMode(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	Tournament.Commit()
+
+	err := Tournament.SetScoreEntryMode(ScoreEntryTablet)
+
+	assertNoError(t, err)
+	if Tournament.State.ScoreEntryMode != ScoreEntryTablet {
+		t.Errorf("expected score entry mode tablet, got %s", Tournament.State.ScoreEntryMode)
+	}
+	assertEvent(t, Tournament.GetEvents(), TournamentScoreEntryModeChanged{
+		TournamentId:   id,
+		ScoreEntryMode: ScoreEntryTablet,
+	})
+}
+
+func TestSetScoreEntryModeUnchangedEmitsNothing(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	Tournament.Commit()
+
+	err := Tournament.SetScoreEntryMode(ScoreEntryBoth)
+
+	assertNoError(t, err)
+	assertNoEvents(t, Tournament.GetEvents())
+}
+
+func TestSetScoreEntryModeRejectsUnknown(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	Tournament.Commit()
+
+	err := Tournament.SetScoreEntryMode("paper")
+
+	assertError(t, err, ErrInvalidScoreEntryMode)
+	assertNoEvents(t, Tournament.GetEvents())
+	if _, parseErr := ParseScoreEntryMode("paper"); parseErr != ErrInvalidScoreEntryMode {
+		t.Errorf("expected parse error, got %v", parseErr)
+	}
+}
+
+func TestSetScoreEntryModeAfterStart(t *testing.T) {
+	Tournament := startableTournament(t)
+	assertNoError(t, Tournament.Start())
+	Tournament.Commit()
+
+	err := Tournament.SetScoreEntryMode(ScoreEntryUmpire)
+
+	assertNoError(t, err)
+	if Tournament.State.ScoreEntryMode != ScoreEntryUmpire {
+		t.Errorf("expected score entry mode umpire, got %s", Tournament.State.ScoreEntryMode)
+	}
+	assertEvent(t, Tournament.GetEvents(), TournamentScoreEntryModeChanged{
+		TournamentId:   id,
+		ScoreEntryMode: ScoreEntryUmpire,
+	})
+}
+
+func TestSetScoreEntryModeOnRemovedTournament(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	assertNoError(t, Tournament.Remove())
+	Tournament.Commit()
+
+	err := Tournament.SetScoreEntryMode(ScoreEntryContestant)
+
+	assertError(t, err, ErrTournamentRemoved)
+	assertNoEvents(t, Tournament.GetEvents())
+}
+
+func TestScoreEntryModePermissions(t *testing.T) {
+	if !ScoreEntryBoth.ContestantsCanRegister() || !ScoreEntryBoth.ContestantsCanReadScores() || !ScoreEntryBoth.TabletCanRegister() || !ScoreEntryBoth.TabletCanReadScores() {
+		t.Fatal("both should allow contestants and the tablet to register and read")
+	}
+	if ScoreEntryTablet.ContestantsCanRegister() || ScoreEntryTablet.ContestantsCanReadScores() || !ScoreEntryTablet.TabletCanRegister() || !ScoreEntryTablet.TabletCanReadScores() {
+		t.Fatal("tablet mode should limit contestants to played status")
+	}
+	if !ScoreEntryContestant.ContestantsCanRegister() || !ScoreEntryContestant.ContestantsCanReadScores() || ScoreEntryContestant.TabletCanRegister() || !ScoreEntryContestant.TabletCanReadScores() {
+		t.Fatal("contestant mode should let the tablet read scores without registering")
+	}
+	if ScoreEntryUmpire.ContestantsCanRegister() || ScoreEntryUmpire.ContestantsCanReadScores() || ScoreEntryUmpire.TabletCanRegister() || ScoreEntryUmpire.TabletCanReadScores() {
+		t.Fatal("umpire mode should block both clients")
+	}
+	if ScoreEntryMode("").ContestantsCanRegister() != true || ScoreEntryMode("").TabletCanRegister() != true {
+		t.Fatal("an empty mode should behave as both")
+	}
+}
+
 // ------ Join Tournament ------
 func TestJoinTournament(t *testing.T) {
 	// given

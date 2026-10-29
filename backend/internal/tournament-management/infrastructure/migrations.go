@@ -16,6 +16,7 @@ func Migrate(db *sql.DB) {
 	m0007_schedule(db)
 	m0008_protocol_without_round(db)
 	m0009_require_team_members(db)
+	m0010_score_entry_mode(db)
 }
 
 func m0001_initial(db *sql.DB) {
@@ -235,6 +236,21 @@ func m0009_require_team_members(db *sql.DB) {
 	_, err := db.Exec(`
 		ALTER TABLE tournament_management.tournament
 		ADD COLUMN IF NOT EXISTS require_team_members BOOLEAN NOT NULL DEFAULT true;
+	`)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func m0010_score_entry_mode(db *sql.DB) {
+	_, err := db.Exec(`
+		ALTER TABLE tournament_management.tournament
+		ADD COLUMN IF NOT EXISTS score_entry_mode TEXT NOT NULL DEFAULT 'both';
+		ALTER TABLE tournament_management.tournament
+		DROP CONSTRAINT IF EXISTS tournament_score_entry_mode_check;
+		ALTER TABLE tournament_management.tournament
+		ADD CONSTRAINT tournament_score_entry_mode_check
+		CHECK (score_entry_mode IN ('tablet', 'contestant', 'both', 'umpire'));
 	`)
 	if err != nil {
 		panic(err)

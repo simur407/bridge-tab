@@ -149,6 +149,8 @@ func explain(err error) error {
 		return errors.New("brak wyników do obliczenia")
 	case errors.Is(err, tournament_domain.ErrTournamentAlreadyStarted):
 		return errors.New("turniej jest już rozpoczęty")
+	case errors.Is(err, tournament_domain.ErrInvalidScoreEntryMode):
+		return errors.New("nieznany sposób wpisywania wyników")
 	case errors.Is(err, tournament_domain.ErrSomeTeamHasNoMembers):
 		return errors.New("każda drużyna musi mieć co najmniej jednego zawodnika")
 	case errors.Is(err, tournament_domain.ErrScheduleEmpty):
