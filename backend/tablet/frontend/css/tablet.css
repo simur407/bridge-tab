@@ -494,6 +494,10 @@ button.accept {
   margin: 0 0 0 0.6rem;
 }
 
+.dir .team:empty {
+  display: none;
+}
+
 .dir.w .team,
 .dir.e .team {
   margin: 0.35rem 0 0;

@@ -23,14 +23,19 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 	var Tournament domain.Tournament
 	var StartedAt sql.NullString
 	var FinishedAt sql.NullString
-	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name, started_at, finished_at, require_team_members FROM tournament_management.tournament WHERE id = $1", Id)
-	err := row.Scan(&Tournament.State.Id, &Tournament.State.Name, &StartedAt, &FinishedAt, &Tournament.State.RequireTeamMembers)
+	var scoreEntryMode string
+	row := r.Tx.QueryRowContext(r.Ctx, "SELECT id, name, started_at, finished_at, require_team_members, score_entry_mode FROM tournament_management.tournament WHERE id = $1", Id)
+	err := row.Scan(&Tournament.State.Id, &Tournament.State.Name, &StartedAt, &FinishedAt, &Tournament.State.RequireTeamMembers, &scoreEntryMode)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("%w: %v", ErrTournamentNotFound, Id)
 		}
 		return nil, err
+	}
+	Tournament.State.ScoreEntryMode = domain.ScoreEntryMode(scoreEntryMode)
+	if Tournament.State.ScoreEntryMode == "" {
+		Tournament.State.ScoreEntryMode = domain.ScoreEntryBoth
 	}
 
 	contestantRows, err := r.Tx.QueryContext(r.Ctx, "SELECT id FROM tournament_management.contestant WHERE tournament_id = $1", Id)
@@ -223,6 +228,8 @@ func (r *PostgresTournamentRepository) Save(t *domain.Tournament) error {
 			err = r.TournamentFinished(event)
 		case domain.TournamentRequireTeamMembersChanged:
 			err = r.tournamentRequireTeamMembersChanged(event)
+		case domain.TournamentScoreEntryModeChanged:
+			err = r.tournamentScoreEntryModeChanged(event)
 		case domain.SetCreated:
 			err = r.setCreated(event)
 		case domain.SetRemoved:
@@ -291,6 +298,11 @@ func (r *PostgresTournamentRepository) TournamentFinished(event domain.Tournamen
 
 func (r *PostgresTournamentRepository) tournamentRequireTeamMembersChanged(event domain.TournamentRequireTeamMembersChanged) error {
 	_, err := r.Tx.ExecContext(r.Ctx, "UPDATE tournament_management.tournament SET require_team_members = $1 WHERE id = $2", event.RequireTeamMembers, event.TournamentId)
+	return err
+}
+
+func (r *PostgresTournamentRepository) tournamentScoreEntryModeChanged(event domain.TournamentScoreEntryModeChanged) error {
+	_, err := r.Tx.ExecContext(r.Ctx, "UPDATE tournament_management.tournament SET score_entry_mode = $1 WHERE id = $2", event.ScoreEntryMode, event.TournamentId)
 	return err
 }
 

@@ -1,3 +1,9 @@
+body {
+  margin: 0;
+  background: #fff;
+  color: #111;
+}
+
 .header {
   display: flex;
   justify-content: center;
@@ -38,8 +44,7 @@
 }
 
 .content {
-  padding-top: 50px;
-  padding-bottom: 20px;
+  padding: 50px 16px 20px;
 }
 
 .umpire-call {
@@ -225,6 +230,424 @@ label::after {
 
 h3 {
   margin: 2px;
+}
+
+.hint {
+  text-align: center;
+  margin: 0.75rem 0;
+}
+
+.team-play {
+  box-sizing: border-box;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 0 0.75rem 1.25rem;
+  font-family: system-ui, sans-serif;
+  color: #111;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.team-play *,
+.team-play *::before,
+.team-play *::after {
+  box-sizing: border-box;
+}
+
+.team-play [hidden] {
+  display: none !important;
+}
+
+.team-play h1,
+.team-play h2,
+.team-play h3 {
+  font-weight: 600;
+  margin: 0.35rem 0;
+}
+
+.team-play h1 {
+  font-size: 1.45rem;
+}
+
+.team-play h2 {
+  font-size: 1.15rem;
+}
+
+.team-play .play-meta {
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.team-play .play-meta p {
+  margin: 0.2rem 0 0;
+}
+
+.team-play .play-meta strong {
+  font-weight: 700;
+}
+
+.team-play .next-hint {
+  margin: 1.1rem 0 0;
+  text-align: center;
+  color: #555;
+  font-weight: 500;
+}
+
+.team-play .next-hint.ready {
+  margin-top: 1rem;
+  padding: 0.65rem 0.75rem;
+  background: #fff8d6;
+  border: 2px solid #111;
+  color: #111;
+  font-weight: 700;
+}
+
+.team-play .end-screen {
+  text-align: center;
+  padding: 1.5rem 0.25rem;
+}
+
+.team-play .end-kicker {
+  margin: 0;
+  font-weight: 700;
+}
+
+.team-play .umpire-call {
+  position: static;
+  max-width: none;
+  margin: 0 0 0.75rem;
+}
+
+.team-play .boards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.55rem;
+}
+
+.team-play .board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: calc(50% - 0.3rem);
+  max-width: 8.5rem;
+  min-height: 6.2rem;
+  padding: 0.55rem 0.35rem;
+  border: 3px solid #bbb;
+  background: white;
+  color: inherit;
+  text-decoration: none;
+  text-align: center;
+  border-radius: 8px;
+}
+
+.team-play .board.done {
+  background: #e8f6e8;
+}
+
+.team-play .board.vul-n { border-top-color: #c62828; }
+.team-play .board.vul-s { border-bottom-color: #c62828; }
+.team-play .board.vul-w { border-left-color: #c62828; }
+.team-play .board.vul-e { border-right-color: #c62828; }
+
+.team-play .board-no,
+.team-play .board-vul,
+.team-play .board-mark {
+  display: block;
+}
+
+.team-play .board-no {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.team-play .board-vul {
+  margin-top: 0.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.team-play .board-mark {
+  font-size: 0.8rem;
+}
+
+.team-play .entry,
+.team-play #board-form,
+.team-play .step {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.team-play .step .actions,
+.team-play .entry > .actions {
+  position: sticky;
+  bottom: 20px;
+  z-index: 6;
+  margin-top: 0.75rem;
+  padding-top: 0.45rem;
+  background: #fff;
+  text-align: center;
+}
+
+.team-play .actions-nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.team-play .actions-nav > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.team-play button,
+.team-play .button-link {
+  margin: 0;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  padding: 0.7rem 0.6rem;
+  min-height: 48px;
+  border: 1px solid #111;
+  background: #f0f0f0;
+  color: #111;
+  text-align: center;
+  text-decoration: none;
+}
+
+.team-play button.accept {
+  background: #005ad7;
+  color: white;
+  border: 0;
+}
+
+.team-play .pass-action {
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.team-play label::after {
+  content: none;
+  line-height: inherit;
+}
+
+.team-play .combo-label {
+  margin: 0.85rem 0 0.35rem;
+  font-weight: 600;
+}
+
+.team-play .combo-grid > .combo-label:first-child {
+  margin-top: 0;
+}
+
+.team-play .combo-row,
+.team-play .choice-row {
+  display: flex;
+  width: 100%;
+}
+
+.team-play .combo-row + .combo-row {
+  margin-top: 0.35rem;
+}
+
+.team-play .combo-row input,
+.team-play .choice-row input,
+.team-play .compass input {
+  position: absolute !important;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  width: 1px;
+  border: 0;
+  overflow: hidden;
+}
+
+.team-play .combo-row label,
+.team-play .choice-row label {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0 0.12rem;
+  background: #f0f0f0;
+  color: #111;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.3rem 0.1rem;
+  font-size: clamp(0.72rem, 3.4vw, 1.05rem);
+  line-height: 1.1;
+}
+
+.team-play .choice-row label {
+  min-height: 3.3rem;
+  font-size: 1rem;
+}
+
+.team-play .combo-row input:checked + label,
+.team-play .choice-row input:checked + label,
+.team-play .compass input:checked + label {
+  background: rgb(0, 90, 215);
+  color: white;
+}
+
+.team-play .combo-row input:checked + label .suit,
+.team-play .choice-row input:checked + label .suit {
+  color: white;
+}
+
+.team-play .combo-spacer {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0 0.12rem;
+}
+
+.team-play .choice-row .suit {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.team-play .compass {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 16rem;
+  margin-top: 0.35rem;
+}
+
+.team-play .compass-row {
+  display: flex;
+  align-items: center;
+}
+
+.team-play .compass-end {
+  justify-content: center;
+}
+
+.team-play .compass-mid {
+  flex: 1 1 auto;
+  justify-content: space-between;
+}
+
+.team-play .compass label {
+  display: block;
+  width: 6.5rem;
+  max-width: 34%;
+  height: 5rem;
+  margin: 0.25rem 0;
+  background: #f0f0f0;
+  color: #111;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 5rem;
+}
+
+.team-play .entered {
+  margin-top: 0.45rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.team-play .entered-item {
+  display: inline-block;
+  margin: 0.15rem 0.45rem 0;
+}
+
+.team-play .entered-label {
+  display: block;
+  margin-bottom: 0.1rem;
+  color: #444;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.team-play .suit.red { color: #c00; }
+.team-play .suit.club { color: #111; }
+
+.team-play .warn { color: #c00; }
+
+.team-play .advance-form button {
+  width: 100%;
+}
+
+.team-play .confirm-overlay {
+  position: fixed;
+  top: 50px;
+  right: 0;
+  bottom: 20px;
+  left: 0;
+  z-index: 30;
+  overflow: auto;
+  background: rgba(250, 250, 250, 0.98);
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.team-play .confirm-card {
+  display: inline-block;
+  width: 100%;
+  max-width: 28rem;
+  text-align: left;
+}
+
+.team-play .confirm-overlay .actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.team-play .confirm-overlay .actions form,
+.team-play .confirm-overlay .actions button {
+  width: 100%;
+}
+
+.team-play table.result,
+.team-play table.result tbody,
+.team-play table.result tr,
+.team-play table.result td {
+  display: block;
+  width: 100%;
+}
+
+.team-play table.result {
+  border: 0;
+  margin: 0.75rem 0;
+}
+
+.team-play table.result tr:first-child {
+  display: none;
+}
+
+.team-play table.result tr {
+  margin: 0 0 0.75rem;
+  border: 1px solid #111;
+}
+
+.team-play table.result td {
+  border: 0;
+  border-bottom: 1px solid #ccc;
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  font-size: 1.15rem;
+}
+
+.team-play table.result tr td:last-child {
+  border-bottom: 0;
+}
+
+.team-play table.result td:before {
+  content: attr(data-label);
+  display: block;
+  margin-bottom: 0.1rem;
+  color: #444;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 @keyframes fadeOut {

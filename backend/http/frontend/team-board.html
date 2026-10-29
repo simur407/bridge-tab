@@ -1,0 +1,112 @@
+<div class="team-play">
+  <div class="entry">
+    <header class="play-meta">
+      <h1>Stół {{ .TableNumber }}</h1>
+      <p>Runda {{ .RoundNo }} · rozdanie {{ .DealNo }}</p>
+      <p>jako {{ .Direction }} przeciwko {{ .OpponentLabel }}</p>
+      <p class="entered" id="entered" hidden></p>
+    </header>
+
+    <div id="dialog"></div>
+
+    <form id="board-form" data-verify-url="/round-registration/{{ .GameSessionId }}/verify">
+      <input type="hidden" name="dealNo" value="{{ .DealNo }}">
+      <input type="hidden" name="openingLeadFigure" id="openingLeadFigure" value="">
+      <input type="hidden" name="openingLeadSuit" id="openingLeadSuit" value="">
+      <input type="hidden" name="contractLevel" id="contractLevel" value="">
+      <input type="hidden" name="contractSuit" id="contractSuit" value="">
+      <input type="hidden" name="contractModifier" id="contractModifier" value="">
+      <input type="hidden" name="declarer" id="declarer" value="">
+      <input type="hidden" name="tricks" id="tricks" value="">
+
+      <section class="step" id="step-lead">
+        <div class="step-body">
+          <h2>Wist</h2>
+          <div id="lead-grid" class="combo-grid"></div>
+        </div>
+        <div class="actions">
+          <button type="button" class="pass-action" id="pass-button">4 x PAS</button>
+          <div class="actions-nav">
+            <a class="button-link" href="/round-registration/{{ .GameSessionId }}">Wróć</a>
+            <button type="button" class="accept" id="lead-next">Dalej</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="step" id="step-contract" hidden>
+        <div class="step-body">
+          <h2>Kontrakt</h2>
+          <div id="contract-grid" class="combo-grid"></div>
+        </div>
+        <div class="actions">
+          <div class="actions-nav">
+            <button type="button" id="contract-back">Wstecz</button>
+            <button type="button" class="accept" id="contract-next">Dalej</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="step" id="step-double" hidden>
+        <div class="step-body">
+          <h2>Kontra</h2>
+          <div class="choice-row">
+            <input type="radio" id="double-none" name="doubleChoice" value=""/>
+            <label for="double-none">Bez kontry</label>
+            <input type="radio" id="double-x" name="doubleChoice" value="x"/>
+            <label for="double-x">Kontra</label>
+            <input type="radio" id="double-xx" name="doubleChoice" value="xx"/>
+            <label for="double-xx">Rekontra</label>
+          </div>
+        </div>
+        <div class="actions">
+          <div class="actions-nav">
+            <button type="button" id="double-back">Wstecz</button>
+            <button type="button" class="accept" id="double-next">Dalej</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="step" id="step-declarer" hidden>
+        <div class="step-body">
+          <h2>Rozgrywający</h2>
+          <div class="compass">
+            <div class="compass-row compass-end">
+              <input type="radio" id="declarer-n" name="declarerChoice" value="N"/>
+              <label for="declarer-n">N</label>
+            </div>
+            <div class="compass-row compass-mid">
+              <input type="radio" id="declarer-w" name="declarerChoice" value="W"/>
+              <label for="declarer-w">W</label>
+              <input type="radio" id="declarer-e" name="declarerChoice" value="E"/>
+              <label for="declarer-e">E</label>
+            </div>
+            <div class="compass-row compass-end">
+              <input type="radio" id="declarer-s" name="declarerChoice" value="S"/>
+              <label for="declarer-s">S</label>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <div class="actions-nav">
+            <button type="button" id="declarer-back">Wstecz</button>
+            <button type="button" class="accept" id="declarer-next">Dalej</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="step" id="step-tricks" hidden>
+        <div class="step-body">
+          <h2>Ugrano lew</h2>
+          <div id="tricks-grid" class="combo-grid"></div>
+        </div>
+        <div class="actions">
+          <div class="actions-nav">
+            <button type="button" id="tricks-back">Wstecz</button>
+            <button type="button" class="accept" id="tricks-next">Dalej</button>
+          </div>
+        </div>
+      </section>
+    </form>
+  </div>
+</div>
+<script src="/script/board.js"></script>

@@ -10,12 +10,77 @@ import (
 
 type TournamentId string
 
+type ScoreEntryMode string
+
+const (
+	ScoreEntryTablet     ScoreEntryMode = "tablet"
+	ScoreEntryContestant ScoreEntryMode = "contestant"
+	ScoreEntryBoth       ScoreEntryMode = "both"
+	ScoreEntryUmpire     ScoreEntryMode = "umpire"
+)
+
+func (m ScoreEntryMode) Valid() bool {
+	switch m {
+	case ScoreEntryTablet, ScoreEntryContestant, ScoreEntryBoth, ScoreEntryUmpire:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m ScoreEntryMode) normalized() ScoreEntryMode {
+	if m == "" {
+		return ScoreEntryBoth
+	}
+	return m
+}
+
+func (m ScoreEntryMode) ContestantsCanRegister() bool {
+	switch m.normalized() {
+	case ScoreEntryContestant, ScoreEntryBoth:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m ScoreEntryMode) ContestantsCanReadScores() bool {
+	return m.ContestantsCanRegister()
+}
+
+func (m ScoreEntryMode) TabletCanRegister() bool {
+	switch m.normalized() {
+	case ScoreEntryTablet, ScoreEntryBoth:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m ScoreEntryMode) TabletCanReadScores() bool {
+	switch m.normalized() {
+	case ScoreEntryTablet, ScoreEntryBoth, ScoreEntryContestant:
+		return true
+	default:
+		return false
+	}
+}
+
+func ParseScoreEntryMode(value string) (ScoreEntryMode, error) {
+	mode := ScoreEntryMode(value)
+	if !mode.Valid() {
+		return "", ErrInvalidScoreEntryMode
+	}
+	return mode, nil
+}
+
 type TournamentState struct {
 	Id                 TournamentId
 	Name               string
 	StartedAt          *time.Time
 	FinishedAt         *time.Time
 	RequireTeamMembers bool
+	ScoreEntryMode     ScoreEntryMode
 	Teams              []*Team
 	Tables             []*Table
 	Contestants        []*Contestant
@@ -54,6 +119,11 @@ type TournamentFinished struct {
 type TournamentRequireTeamMembersChanged struct {
 	TournamentId       TournamentId
 	RequireTeamMembers bool
+}
+
+type TournamentScoreEntryModeChanged struct {
+	TournamentId   TournamentId
+	ScoreEntryMode ScoreEntryMode
 }
 
 type SetCreated struct {
@@ -165,6 +235,7 @@ var ErrScheduleTableAlreadyUsed = errors.New("table is already used in this roun
 var ErrScheduleTeamAlreadyUsed = errors.New("team is already playing in this round")
 var ErrScheduleSetAlreadyUsed = errors.New("set is already used in this round")
 var ErrNoSuchSchedule = errors.New("no such schedule entry")
+var ErrInvalidScoreEntryMode = errors.New("invalid score entry mode")
 
 func CreateTournament(id TournamentId, name string) *Tournament {
 	return &Tournament{
@@ -172,6 +243,7 @@ func CreateTournament(id TournamentId, name string) *Tournament {
 			Id:                 id,
 			Name:               name,
 			RequireTeamMembers: true,
+			ScoreEntryMode:     ScoreEntryBoth,
 			removed:            false,
 			Teams:              []*Team{},
 			Tables:             []*Table{},
@@ -280,6 +352,24 @@ func (t *Tournament) SetRequireTeamMembers(require bool) error {
 	t.events = append(t.events, TournamentRequireTeamMembersChanged{
 		TournamentId:       t.State.Id,
 		RequireTeamMembers: require,
+	})
+	return nil
+}
+
+func (t *Tournament) SetScoreEntryMode(mode ScoreEntryMode) error {
+	if t.State.removed {
+		return ErrTournamentRemoved
+	}
+	if !mode.Valid() {
+		return ErrInvalidScoreEntryMode
+	}
+	if t.State.ScoreEntryMode == mode {
+		return nil
+	}
+	t.State.ScoreEntryMode = mode
+	t.events = append(t.events, TournamentScoreEntryModeChanged{
+		TournamentId:   t.State.Id,
+		ScoreEntryMode: mode,
 	})
 	return nil
 }
@@ -865,6 +955,7 @@ type TournamentDto struct {
 	StartedAt          string
 	FinishedAt         string
 	RequireTeamMembers bool
+	ScoreEntryMode     ScoreEntryMode
 }
 
 type TournamentReadRepository interface {

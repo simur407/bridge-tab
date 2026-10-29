@@ -74,8 +74,13 @@ func getPlay(c *fiber.Ctx) error {
 	if isHTMX(c) {
 		if finished, _ := viewData["Finished"].(bool); finished {
 			c.Set("HX-Redirect", "/play")
+			return c.SendStatus(fiber.StatusNoContent)
 		}
-		return c.SendStatus(fiber.StatusNoContent)
+		if canRegister, _ := viewData["CanRegister"].(bool); canRegister {
+			return c.SendStatus(fiber.StatusNoContent)
+		}
+		viewData["Fragment"] = true
+		return fragment(c, "play", viewData)
 	}
 	return playView(c, "play", viewData)
 }
@@ -101,6 +106,10 @@ func getBoard(c *fiber.Ctx) error {
 	if !ok {
 		return fiber.NewError(fiber.StatusNotFound, "to rozdanie nie jest grane w tej rundzie")
 	}
+	mode := tournament.ScoreEntryMode
+	if !mode.TabletCanRegister() {
+		return c.Redirect("/play", fiber.StatusSeeOther)
+	}
 	data := boardPageData(tournament, a, play, board)
 	if board.Recorded {
 		return playView(c, "board-review", data)
@@ -109,7 +118,7 @@ func getBoard(c *fiber.Ctx) error {
 }
 
 func postVerify(c *fiber.Ctx) error {
-	play, _, a, err := loadTablePlayForDeal(c)
+	play, tournament, a, err := loadTablePlayForDeal(c)
 	if err != nil {
 		if redirect, ok := err.(redirectError); ok {
 			c.Set("HX-Redirect", redirect.To)
@@ -124,6 +133,9 @@ func postVerify(c *fiber.Ctx) error {
 	board, ok := findBoard(play.Boards, body.DealNo)
 	if !ok {
 		return rejectFragment(c, "error", fiber.Map{}, errors.New("to rozdanie nie jest grane w tej rundzie"))
+	}
+	if !tournament.ScoreEntryMode.TabletCanRegister() {
+		return rejectFragment(c, "error", fiber.Map{}, errors.New(tabletScoreEntryDenied(tournament.ScoreEntryMode)))
 	}
 	if board.Recorded {
 		return rejectFragment(c, "error", fiber.Map{}, errors.New("rozdanie już zostało wpisane"))
@@ -157,7 +169,7 @@ func postVerify(c *fiber.Ctx) error {
 }
 
 func postAdd(c *fiber.Ctx) error {
-	play, _, a, err := loadTablePlayForDeal(c)
+	play, tournament, a, err := loadTablePlayForDeal(c)
 	if err != nil {
 		if redirect, ok := err.(redirectError); ok {
 			c.Set("HX-Redirect", redirect.To)
@@ -172,6 +184,9 @@ func postAdd(c *fiber.Ctx) error {
 	board, ok := findBoard(play.Boards, body.DealNo)
 	if !ok {
 		return rejectFragment(c, "error", fiber.Map{}, errors.New("to rozdanie nie jest grane w tej rundzie"))
+	}
+	if !tournament.ScoreEntryMode.TabletCanRegister() {
+		return rejectFragment(c, "error", fiber.Map{}, errors.New(tabletScoreEntryDenied(tournament.ScoreEntryMode)))
 	}
 	if board.Recorded {
 		return rejectFragment(c, "error", fiber.Map{}, errors.New("rozdanie już zostało wpisane"))
@@ -205,7 +220,7 @@ func postAdd(c *fiber.Ctx) error {
 }
 
 func getResults(c *fiber.Ctx) error {
-	play, _, a, err := loadTablePlayForDeal(c)
+	play, tournament, a, err := loadTablePlayForDeal(c)
 	if err != nil {
 		if redirect, ok := err.(redirectError); ok {
 			return c.Redirect(redirect.To, fiber.StatusSeeOther)
@@ -219,6 +234,9 @@ func getResults(c *fiber.Ctx) error {
 	board, ok := findBoard(play.Boards, dealNo)
 	if !ok || !board.Recorded {
 		return fiber.NewError(fiber.StatusNotFound, "wyniki będą dostępne po wpisaniu rozdania")
+	}
+	if !tournament.ScoreEntryMode.TabletCanRegister() {
+		return rejectFragment(c, "error", fiber.Map{}, errors.New(tabletScoreEntryDenied(tournament.ScoreEntryMode)))
 	}
 	s := newStores(c)
 	matches, err := (&play_query.ListMatchesQuery{PlaySessionId: a.TournamentId}).Execute(s.playSession, s.boardResults)
@@ -252,13 +270,18 @@ func loadPlay(c *fiber.Ctx) (fiber.Map, error) {
 	if err != nil {
 		return nil, err
 	}
-	return playMap(tournament.Name, play, a), nil
+	return playMap(tournament, play, a), nil
 }
 
-func playMap(tournamentName string, play tablePlayView, a assignment) fiber.Map {
+func playMap(tournament *tournament_domain.TournamentDto, play tablePlayView, a assignment) fiber.Map {
+	mode := tournament.ScoreEntryMode
+	held := play.Held
+	if !mode.TabletCanRegister() && play.AllDone {
+		held = true
+	}
 	return fiber.Map{
 		"Title":          "Stół " + strconv.Itoa(a.TableNumber),
-		"TournamentName": tournamentName,
+		"TournamentName": tournament.Name,
 		"TableNumber":    play.TableNumber,
 		"RoundNo":        play.RoundNo,
 		"NsTeamNumber":   play.NsTeamNumber,
@@ -272,8 +295,23 @@ func playMap(tournamentName string, play tablePlayView, a assignment) fiber.Map 
 		"RoundComplete":  play.RoundComplete,
 		"HasNextRound":   play.HasNextRound,
 		"NextRoundNo":    play.NextRoundNo,
-		"Held":           play.Held,
+		"Held":           held,
 		"PlayScreen":     true,
+		"CanRegister":    mode.TabletCanRegister(),
+		"CanReadScores":  mode.TabletCanReadScores(),
+	}
+}
+
+func tabletScoreEntryDenied(mode tournament_domain.ScoreEntryMode) string {
+	switch mode {
+	case tournament_domain.ScoreEntryUmpire:
+		return "Wyniki wpisuje sędzia"
+	case tournament_domain.ScoreEntryTablet:
+		return "Wyniki wpisuje tablet"
+	case tournament_domain.ScoreEntryContestant:
+		return "Wyniki wpisują zawodnicy"
+	default:
+		return "Wyniki nie są dostępne"
 	}
 }
 
@@ -310,7 +348,11 @@ func loadTablePlayForDeal(c *fiber.Ctx) (tablePlayView, *tournament_domain.Tourn
 			return labeledPlay(s, a.TournamentId, play, tournament, a)
 		}
 	}
-	play := buildTablePlay(a.TableNumber, tournament.FinishedAt != "", matches, readHoldRound(c))
+	hold := readHoldRound(c)
+	if !tournament.ScoreEntryMode.TabletCanRegister() {
+		hold = 0
+	}
+	play := buildTablePlay(a.TableNumber, tournament.FinishedAt != "", matches, hold)
 	return labeledPlay(s, a.TournamentId, play, tournament, a)
 }
 
@@ -333,6 +375,9 @@ func loadTablePlayWithHold(c *fiber.Ctx, holdRound int) (tablePlayView, *tournam
 	matches, err := (&play_query.ListMatchesQuery{PlaySessionId: a.TournamentId}).Execute(s.playSession, s.boardResults)
 	if err != nil {
 		return tablePlayView{}, tournament, a, err
+	}
+	if !tournament.ScoreEntryMode.TabletCanRegister() {
+		holdRound = 0
 	}
 	play := buildTablePlay(a.TableNumber, tournament.FinishedAt != "", matches, holdRound)
 	return labeledPlay(s, a.TournamentId, play, tournament, a)

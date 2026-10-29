@@ -1,6 +1,23 @@
 <h1>{{ .TournamentName }}</h1>
 <p>Status: {{ .Status }}</p>
 <p>Kod dla zawodników: <code>{{ .Code }}</code></p>
+{{ if not .Finished }}
+<form method="post" action="/tournaments/{{ .TournamentId }}/score-entry" class="noprint">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <label>
+    Metoda wprowadzania wyników
+    <select name="scoreEntryMode">
+      <option value="tablet" {{ if eq .ScoreEntryMode "tablet" }}selected{{ end }}>Tablet</option>
+      <option value="contestant" {{ if eq .ScoreEntryMode "contestant" }}selected{{ end }}>Zawodnicy</option>
+      <option value="both" {{ if eq .ScoreEntryMode "both" }}selected{{ end }}>Tablet i zawodnicy</option>
+      <option value="umpire" {{ if eq .ScoreEntryMode "umpire" }}selected{{ end }}>Tylko sędzia</option>
+    </select>
+  </label>
+  <button type="submit">Zapisz metodę wprowadzania wyników</button>
+</form>
+{{ else }}
+<p class="hint">Metoda wprowadzania wyników: {{ .ScoreEntryLabel }}</p>
+{{ end }}
 {{ if not .Started }}
 <form method="post" action="/tournaments/{{ .TournamentId }}/settings" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">

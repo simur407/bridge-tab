@@ -125,6 +125,26 @@ func postSettings(c *fiber.Ctx) error {
 	return c.Redirect("/tournaments/"+tournament.Id, fiber.StatusSeeOther)
 }
 
+func postScoreEntry(c *fiber.Ctx) error {
+	s := newStores(c)
+	tournament, err := loadTournament(c, s)
+	if err != nil {
+		return err
+	}
+	data, err := tournamentPage(s, tournament)
+	if err != nil {
+		return err
+	}
+	cmd := tournament_cmd.SetScoreEntryModeCommand{
+		TournamentId:   tournament.Id,
+		ScoreEntryMode: c.FormValue("scoreEntryMode"),
+	}
+	if err := cmd.Execute(s.tournament); err != nil {
+		return reject(c, "tournament", data, err)
+	}
+	return c.Redirect("/tournaments/"+tournament.Id, fiber.StatusSeeOther)
+}
+
 func postStart(c *fiber.Ctx) error {
 	s := newStores(c)
 	tournament, err := loadTournament(c, s)
@@ -194,5 +214,24 @@ func tournamentPage(s stores, tournament *tournament_domain.TournamentDto) (fibe
 	data := pageData(tournament)
 	data["Contestants"] = rows
 	data["RequireTeamMembers"] = tournament.RequireTeamMembers
+	mode := tournament.ScoreEntryMode
+	if mode == "" {
+		mode = tournament_domain.ScoreEntryBoth
+	}
+	data["ScoreEntryMode"] = string(mode)
+	data["ScoreEntryLabel"] = scoreEntryLabel(mode)
 	return data, nil
+}
+
+func scoreEntryLabel(mode tournament_domain.ScoreEntryMode) string {
+	switch mode {
+	case tournament_domain.ScoreEntryTablet:
+		return "Tablet"
+	case tournament_domain.ScoreEntryContestant:
+		return "Zawodnicy"
+	case tournament_domain.ScoreEntryUmpire:
+		return "Tylko sędzia"
+	default:
+		return "Tablet i zawodnicy"
+	}
 }
