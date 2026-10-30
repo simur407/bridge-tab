@@ -1,6 +1,6 @@
 <h1>Protokoły</h1>
 {{ if not .Started }}
-<form method="post" action="/tournaments/{{ .TournamentId }}/protocols" class="noprint">
+<form method="post" action="{{ base }}/tournaments/{{ .TournamentId }}/protocols" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <label>
     Numer rozdania
@@ -34,7 +34,7 @@
       <td>{{ .Vulnerable }}</td>
       {{ if not $.Started }}
       <td class="noprint">
-        <form method="post" action="/tournaments/{{ $.TournamentId }}/protocols/{{ .BoardNo }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
+        <form method="post" action="{{ base }}/tournaments/{{ $.TournamentId }}/protocols/{{ .BoardNo }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
           <input type="hidden" name="csrf" value="{{ $.CSRF }}">
           <button type="submit">Usuń</button>
         </form>

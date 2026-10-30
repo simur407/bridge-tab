@@ -60,7 +60,7 @@ func postSet(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "sets", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id+"/sets", fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id+"/sets"), fiber.StatusSeeOther)
 }
 
 func postRemoveSet(c *fiber.Ctx) error {
@@ -77,7 +77,7 @@ func postRemoveSet(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "sets", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id+"/sets", fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id+"/sets"), fiber.StatusSeeOther)
 }
 
 func setsPage(s stores, tournament *tournament_domain.TournamentDto) (fiber.Map, error) {

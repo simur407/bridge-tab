@@ -1,12 +1,12 @@
 <h1>{{ .TournamentName }}</h1>
 <p class="noprint">Matchpointy. <button type="button" onclick="window.print()">Drukuj</button></p>
 {{ if not .Finished }}
-<form method="post" action="/tournaments/{{ .TournamentId }}/scores/finish" class="noprint">
+<form method="post" action="{{ base }}/tournaments/{{ .TournamentId }}/scores/finish" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <button type="submit">Zakończ turniej</button>
 </form>
 {{ end }}
-<form method="post" action="/tournaments/{{ .TournamentId }}/scores/calculate" class="noprint">
+<form method="post" action="{{ base }}/tournaments/{{ .TournamentId }}/scores/calculate" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <button type="submit">Oblicz wyniki</button>
 </form>

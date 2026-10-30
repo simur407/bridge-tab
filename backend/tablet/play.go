@@ -64,16 +64,16 @@ func getPlay(c *fiber.Ctx) error {
 	if err != nil {
 		if redirect, ok := err.(redirectError); ok {
 			if isHTMX(c) {
-				c.Set("HX-Redirect", redirect.To)
+				c.Set("HX-Redirect", path(redirect.To))
 				return c.SendStatus(fiber.StatusNoContent)
 			}
-			return c.Redirect(redirect.To, fiber.StatusSeeOther)
+			return c.Redirect(path(redirect.To), fiber.StatusSeeOther)
 		}
 		return err
 	}
 	if isHTMX(c) {
 		if finished, _ := viewData["Finished"].(bool); finished {
-			c.Set("HX-Redirect", "/play")
+			c.Set("HX-Redirect", path("/play"))
 			return c.SendStatus(fiber.StatusNoContent)
 		}
 		if canRegister, _ := viewData["CanRegister"].(bool); canRegister {
@@ -87,14 +87,14 @@ func getPlay(c *fiber.Ctx) error {
 
 func postAdvance(c *fiber.Ctx) error {
 	clearHoldRound(c)
-	return c.Redirect("/play", fiber.StatusSeeOther)
+	return c.Redirect(path("/play"), fiber.StatusSeeOther)
 }
 
 func getBoard(c *fiber.Ctx) error {
 	play, tournament, a, err := loadTablePlayForDeal(c)
 	if err != nil {
 		if redirect, ok := err.(redirectError); ok {
-			return c.Redirect(redirect.To, fiber.StatusSeeOther)
+			return c.Redirect(path(redirect.To), fiber.StatusSeeOther)
 		}
 		return err
 	}
@@ -108,7 +108,7 @@ func getBoard(c *fiber.Ctx) error {
 	}
 	mode := tournament.ScoreEntryMode
 	if !mode.TabletCanRegister() {
-		return c.Redirect("/play", fiber.StatusSeeOther)
+		return c.Redirect(path("/play"), fiber.StatusSeeOther)
 	}
 	data := boardPageData(tournament, a, play, board)
 	if board.Recorded {
@@ -121,7 +121,7 @@ func postVerify(c *fiber.Ctx) error {
 	play, tournament, a, err := loadTablePlayForDeal(c)
 	if err != nil {
 		if redirect, ok := err.(redirectError); ok {
-			c.Set("HX-Redirect", redirect.To)
+			c.Set("HX-Redirect", path(redirect.To))
 			return c.SendStatus(fiber.StatusNoContent)
 		}
 		return err
@@ -172,7 +172,7 @@ func postAdd(c *fiber.Ctx) error {
 	play, tournament, a, err := loadTablePlayForDeal(c)
 	if err != nil {
 		if redirect, ok := err.(redirectError); ok {
-			c.Set("HX-Redirect", redirect.To)
+			c.Set("HX-Redirect", path(redirect.To))
 			return c.SendStatus(fiber.StatusNoContent)
 		}
 		return err
@@ -215,7 +215,7 @@ func postAdd(c *fiber.Ctx) error {
 		setHoldRound(c, play.RoundNo)
 	}
 
-	c.Set("HX-Redirect", "/play/boards/"+strconv.Itoa(body.DealNo))
+	c.Set("HX-Redirect", path("/play/boards/"+strconv.Itoa(body.DealNo)))
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
@@ -223,7 +223,7 @@ func getResults(c *fiber.Ctx) error {
 	play, tournament, a, err := loadTablePlayForDeal(c)
 	if err != nil {
 		if redirect, ok := err.(redirectError); ok {
-			return c.Redirect(redirect.To, fiber.StatusSeeOther)
+			return c.Redirect(path(redirect.To), fiber.StatusSeeOther)
 		}
 		return err
 	}

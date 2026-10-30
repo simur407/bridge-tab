@@ -9,7 +9,7 @@
 
     <div id="dialog"></div>
 
-    <form id="board-form" data-verify-url="/round-registration/{{ .GameSessionId }}/verify">
+    <form id="board-form" data-verify-url="{{ base }}/round-registration/{{ .GameSessionId }}/verify">
       <input type="hidden" name="dealNo" value="{{ .DealNo }}">
       <input type="hidden" name="openingLeadFigure" id="openingLeadFigure" value="">
       <input type="hidden" name="openingLeadSuit" id="openingLeadSuit" value="">
@@ -27,7 +27,7 @@
         <div class="actions">
           <button type="button" class="pass-action" id="pass-button">4 x PAS</button>
           <div class="actions-nav">
-            <a class="button-link" href="/round-registration/{{ .GameSessionId }}">Wróć</a>
+            <a class="button-link" href="{{ base }}/round-registration/{{ .GameSessionId }}">Wróć</a>
             <button type="button" class="accept" id="lead-next">Dalej</button>
           </div>
         </div>
@@ -109,4 +109,4 @@
     </form>
   </div>
 </div>
-<script src="/script/board.js"></script>
+<script src="{{ base }}/script/board.js"></script>

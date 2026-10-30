@@ -24,7 +24,7 @@
     <div id="dialog-error"></div>
     <div class="actions">
       <button type="button" onclick="htmx.remove(htmx.closest(this, '.confirm-overlay'))">Nie zgadza się/Anuluj</button>
-      <form hx-post="/round-registration/{{ .GameSessionId }}/add" hx-target="#dialog" hx-swap="innerHTML" hx-disabled-elt="find button">
+      <form hx-post="{{ base }}/round-registration/{{ .GameSessionId }}/add" hx-target="#dialog" hx-swap="innerHTML" hx-disabled-elt="find button">
         <input type="hidden" name="dealNo" value="{{ .DealNo }}"/>
         <input type="hidden" name="contractLevel" value="{{ .ContractLevel }}"/>
         <input type="hidden" name="contractSuit" value="{{ .ContractSuit }}"/>

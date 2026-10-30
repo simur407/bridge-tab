@@ -26,7 +26,7 @@
     <div class="actions">
       <button type="button" class="pass-action" id="pass-button">4 x PAS</button>
       <div class="actions-nav">
-        <a class="button-link" href="/play">Wróć</a>
+        <a class="button-link" href="{{ base }}/play">Wróć</a>
         <button type="button" class="accept" id="lead-next">Dalej</button>
       </div>
     </div>
@@ -324,7 +324,7 @@
     if (!window.htmx) {
       return;
     }
-    htmx.ajax("POST", "/play/verify", {
+    htmx.ajax("POST", "{{ base }}/play/verify", {
       source: form,
       target: "#dialog",
       swap: "innerHTML"

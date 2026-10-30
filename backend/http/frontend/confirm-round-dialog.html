@@ -26,7 +26,7 @@
   <form method="dialog">
     <button>Nie zgadza się/Anuluj</button>
   </form><br>
-  <form hx-post="/round-registration/{{ .GameSessionId }}/add-round" hx-swap="afterbegin" hx-target="#content">
+  <form hx-post="{{ base }}/round-registration/{{ .GameSessionId }}/add-round" hx-swap="afterbegin" hx-target="#content">
     <input type="text" name="dealNo" value="{{ .DealNo }}" hidden/>
     <input type="text" name="versusTeamNumber" value="{{ .VersusTeamNumber }}" hidden/>
     <input type="text" name="contractLevel" value="{{ .ContractLevel }}" hidden/>

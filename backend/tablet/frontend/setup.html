@@ -3,14 +3,14 @@
 <p class="hint">To urządzenie jest przypisane i turniej już trwa. Nie można zmienić stołu.</p>
 <p>Turniej: <b>{{ .TournamentName }}</b></p>
 <p>Stół: <b>{{ .TableNumber }}</b></p>
-<p><a href="/">Dalej</a></p>
+<p><a href="{{ base }}/">Dalej</a></p>
 {{ else }}
-<form method="post" action="/setup">
+<form method="post" action="{{ base }}/setup">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <label>
     Turniej
     <select name="tournamentId" required
-            hx-get="/setup/tables"
+            hx-get="{{ base }}/setup/tables"
             hx-target="#tables"
             hx-swap="innerHTML"
             hx-trigger="change"
@@ -38,7 +38,7 @@
   <button type="submit">Połącz</button>
 </form>
 {{ end }}
-<form method="post" action="/logout" class="logout">
+<form method="post" action="{{ base }}/logout" class="logout">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <button type="submit">Wyloguj</button>
 </form>

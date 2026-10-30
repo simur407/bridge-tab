@@ -68,7 +68,7 @@ func postTeam(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "teams", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id+"/teams", fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id+"/teams"), fiber.StatusSeeOther)
 }
 
 func postRenameTeam(c *fiber.Ctx) error {
@@ -89,7 +89,7 @@ func postRenameTeam(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "teams", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id+"/teams", fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id+"/teams"), fiber.StatusSeeOther)
 }
 
 func postRemoveTeam(c *fiber.Ctx) error {
@@ -106,7 +106,7 @@ func postRemoveTeam(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "teams", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id+"/teams", fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id+"/teams"), fiber.StatusSeeOther)
 }
 
 func teamsPage(s stores, tournament *tournament_domain.TournamentDto) (fiber.Map, error) {

@@ -40,7 +40,7 @@ func setAssignment(c *fiber.Ctx, a assignment) {
 		HTTPOnly: true,
 		SameSite: "Lax",
 		Secure:   cookieSecure,
-		Path:     "/",
+		Path:     cookiePath(),
 		Expires:  expires,
 	})
 	c.Cookie(&fiber.Cookie{
@@ -49,7 +49,7 @@ func setAssignment(c *fiber.Ctx, a assignment) {
 		HTTPOnly: true,
 		SameSite: "Lax",
 		Secure:   cookieSecure,
-		Path:     "/",
+		Path:     cookiePath(),
 		Expires:  expires,
 	})
 }
@@ -73,7 +73,7 @@ func setHoldRound(c *fiber.Ctx, roundNo int) {
 		HTTPOnly: true,
 		SameSite: "Lax",
 		Secure:   cookieSecure,
-		Path:     "/",
+		Path:     cookiePath(),
 		Expires:  time.Now().Add(assignmentDays * 24 * time.Hour),
 	})
 }
@@ -85,7 +85,7 @@ func clearHoldRound(c *fiber.Ctx) {
 		HTTPOnly: true,
 		SameSite: "Lax",
 		Secure:   cookieSecure,
-		Path:     "/",
+		Path:     cookiePath(),
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 	})

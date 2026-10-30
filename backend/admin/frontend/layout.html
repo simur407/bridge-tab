@@ -5,24 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
     <title>{{ if .Title }}{{ .Title }} — {{ end }}Bridge Tab</title>
-    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="{{ base }}/css/admin.css">
   </head>
   <body>
     {{ if .CSRF }}
     <nav class="nav">
-      <a href="/tournaments">Turnieje</a>
+      <a href="{{ base }}/tournaments">Turnieje</a>
       {{ if .TournamentId }}
-      <a href="/tournaments/{{ .TournamentId }}">{{ .TournamentName }}</a>
-      <a href="/tournaments/{{ .TournamentId }}/teams">Drużyny</a>
-      <a href="/tournaments/{{ .TournamentId }}/tables">Stoły</a>
-      <a href="/tournaments/{{ .TournamentId }}/protocols">Protokoły</a>
-      <a href="/tournaments/{{ .TournamentId }}/sets">Komplety</a>
-      <a href="/tournaments/{{ .TournamentId }}/schedule">Harmonogram</a>
-      <a href="/tournaments/{{ .TournamentId }}/rounds">Rozdania</a>
-      <a href="/tournaments/{{ .TournamentId }}/scores">Wyniki</a>
-      <a id="umpire-nav" href="/tournaments/{{ .TournamentId }}/umpire-calls" data-open-url="/tournaments/{{ .TournamentId }}/umpire-calls/open">Wezwania</a>
+      <a href="{{ base }}/tournaments/{{ .TournamentId }}">{{ .TournamentName }}</a>
+      <a href="{{ base }}/tournaments/{{ .TournamentId }}/teams">Drużyny</a>
+      <a href="{{ base }}/tournaments/{{ .TournamentId }}/tables">Stoły</a>
+      <a href="{{ base }}/tournaments/{{ .TournamentId }}/protocols">Protokoły</a>
+      <a href="{{ base }}/tournaments/{{ .TournamentId }}/sets">Komplety</a>
+      <a href="{{ base }}/tournaments/{{ .TournamentId }}/schedule">Harmonogram</a>
+      <a href="{{ base }}/tournaments/{{ .TournamentId }}/rounds">Rozdania</a>
+      <a href="{{ base }}/tournaments/{{ .TournamentId }}/scores">Wyniki</a>
+      <a id="umpire-nav" href="{{ base }}/tournaments/{{ .TournamentId }}/umpire-calls" data-open-url="{{ base }}/tournaments/{{ .TournamentId }}/umpire-calls/open">Wezwania</a>
       {{ end }}
-      <form method="post" action="/logout">
+      <form method="post" action="{{ base }}/logout">
         <input type="hidden" name="csrf" value="{{ .CSRF }}">
         <button type="submit">Wyloguj</button>
       </form>

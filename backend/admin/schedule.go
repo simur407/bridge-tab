@@ -109,7 +109,7 @@ func postSchedule(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "schedule", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id+"/schedule", fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id+"/schedule"), fiber.StatusSeeOther)
 }
 
 func postRemoveSchedule(c *fiber.Ctx) error {
@@ -134,7 +134,7 @@ func postRemoveSchedule(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "schedule", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id+"/schedule", fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id+"/schedule"), fiber.StatusSeeOther)
 }
 
 func schedulePage(s stores, tournament *tournament_domain.TournamentDto) (fiber.Map, error) {

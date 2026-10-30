@@ -25,9 +25,9 @@
     </div>
     <div class="actions">
       <div class="actions-nav">
-        <a class="button-link" href="/round-registration/{{ .GameSessionId }}">Wróć</a>
+        <a class="button-link" href="{{ base }}/round-registration/{{ .GameSessionId }}">Wróć</a>
         <button type="button"
-                hx-get="/round-registration/{{ .GameSessionId }}/boards/{{ .DealNo }}/results"
+                hx-get="{{ base }}/round-registration/{{ .GameSessionId }}/boards/{{ .DealNo }}/results"
                 hx-target="#other-results"
                 hx-swap="innerHTML">
           Pokaż wyniki

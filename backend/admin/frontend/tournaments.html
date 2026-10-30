@@ -1,5 +1,5 @@
 <h1>Turnieje</h1>
-<form method="post" action="/tournaments" class="noprint">
+<form method="post" action="{{ base }}/tournaments" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <label>
     Nazwa
@@ -51,7 +51,7 @@
   <tbody>
     {{ range .Tournaments }}
     <tr>
-      <td><a href="/tournaments/{{ .Id }}">{{ .Name }}</a></td>
+      <td><a href="{{ base }}/tournaments/{{ .Id }}">{{ .Name }}</a></td>
       <td>{{ .Status }}</td>
       <td><code>{{ .Code }}</code></td>
     </tr>

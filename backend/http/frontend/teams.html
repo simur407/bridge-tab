@@ -2,26 +2,26 @@
 {{ if .Started }}
   <h2>Turniej wystartował!</h2>
   {{ if .CanCallUmpire }}
-  <div id="umpire-call" class="umpire-call idle" hx-get="/tournaments/{{ .TournamentId }}/umpire-call" hx-trigger="load" hx-swap="outerHTML" aria-live="polite">
-    <form method="post" action="/tournaments/{{ .TournamentId }}/umpire-call" hx-post="/tournaments/{{ .TournamentId }}/umpire-call" hx-target="#umpire-call" hx-swap="outerHTML" hx-disabled-elt="find button">
+  <div id="umpire-call" class="umpire-call idle" hx-get="{{ base }}/tournaments/{{ .TournamentId }}/umpire-call" hx-trigger="load" hx-swap="outerHTML" aria-live="polite">
+    <form method="post" action="{{ base }}/tournaments/{{ .TournamentId }}/umpire-call" hx-post="{{ base }}/tournaments/{{ .TournamentId }}/umpire-call" hx-target="#umpire-call" hx-swap="outerHTML" hx-disabled-elt="find button">
       <button type="submit"><span class="umpire-label">Wezwij sędziego</span><span class="umpire-loading">Wzywanie…</span></button>
     </form>
   </div>
   {{ end }}
   {{ if .JoinedTeam.Number }}
   <h3>Drużyna {{ .JoinedTeam.Number }}{{ if .JoinedTeam.Name }} - {{ .JoinedTeam.Name }}{{ end }}</h3>
-  <form method="get" action="/round-registration/{{ .TournamentId }}">
+  <form method="get" action="{{ base }}/round-registration/{{ .TournamentId }}">
     <input type="submit" value="Rozdania"/>
   </form>
   {{ end }}
 {{ else }}
 <p>Strona przełączy się automatycznie po starcie turnieju.</p>
-<div id="team-wait" hx-get="/tournaments/{{ .TournamentId }}/teams" hx-trigger="every 3s" hx-swap="none">
+<div id="team-wait" hx-get="{{ base }}/tournaments/{{ .TournamentId }}/teams" hx-trigger="every 3s" hx-swap="none">
   <h2>Drużyny</h2>
   {{ range .Teams }}
     {{ if eq .Id $.JoinedTeam.Id }}
     <div>
-      <form method="post" action="/tournaments/{{ $.TournamentId }}/teams/{{ .Id }}/leave">
+      <form method="post" action="{{ base }}/tournaments/{{ $.TournamentId }}/teams/{{ .Id }}/leave">
         <b>{{ .Number }}{{ if .Name }} - {{ .Name }}{{ end }}</b>
         <button type="submit">Opuść</button>
       </form>
@@ -30,7 +30,7 @@
       {{ if not $.JoinedTeam.Id }}
         {{ if lt (len .Members) 2 }}
             <div style="padding-top: 8px">
-              <form method="post" action="/tournaments/{{ $.TournamentId }}/teams/{{ .Id }}/join">
+              <form method="post" action="{{ base }}/tournaments/{{ $.TournamentId }}/teams/{{ .Id }}/join">
                 {{ .Number }}{{ if .Name }} - {{ .Name }}{{ end }}
                 <button type="submit">Dołącz do drużyny</button>
               </form>

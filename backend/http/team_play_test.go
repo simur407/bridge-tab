@@ -146,6 +146,7 @@ func TestTeamLabel(t *testing.T) {
 
 func TestFrontendTemplatesParse(t *testing.T) {
 	engine := html.New("frontend", ".html")
+	engine.AddFunc("base", func() string { return "" })
 	if err := engine.Load(); err != nil {
 		t.Fatal(err)
 	}

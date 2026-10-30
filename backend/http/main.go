@@ -3,6 +3,7 @@ package main
 import (
 	"bridge-tab/http/middleware"
 	auth "bridge-tab/internal/auth"
+	"bridge-tab/internal/basepath"
 	"bridge-tab/internal/idutil"
 	play_app "bridge-tab/internal/play/application"
 	play_query "bridge-tab/internal/play/application/query"
@@ -22,6 +23,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -35,6 +37,9 @@ import (
 )
 
 func main() {
+	basePath = basepath.Normalize(os.Getenv("HTTP_BASE_PATH"))
+	middleware.BasePath = basePath
+
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
 		panic("could not get current filename")
@@ -42,8 +47,11 @@ func main() {
 
 	frontendDirectory := filepath.Join(filepath.Dir(filename), "frontend")
 
+	views := html.New(frontendDirectory, ".html")
+	views.AddFunc("base", func() string { return basePath })
+
 	app := fiber.New(fiber.Config{
-		Views: html.New(frontendDirectory, ".html"),
+		Views: views,
 	})
 	app.Use(logger.New())
 	app.Use(recover.New())
@@ -218,10 +226,14 @@ func PostRegister(c *fiber.Ctx) error {
 	cookie.Name = "token"
 	cookie.Value = token
 	cookie.Expires = time.Now().Add(auth.EXPIRES_AT)
+	cookie.Path = cookiePath()
 	c.Cookie(cookie)
 
 	redirect := c.Query("redirect", "/")
-	return c.Redirect(redirect)
+	if !strings.HasPrefix(redirect, "/") || strings.HasPrefix(redirect, "//") {
+		redirect = "/"
+	}
+	return c.Redirect(path(redirect))
 }
 
 func GetTournament(c *fiber.Ctx) error {
@@ -240,7 +252,7 @@ func GetTournament(c *fiber.Ctx) error {
 	joinedTournament := c.Cookies("tournamentId")
 
 	if joinedTournament != "" && idutil.SameId(joinedTournament, tournamentId) {
-		return c.Redirect("/tournaments/" + joinedTournament + "/teams")
+		return c.Redirect(path("/tournaments/" + joinedTournament + "/teams"))
 	}
 
 	getTournament := tournament_management_query.GetTournamentById{
@@ -307,9 +319,10 @@ func JoinTournament(c *fiber.Ctx) error {
 		Value:    tournamentId,
 		Expires:  time.Now().Add(time.Hour * 24),
 		HTTPOnly: true,
+		Path:     cookiePath(),
 	})
 
-	return c.Redirect("/tournaments/" + tournamentId + "/teams")
+	return c.Redirect(path("/tournaments/" + tournamentId + "/teams"))
 }
 
 func GetTournamentTeams(c *fiber.Ctx) error {
@@ -365,6 +378,7 @@ func GetTournamentTeams(c *fiber.Ctx) error {
 			Name:     "teamId",
 			Expires:  time.Now(),
 			HTTPOnly: true,
+			Path:     cookiePath(),
 		})
 	}
 
@@ -388,7 +402,7 @@ func GetTournamentTeams(c *fiber.Ctx) error {
 		if joinedTeam.Id != "" {
 			target = "/round-registration/" + tournamentId
 		}
-		c.Set("HX-Redirect", target)
+		c.Set("HX-Redirect", path(target))
 		return c.SendStatus(fiber.StatusNoContent)
 	}
 
@@ -505,9 +519,10 @@ func JoinTeam(c *fiber.Ctx) error {
 		Value:    teamId,
 		Expires:  time.Now().Add(time.Hour * 24),
 		HTTPOnly: true,
+		Path:     cookiePath(),
 	})
 
-	return c.Redirect("/tournaments/" + tournamentId + "/teams")
+	return c.Redirect(path("/tournaments/" + tournamentId + "/teams"))
 }
 
 func LeaveTeam(c *fiber.Ctx) error {
@@ -554,9 +569,10 @@ func LeaveTeam(c *fiber.Ctx) error {
 		Name:     "teamId",
 		Expires:  time.Now(),
 		HTTPOnly: true,
+		Path:     cookiePath(),
 	})
 
-	return c.Redirect("/tournaments/" + tournamentId + "/teams")
+	return c.Redirect(path("/tournaments/" + tournamentId + "/teams"))
 }
 
 func GetAddRoundForm(c *fiber.Ctx) error {
@@ -565,7 +581,7 @@ func GetAddRoundForm(c *fiber.Ctx) error {
 		log.Debug(err)
 		return notFound(c, "Niepoprawny identyfikator rozgrywki")
 	}
-	return c.Redirect("/round-registration/"+gameSessionId, fiber.StatusSeeOther)
+	return c.Redirect(path("/round-registration/"+gameSessionId), fiber.StatusSeeOther)
 }
 
 type Round struct {
@@ -705,7 +721,7 @@ func SubmitRound(c *fiber.Ctx) error {
 		})
 	}
 
-	c.Append("HX-Redirect", "/round-registration/"+gameSessionId+"/add-round?success=true")
+	c.Append("HX-Redirect", path("/round-registration/"+gameSessionId+"/add-round?success=true"))
 	return c.SendStatus(302)
 }
 

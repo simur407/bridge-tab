@@ -247,10 +247,10 @@ func contestantReturn(c *fiber.Ctx, fallback string) string {
 	ref := c.Get("Referer")
 	u, err := url.Parse(ref)
 	if err != nil || u.Path == "" || !strings.HasPrefix(u.Path, "/") || strings.HasPrefix(u.Path, "//") {
-		return fallback
+		return path(fallback)
 	}
 	if u.Host != "" && !strings.EqualFold(u.Hostname(), c.Hostname()) {
-		return fallback
+		return path(fallback)
 	}
 	return u.RequestURI()
 }

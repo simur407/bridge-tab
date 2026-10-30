@@ -60,7 +60,7 @@ func postProtocol(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "protocols", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id+"/protocols", fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id+"/protocols"), fiber.StatusSeeOther)
 }
 
 func postRemoveProtocol(c *fiber.Ctx) error {
@@ -81,7 +81,7 @@ func postRemoveProtocol(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "protocols", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id+"/protocols", fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id+"/protocols"), fiber.StatusSeeOther)
 }
 
 func protocolsPage(s stores, tournament *tournament_domain.TournamentDto) (fiber.Map, error) {

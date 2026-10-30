@@ -1,7 +1,7 @@
 <div class="team-play">
   {{ if .CanCallUmpire }}
-  <div id="umpire-call" class="umpire-call idle" hx-get="/tournaments/{{ .GameSessionId }}/umpire-call" hx-trigger="load" hx-target="this" hx-swap="outerHTML" aria-live="polite">
-    <form method="post" action="/tournaments/{{ .GameSessionId }}/umpire-call" hx-post="/tournaments/{{ .GameSessionId }}/umpire-call" hx-target="#umpire-call" hx-swap="outerHTML" hx-disabled-elt="find button">
+  <div id="umpire-call" class="umpire-call idle" hx-get="{{ base }}/tournaments/{{ .GameSessionId }}/umpire-call" hx-trigger="load" hx-target="this" hx-swap="outerHTML" aria-live="polite">
+    <form method="post" action="{{ base }}/tournaments/{{ .GameSessionId }}/umpire-call" hx-post="{{ base }}/tournaments/{{ .GameSessionId }}/umpire-call" hx-target="#umpire-call" hx-swap="outerHTML" hx-disabled-elt="find button">
       <button type="submit"><span class="umpire-label">Wezwij sędziego</span><span class="umpire-loading">Wzywanie…</span></button>
     </form>
   </div>
