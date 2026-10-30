@@ -1,9 +1,9 @@
 <div class="umpire-stack" data-open="{{ .OpenCount }}">
   {{ range .Calls }}
   <div class="umpire-note">
-    <a href="/tournaments/{{ $.TournamentId }}/umpire-calls">Stół {{ .TableNumber }}, runda {{ .RoundNo }}</a>
+    <a href="{{ base }}/tournaments/{{ $.TournamentId }}/umpire-calls">Stół {{ .TableNumber }}, runda {{ .RoundNo }}</a>
     · NS {{ .Ns }} · EW {{ .Ew }} · {{ .Source }} · {{ .When }}
-    <form method="post" action="/tournaments/{{ $.TournamentId }}/umpire-calls/{{ .Id }}/answer">
+    <form method="post" action="{{ base }}/tournaments/{{ $.TournamentId }}/umpire-calls/{{ .Id }}/answer">
       <input type="hidden" name="csrf" value="{{ $.CSRF }}">
       <button type="submit">Odebrano</button>
     </form>

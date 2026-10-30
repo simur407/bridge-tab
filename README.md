@@ -71,6 +71,8 @@ Then you can run it with the following command:
 make run-http
 ```
 
+Optional `HTTP_BASE_PATH` (for example `/app`) prefixes redirects, links, and cookies when this frontend is served behind a path-based reverse proxy. Leave unset when the app is at the domain root. Nginx should strip the prefix before proxying (e.g. `location /app/ { proxy_pass http://127.0.0.1:3000/; }`).
+
 #### Admin
 
 :warning: This is a very early stage. It was done with a lot of AI and is more of a concept/prototype.
@@ -83,6 +85,8 @@ export ADMIN_PASSWORD=<long random password>
 ```
 
 `ADMIN_PORT` defaults to `3001`. Set `ADMIN_COOKIE_SECURE=1` when the panel is served over HTTPS.
+
+Optional `ADMIN_BASE_PATH` (for example `/admin`) prefixes redirects, links, and cookies for path-based reverse proxies. Nginx should strip the prefix before proxying.
 
 ```bash
 make admin
@@ -103,6 +107,8 @@ export TABLET_PASSWORD=<long random password>
 ```
 
 `TABLET_PORT` defaults to `3002`. Set `TABLET_COOKIE_SECURE=1` when the panel is served over HTTPS.
+
+Optional `TABLET_BASE_PATH` (for example `/tablet`) prefixes redirects, links, and cookies for path-based reverse proxies. Nginx should strip the prefix before proxying.
 
 ```bash
 make tablet

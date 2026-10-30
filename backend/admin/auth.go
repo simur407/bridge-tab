@@ -102,7 +102,7 @@ func requireAdmin(c *fiber.Ctx) error {
 	}
 	nonce, ok := readSession(c)
 	if !ok {
-		return c.Redirect("/login", fiber.StatusSeeOther)
+		return c.Redirect(path("/login"), fiber.StatusSeeOther)
 	}
 	c.Locals("nonce", nonce)
 	return c.Next()
@@ -115,7 +115,7 @@ func setSessionCookie(c *fiber.Ctx, value string) {
 		HTTPOnly: true,
 		SameSite: "Lax",
 		Secure:   cookieSecure,
-		Path:     "/",
+		Path:     cookiePath(),
 		Expires:  time.Now().Add(sessionHours * time.Hour),
 	})
 }
@@ -127,7 +127,7 @@ func clearSessionCookie(c *fiber.Ctx) {
 		HTTPOnly: true,
 		SameSite: "Lax",
 		Secure:   cookieSecure,
-		Path:     "/",
+		Path:     cookiePath(),
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 	})
@@ -135,7 +135,7 @@ func clearSessionCookie(c *fiber.Ctx) {
 
 func getLogin(c *fiber.Ctx) error {
 	if _, ok := readSession(c); ok {
-		return c.Redirect("/tournaments", fiber.StatusSeeOther)
+		return c.Redirect(path("/tournaments"), fiber.StatusSeeOther)
 	}
 	return view(c, "login", fiber.Map{"Title": loginTitle})
 }
@@ -148,7 +148,7 @@ func postLogin(c *fiber.Ctx) error {
 		}), "layout")
 	}
 	setSessionCookie(c, issueSession())
-	return c.Redirect("/tournaments", fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments"), fiber.StatusSeeOther)
 }
 
 func postLogout(c *fiber.Ctx) error {
@@ -156,5 +156,5 @@ func postLogout(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 	clearSessionCookie(c)
-	return c.Redirect("/login", fiber.StatusSeeOther)
+	return c.Redirect(path("/login"), fiber.StatusSeeOther)
 }

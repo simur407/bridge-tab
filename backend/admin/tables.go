@@ -52,7 +52,7 @@ func postTable(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "tables", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id+"/tables", fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id+"/tables"), fiber.StatusSeeOther)
 }
 
 func postRemoveTable(c *fiber.Ctx) error {
@@ -69,7 +69,7 @@ func postRemoveTable(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "tables", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id+"/tables", fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id+"/tables"), fiber.StatusSeeOther)
 }
 
 func tablesPage(s stores, tournament *tournament_domain.TournamentDto) (fiber.Map, error) {

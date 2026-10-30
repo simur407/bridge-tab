@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"bridge-tab/internal/basepath"
 	play_infra "bridge-tab/internal/play/infrastructure"
 	score_infra "bridge-tab/internal/score-registration/infrastructure"
 	tournament_infra "bridge-tab/internal/tournament-management/infrastructure"
@@ -32,6 +33,7 @@ func main() {
 		panic("ADMIN_PASSWORD is required")
 	}
 	cookieSecure = os.Getenv("ADMIN_COOKIE_SECURE") == "1"
+	basePath = basepath.Normalize(os.Getenv("ADMIN_BASE_PATH"))
 
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
@@ -39,8 +41,11 @@ func main() {
 	}
 	frontendDirectory := filepath.Join(filepath.Dir(filename), "frontend")
 
+	views := html.New(frontendDirectory, ".html")
+	views.AddFunc("base", func() string { return basePath })
+
 	app := fiber.New(fiber.Config{
-		Views: html.New(frontendDirectory, ".html"),
+		Views: views,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 			var fiberErr *fiber.Error
@@ -76,7 +81,7 @@ func main() {
 	authed := app.Group("", requireAdmin, readTx(db), writeTx(db))
 	authed.Post("/logout", postLogout)
 	authed.Get("/", func(c *fiber.Ctx) error {
-		return c.Redirect("/tournaments", fiber.StatusSeeOther)
+		return c.Redirect(path("/tournaments"), fiber.StatusSeeOther)
 	})
 	authed.Get("/tournaments", getTournaments)
 	authed.Post("/tournaments", postTournament)

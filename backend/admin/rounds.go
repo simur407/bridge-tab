@@ -144,7 +144,7 @@ func postRound(c *fiber.Ctx) error {
 	if c.FormValue("reveal") == "1" {
 		target += "?reveal=1"
 	}
-	return c.Redirect(target, fiber.StatusSeeOther)
+	return c.Redirect(path(target), fiber.StatusSeeOther)
 }
 
 func roundsPage(s stores, tournament *tournament_domain.TournamentDto, reveal bool) (fiber.Map, error) {

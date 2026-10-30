@@ -1,6 +1,6 @@
 <h1>Komplety</h1>
 {{ if not .Started }}
-<form method="post" action="/tournaments/{{ .TournamentId }}/sets" class="noprint">
+<form method="post" action="{{ base }}/tournaments/{{ .TournamentId }}/sets" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <label>
     Etykieta
@@ -30,7 +30,7 @@
       <td>{{ .Boards }}</td>
       {{ if not $.Started }}
       <td class="noprint">
-        <form method="post" action="/tournaments/{{ $.TournamentId }}/sets/{{ .Id }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
+        <form method="post" action="{{ base }}/tournaments/{{ $.TournamentId }}/sets/{{ .Id }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
           <input type="hidden" name="csrf" value="{{ $.CSRF }}">
           <button type="submit">Usuń</button>
         </form>

@@ -14,10 +14,10 @@ func getUmpireCall(c *fiber.Ctx) error {
 	if err != nil {
 		if redirect, ok := err.(redirectError); ok {
 			if isHTMX(c) {
-				c.Set("HX-Redirect", redirect.To)
+				c.Set("HX-Redirect", path(redirect.To))
 				return c.SendStatus(fiber.StatusNoContent)
 			}
-			return c.Redirect(redirect.To, fiber.StatusSeeOther)
+			return c.Redirect(path(redirect.To), fiber.StatusSeeOther)
 		}
 		return err
 	}
@@ -32,10 +32,10 @@ func postUmpireCall(c *fiber.Ctx) error {
 	if err != nil {
 		if redirect, ok := err.(redirectError); ok {
 			if isHTMX(c) {
-				c.Set("HX-Redirect", redirect.To)
+				c.Set("HX-Redirect", path(redirect.To))
 				return c.SendStatus(fiber.StatusNoContent)
 			}
-			return c.Redirect(redirect.To, fiber.StatusSeeOther)
+			return c.Redirect(path(redirect.To), fiber.StatusSeeOther)
 		}
 		return err
 	}
@@ -56,7 +56,7 @@ func postUmpireCall(c *fiber.Ctx) error {
 	if isHTMX(c) {
 		return renderUmpireCall(c, a.TournamentId, a.TableNumber)
 	}
-	return c.Redirect("/play", fiber.StatusSeeOther)
+	return c.Redirect(path("/play"), fiber.StatusSeeOther)
 }
 
 func renderUmpireCall(c *fiber.Ctx, tournamentId string, tableNumber int) error {

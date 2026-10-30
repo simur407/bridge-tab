@@ -40,7 +40,7 @@ func GetTeamPlay(c *fiber.Ctx) error {
 	play := labeledPlay(loaded, hold)
 	if isHTMX(c) {
 		if play.Finished {
-			c.Set("HX-Redirect", "/round-registration/"+id)
+			c.Set("HX-Redirect", path("/round-registration/"+id))
 			return c.SendStatus(fiber.StatusNoContent)
 		}
 		if loaded.tournament.ScoreEntryMode.ContestantsCanRegister() {
@@ -57,7 +57,7 @@ func PostTeamAdvance(c *fiber.Ctx) error {
 		return notFound(c, "Niepoprawny identyfikator rozgrywki")
 	}
 	clearHoldRound(c)
-	return c.Redirect("/round-registration/"+id, fiber.StatusSeeOther)
+	return c.Redirect(path("/round-registration/"+id), fiber.StatusSeeOther)
 }
 
 func GetTeamBoard(c *fiber.Ctx) error {
@@ -183,9 +183,9 @@ func PostTeamAdd(c *fiber.Ctx) error {
 	if teamRoundComplete(matchesForRound(matches, loaded.teamNumber, play.RoundNo)) {
 		setHoldRound(c, play.RoundNo)
 	}
-	c.Set("HX-Redirect", "/round-registration/"+id+"/boards/"+strconv.Itoa(body.DealNo))
+	c.Set("HX-Redirect", path("/round-registration/"+id+"/boards/"+strconv.Itoa(body.DealNo)))
 	if !isHTMX(c) {
-		return c.Redirect("/round-registration/"+id+"/boards/"+strconv.Itoa(body.DealNo), fiber.StatusSeeOther)
+		return c.Redirect(path("/round-registration/"+id+"/boards/"+strconv.Itoa(body.DealNo)), fiber.StatusSeeOther)
 	}
 	return c.SendStatus(fiber.StatusNoContent)
 }
@@ -462,7 +462,7 @@ func setHoldRound(c *fiber.Ctx, roundNo int) {
 	c.Cookie(&fiber.Cookie{
 		Name:     holdRoundCookie,
 		Value:    strconv.Itoa(roundNo),
-		Path:     "/",
+		Path:     cookiePath(),
 		Expires:  time.Now().Add(24 * time.Hour),
 		HTTPOnly: true,
 	})
@@ -472,7 +472,7 @@ func clearHoldRound(c *fiber.Ctx) {
 	c.Cookie(&fiber.Cookie{
 		Name:     holdRoundCookie,
 		Value:    "",
-		Path:     "/",
+		Path:     cookiePath(),
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 		HTTPOnly: true,

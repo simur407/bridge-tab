@@ -2,7 +2,7 @@
 <p>Status: {{ .Status }}</p>
 <p>Kod dla zawodników: <code>{{ .Code }}</code></p>
 {{ if not .Finished }}
-<form method="post" action="/tournaments/{{ .TournamentId }}/score-entry" class="noprint">
+<form method="post" action="{{ base }}/tournaments/{{ .TournamentId }}/score-entry" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <label>
     Metoda wprowadzania wyników
@@ -19,7 +19,7 @@
 <p class="hint">Metoda wprowadzania wyników: {{ .ScoreEntryLabel }}</p>
 {{ end }}
 {{ if not .Started }}
-<form method="post" action="/tournaments/{{ .TournamentId }}/settings" class="noprint">
+<form method="post" action="{{ base }}/tournaments/{{ .TournamentId }}/settings" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <label>
     <input type="checkbox" name="requireTeamMembers" value="1" {{ if .RequireTeamMembers }}checked{{ end }}>
@@ -27,7 +27,7 @@
   </label>
   <button type="submit">Zapisz ustawienie</button>
 </form>
-<form method="post" action="/tournaments/{{ .TournamentId }}/start" class="noprint">
+<form method="post" action="{{ base }}/tournaments/{{ .TournamentId }}/start" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <button type="submit">Rozpocznij</button>
 </form>
@@ -35,7 +35,7 @@
 {{ else }}
 <p class="hint">Wymaganie zawodników w drużynach: {{ if .RequireTeamMembers }}tak{{ else }}nie{{ end }}</p>
 {{ if not .Finished }}
-<form method="post" action="/tournaments/{{ .TournamentId }}/finish" class="noprint">
+<form method="post" action="{{ base }}/tournaments/{{ .TournamentId }}/finish" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <button type="submit">Zakończ</button>
 </form>

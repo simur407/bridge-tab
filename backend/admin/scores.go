@@ -131,7 +131,7 @@ func postCalculate(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.played, s.scores); err != nil {
 		return reject(c, "scores", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id+"/scores", fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id+"/scores"), fiber.StatusSeeOther)
 }
 
 func postScoresFinish(c *fiber.Ctx) error {

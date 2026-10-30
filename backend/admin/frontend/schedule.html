@@ -1,6 +1,6 @@
 <h1>Harmonogram</h1>
 {{ if not .Started }}
-<form method="post" action="/tournaments/{{ .TournamentId }}/schedule" class="noprint">
+<form method="post" action="{{ base }}/tournaments/{{ .TournamentId }}/schedule" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <label>
     Runda
@@ -48,7 +48,7 @@
       <td>{{ .SetLabel }}</td>
       {{ if not $.Started }}
       <td class="noprint">
-        <form method="post" action="/tournaments/{{ $.TournamentId }}/schedule/{{ .RoundNo }}/{{ .TableId }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
+        <form method="post" action="{{ base }}/tournaments/{{ $.TournamentId }}/schedule/{{ .RoundNo }}/{{ .TableId }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
           <input type="hidden" name="csrf" value="{{ $.CSRF }}">
           <button type="submit">Usuń</button>
         </form>

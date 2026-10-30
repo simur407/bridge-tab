@@ -1,4 +1,4 @@
-<div id="play"{{ if not .CanRegister }} hx-get="/play" hx-trigger="every 15s" hx-target="#play" hx-swap="outerHTML"{{ end }}>
+<div id="play"{{ if not .CanRegister }} hx-get="{{ base }}/play" hx-trigger="every 15s" hx-target="#play" hx-swap="outerHTML"{{ end }}>
   {{ if and .Fragment (not .CanRegister) }}
   <span id="ns-team-n" class="team" hx-swap-oob="true">{{ .NsTeamLabel }}</span>
   <span id="ew-team-w" class="team" hx-swap-oob="true">{{ .EwTeamLabel }}</span>
@@ -16,7 +16,7 @@
   {{ else if .Empty }}
   <p class="status">Ten stół nie jest w rozgrywce.</p>
   {{ else if and .AllDone (not .Held) .CanRegister }}
-  <div class="end-screen" hx-get="/play" hx-trigger="every 3s" hx-swap="none">
+  <div class="end-screen" hx-get="{{ base }}/play" hx-trigger="every 3s" hx-swap="none">
     <p class="end-kicker">Stół {{ .TableNumber }}</p>
     <h1>Wszystkie rundy na tym stole są zakończone</h1>
   </div>
@@ -37,7 +37,7 @@
   <div class="boards">
     {{ range .Boards }}
     {{ if .CanRegister }}
-    <a class="board {{ if .Recorded }}done{{ end }}{{ if .NsVulnerable }} vul-n vul-s{{ end }}{{ if .EwVulnerable }} vul-e vul-w{{ end }}" href="/play/boards/{{ .DealNo }}">
+    <a class="board {{ if .Recorded }}done{{ end }}{{ if .NsVulnerable }} vul-n vul-s{{ end }}{{ if .EwVulnerable }} vul-e vul-w{{ end }}" href="{{ base }}/play/boards/{{ .DealNo }}">
       <span class="board-no">{{ .DealNo }}</span>
       <span class="board-vul">{{ .VulnerableLabel }}</span>
       {{ if .Recorded }}
@@ -60,7 +60,7 @@
     {{ end }}
   </div>
   {{ if and .CanRegister .RoundComplete (or .HasNextRound .Held) }}
-  <form id="advance-form" method="post" action="/play/advance">
+  <form id="advance-form" method="post" action="{{ base }}/play/advance">
     <input type="hidden" name="csrf" value="{{ .CSRF }}">
     <p class="status">Runda {{ .RoundNo }} jest zakończona.</p>
     <div class="actions">

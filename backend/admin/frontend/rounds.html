@@ -3,10 +3,10 @@
 <p class="noprint">
   {{ if .ShowScores }}
   Wyniki są odkryte.
-  <a href="/tournaments/{{ .TournamentId }}/rounds">Ukryj wyniki</a>
+  <a href="{{ base }}/tournaments/{{ .TournamentId }}/rounds">Ukryj wyniki</a>
   {{ else }}
   Wyniki rozdań są ukryte, dopóki turniej się nie skończy.
-  <a href="/tournaments/{{ .TournamentId }}/rounds?reveal=1">Pokaż wyniki</a>
+  <a href="{{ base }}/tournaments/{{ .TournamentId }}/rounds?reveal=1">Pokaż wyniki</a>
   {{ end }}
 </p>
 {{ end }}
@@ -44,7 +44,7 @@
       <td>{{ .Tricks }}</td>
       <td>{{ .OpeningLead }}</td>
       {{ end }}
-      <td class="noprint"><a href="/tournaments/{{ $.TournamentId }}/rounds/{{ .DealNo }}/{{ .NS }}/{{ .EW }}{{ if and $.CanHide $.ShowScores }}?reveal=1{{ end }}">szczegóły</a></td>
+      <td class="noprint"><a href="{{ base }}/tournaments/{{ $.TournamentId }}/rounds/{{ .DealNo }}/{{ .NS }}/{{ .EW }}{{ if and $.CanHide $.ShowScores }}?reveal=1{{ end }}">szczegóły</a></td>
     </tr>
     {{ end }}
   </tbody>

@@ -16,7 +16,7 @@ import (
 func getHome(c *fiber.Ctx) error {
 	a, ok := readAssignment(c)
 	if !ok {
-		return c.Redirect("/setup", fiber.StatusSeeOther)
+		return c.Redirect(path("/setup"), fiber.StatusSeeOther)
 	}
 	s := newStores(c)
 	tournament, err := findTournament(s, a.TournamentId)
@@ -33,10 +33,10 @@ func getHome(c *fiber.Ctx) error {
 		return view(c, "waiting", waitingData(tournament, a))
 	}
 	if isHTMX(c) {
-		c.Set("HX-Redirect", "/play")
+		c.Set("HX-Redirect", path("/play"))
 		return c.SendStatus(fiber.StatusNoContent)
 	}
-	return c.Redirect("/play", fiber.StatusSeeOther)
+	return c.Redirect(path("/play"), fiber.StatusSeeOther)
 }
 
 func getSetup(c *fiber.Ctx) error {
@@ -96,7 +96,7 @@ func postSetup(c *fiber.Ctx) error {
 		return reject(c, "setup", data, errors.New("nie znaleziono stołu"))
 	}
 	setAssignment(c, assignment{TournamentId: tournamentId, TableNumber: tableNumber})
-	return c.Redirect("/", fiber.StatusSeeOther)
+	return c.Redirect(path("/"), fiber.StatusSeeOther)
 }
 
 func getSetupTables(c *fiber.Ctx) error {

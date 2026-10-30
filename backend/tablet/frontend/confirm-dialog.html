@@ -25,7 +25,7 @@
       <form method="dialog">
         <button type="button" onclick="htmx.remove(htmx.closest(this, '.confirm-overlay'))">Nie zgadza się/Anuluj</button>
       </form>
-      <form hx-post="/play/add" hx-swap="none">
+      <form hx-post="{{ base }}/play/add" hx-swap="none">
         <input type="hidden" name="csrf" value="{{ .CSRF }}">
         <input type="hidden" name="dealNo" value="{{ .DealNo }}"/>
         <input type="hidden" name="contractLevel" value="{{ .ContractLevel }}"/>

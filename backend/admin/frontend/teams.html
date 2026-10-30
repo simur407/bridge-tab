@@ -1,6 +1,6 @@
 <h1>Drużyny</h1>
 {{ if not .Started }}
-<form method="post" action="/tournaments/{{ .TournamentId }}/teams" class="noprint">
+<form method="post" action="{{ base }}/tournaments/{{ .TournamentId }}/teams" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
   <label>
     Nazwa
@@ -29,7 +29,7 @@
     <tr>
       <td>{{ .Number }}</td>
       <td>
-        <form method="post" action="/tournaments/{{ $.TournamentId }}/teams/{{ .Id }}/rename" class="inline noprint">
+        <form method="post" action="{{ base }}/tournaments/{{ $.TournamentId }}/teams/{{ .Id }}/rename" class="inline noprint">
           <input type="hidden" name="csrf" value="{{ $.CSRF }}">
           <input name="name" value="{{ .Name }}">
           <button type="submit">Zapisz</button>
@@ -39,7 +39,7 @@
       <td>{{ if .Players }}{{ .Players }}{{ else }}—{{ end }}</td>
       {{ if not $.Started }}
       <td class="noprint">
-        <form method="post" action="/tournaments/{{ $.TournamentId }}/teams/{{ .Id }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
+        <form method="post" action="{{ base }}/tournaments/{{ $.TournamentId }}/teams/{{ .Id }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
           <input type="hidden" name="csrf" value="{{ $.CSRF }}">
           <button type="submit">Usuń</button>
         </form>

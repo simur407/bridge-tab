@@ -63,7 +63,7 @@ func postTournament(c *fiber.Ctx) error {
 			return reject(c, "tournaments", data, err)
 		}
 	}
-	return c.Redirect("/tournaments/"+cmd.TournamentId, fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+cmd.TournamentId), fiber.StatusSeeOther)
 }
 
 func tournamentListData(list []tournament_domain.TournamentDto, name string, presetID string) fiber.Map {
@@ -122,7 +122,7 @@ func postSettings(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "tournament", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id, fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id), fiber.StatusSeeOther)
 }
 
 func postScoreEntry(c *fiber.Ctx) error {
@@ -142,7 +142,7 @@ func postScoreEntry(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "tournament", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id, fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id), fiber.StatusSeeOther)
 }
 
 func postStart(c *fiber.Ctx) error {
@@ -159,7 +159,7 @@ func postStart(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament, s.playSession); err != nil {
 		return reject(c, "tournament", data, err)
 	}
-	return c.Redirect("/tournaments/"+tournament.Id, fiber.StatusSeeOther)
+	return c.Redirect(path("/tournaments/"+tournament.Id), fiber.StatusSeeOther)
 }
 
 func postFinish(c *fiber.Ctx) error {
@@ -187,7 +187,7 @@ func finishTournament(c *fiber.Ctx, back string) error {
 		}
 		return reject(c, "tournament", data, err)
 	}
-	return c.Redirect(back, fiber.StatusSeeOther)
+	return c.Redirect(path(back), fiber.StatusSeeOther)
 }
 
 func tournamentPage(s stores, tournament *tournament_domain.TournamentDto) (fiber.Map, error) {

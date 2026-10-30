@@ -1,4 +1,4 @@
-<div id="team-play"{{ if not .CanReadScores }} hx-get="/round-registration/{{ .GameSessionId }}" hx-trigger="every 30s" hx-swap="outerHTML" hx-disinherit="*"{{ end }}>
+<div id="team-play"{{ if not .CanReadScores }} hx-get="{{ base }}/round-registration/{{ .GameSessionId }}" hx-trigger="every 30s" hx-swap="outerHTML" hx-disinherit="*"{{ end }}>
   {{ if .Finished }}
   <div class="end-screen">
     <p class="end-kicker">{{ .TeamLabel }}</p>
@@ -8,7 +8,7 @@
   {{ else if .Empty }}
   <p class="hint">Brak rozdań dla tej drużyny.</p>
   {{ else if and .AllDone (not .Held) }}
-  <div class="end-screen"{{ if .CanReadScores }} hx-get="/round-registration/{{ .GameSessionId }}" hx-trigger="every 3s" hx-swap="none"{{ end }}>
+  <div class="end-screen"{{ if .CanReadScores }} hx-get="{{ base }}/round-registration/{{ .GameSessionId }}" hx-trigger="every 3s" hx-swap="none"{{ end }}>
     <p class="end-kicker">{{ .TeamLabel }}</p>
     <h1>Wszystkie rundy są zakończone</h1>
   </div>
@@ -21,7 +21,7 @@
   <div class="boards">
     {{ range .Boards }}
     {{ if $.CanReadScores }}
-    <a class="board{{ if .Recorded }} done{{ end }}{{ if .NsVulnerable }} vul-n vul-s{{ end }}{{ if .EwVulnerable }} vul-e vul-w{{ end }}" href="/round-registration/{{ $.GameSessionId }}/boards/{{ .DealNo }}">
+    <a class="board{{ if .Recorded }} done{{ end }}{{ if .NsVulnerable }} vul-n vul-s{{ end }}{{ if .EwVulnerable }} vul-e vul-w{{ end }}" href="{{ base }}/round-registration/{{ $.GameSessionId }}/boards/{{ .DealNo }}">
       <span class="board-no">{{ .DealNo }}</span>
       <span class="board-vul">{{ .VulnerableLabel }}</span>
       {{ if .Recorded }}
@@ -49,7 +49,7 @@
   <p class="next-hint{{ if .RoundComplete }} ready{{ end }}">To ostatnia runda.</p>
   {{ end }}
   {{ if and .CanRegister .RoundComplete (or .HasNextRound .Held) }}
-  <form class="advance-form" method="post" action="/round-registration/{{ .GameSessionId }}/advance">
+  <form class="advance-form" method="post" action="{{ base }}/round-registration/{{ .GameSessionId }}/advance">
     <p class="hint">Runda {{ .RoundNo }} jest zakończona.</p>
     {{ if .HasNextRound }}
     <button type="submit" class="accept">Przejdź do rundy {{ .NextRoundNo }}</button>

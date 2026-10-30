@@ -6,8 +6,8 @@
     <meta name="robots" content="noindex">
     <title>{{ if .Title }}{{ .Title }} — {{ end }}Bridge Tab</title>
     <!-- htmx 1.7.0 is the last release that parses in wallpanel-android-legacy (WebView based on Chrome 30). 1.8+ uses let/const. -->
-    <script src="/script/htmx-1.7.0.min.js"></script>
-    <link rel="stylesheet" href="/css/tablet.css">
+    <script src="{{ base }}/script/htmx-1.7.0.min.js"></script>
+    <link rel="stylesheet" href="{{ base }}/css/tablet.css">
   </head>
   <body class="play-body">
     <div class="play-frame{{ if or .Finished (and .AllDone (not .Held)) }} ended{{ end }}" aria-label="{{ if .Finished }}Turniej zakończony{{ else if and .AllDone (not .Held) }}Wszystkie rundy zakończone{{ else }}Stół, północ u góry{{ end }}">
@@ -15,7 +15,7 @@
       <div class="dir n{{ if .ShowVulnerability }} {{ if .NsVulnerable }}vul{{ else }}nv{{ end }}{{ end }}">
         {{ if .RoundNo }}
         <div id="umpire-call" class="umpire-call idle" aria-live="polite">
-          <form method="post" action="/play/umpire-call" hx-post="/play/umpire-call" hx-target="#umpire-call" hx-swap="outerHTML">
+          <form method="post" action="{{ base }}/play/umpire-call" hx-post="{{ base }}/play/umpire-call" hx-target="#umpire-call" hx-swap="outerHTML">
             <input type="hidden" name="csrf" value="{{ .CSRF }}">
             <button type="submit"><span class="umpire-label">Wezwij sędziego</span><span class="umpire-loading">Wzywanie…</span></button>
           </form>
@@ -115,6 +115,6 @@
         document.body.addEventListener("htmx:afterSwap", arm);
       })();
     </script>
-    <script src="/script/play.js"></script>
+    <script src="{{ base }}/script/play.js"></script>
   </body>
 </html>
