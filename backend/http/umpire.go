@@ -141,7 +141,7 @@ func umpireButtonView(call *umpirecall.Call, tournamentId string, seat callSeat)
 	if seat.TableNumber == 0 {
 		return nil, false
 	}
-	url := "/tournaments/" + tournamentId + "/umpire-call"
+	url := path("/tournaments/" + tournamentId + "/umpire-call")
 	return umpireButtonData(call, url), true
 }
 

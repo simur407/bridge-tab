@@ -36,7 +36,7 @@
 
   <div class="boards">
     {{ range .Boards }}
-    {{ if .CanRegister }}
+    {{ if $.CanRegister }}
     <a class="board {{ if .Recorded }}done{{ end }}{{ if .NsVulnerable }} vul-n vul-s{{ end }}{{ if .EwVulnerable }} vul-e vul-w{{ end }}" href="{{ base }}/play/boards/{{ .DealNo }}">
       <span class="board-no">{{ .DealNo }}</span>
       <span class="board-vul">{{ .VulnerableLabel }}</span>

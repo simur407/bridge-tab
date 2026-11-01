@@ -64,7 +64,7 @@ func renderUmpireCall(c *fiber.Ctx, tournamentId string, tableNumber int) error 
 	if err != nil {
 		return err
 	}
-	return fragment(c, "umpire-call", umpireButtonData(call, "/play/umpire-call"))
+	return fragment(c, "umpire-call", umpireButtonData(call, path("/play/umpire-call")))
 }
 
 func umpireRepo(c *fiber.Ctx) *umpirecall.Repository {
