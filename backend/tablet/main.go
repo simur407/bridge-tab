@@ -59,6 +59,12 @@ func main() {
 	app.Use(recover.New())
 	app.Static("/css", filepath.Join(frontendDirectory, "css"))
 	app.Static("/script", filepath.Join(frontendDirectory, "script"))
+	app.Static("/icons", filepath.Join(frontendDirectory, "icons"))
+	app.Get("/manifest.json", func(c *fiber.Ctx) error {
+		c.Type("json")
+		c.Set("Cache-Control", "no-cache")
+		return c.SendFile(filepath.Join(frontendDirectory, "manifest.json"))
+	})
 
 	dbString := os.Getenv("DATABASE_STRING")
 	db, err := sql.Open("postgres", dbString)
