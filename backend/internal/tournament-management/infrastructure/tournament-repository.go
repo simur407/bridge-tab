@@ -142,7 +142,7 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 		Sets = append(Sets, &set)
 	}
 
-	boardProtocolRows, err := r.Tx.QueryContext(r.Ctx, "SELECT board_no, vulnerable, set_id FROM tournament_management.board_protocol WHERE tournament_id = $1 ORDER BY board_no", Id)
+	boardProtocolRows, err := r.Tx.QueryContext(r.Ctx, "SELECT board_no, vulnerable, set_id, north, east, south, west FROM tournament_management.board_protocol WHERE tournament_id = $1 ORDER BY board_no", Id)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -153,10 +153,15 @@ func (r *PostgresTournamentRepository) Load(Id *domain.TournamentId) (*domain.To
 	for boardProtocolRows.Next() {
 		var boardProtocol domain.BoardProtocol
 		var setId sql.NullString
-		err = boardProtocolRows.Scan(&boardProtocol.BoardNo, &boardProtocol.Vulnerable, &setId)
+		var north, east, south, west sql.NullString
+		err = boardProtocolRows.Scan(&boardProtocol.BoardNo, &boardProtocol.Vulnerable, &setId, &north, &east, &south, &west)
 		if err != nil {
 			return nil, err
 		}
+		boardProtocol.North = north.String
+		boardProtocol.East = east.String
+		boardProtocol.South = south.String
+		boardProtocol.West = west.String
 		if setId.Valid {
 			id := domain.SetId(setId.String)
 			boardProtocol.SetId = &id
@@ -256,6 +261,8 @@ func (r *PostgresTournamentRepository) Save(t *domain.Tournament) error {
 			err = r.boardProtocolCreated(event)
 		case domain.BoardProtocolRemoved:
 			err = r.boardProtocolRemoved(event)
+		case domain.BoardProtocolHandsSet:
+			err = r.boardProtocolHandsSet(event)
 		case domain.ScheduleAdded:
 			err = r.scheduleAdded(event)
 		case domain.ScheduleRemoved:
@@ -392,6 +399,15 @@ func (r *PostgresTournamentRepository) boardProtocolCreated(event domain.BoardPr
 
 func (r *PostgresTournamentRepository) boardProtocolRemoved(event domain.BoardProtocolRemoved) error {
 	_, err := r.Tx.ExecContext(r.Ctx, "DELETE FROM tournament_management.board_protocol WHERE tournament_id = $1 AND board_no = $2", event.TournamentId, event.BoardNo)
+	return err
+}
+
+func (r *PostgresTournamentRepository) boardProtocolHandsSet(event domain.BoardProtocolHandsSet) error {
+	_, err := r.Tx.ExecContext(r.Ctx, `
+		UPDATE tournament_management.board_protocol
+		SET north = $1, east = $2, south = $3, west = $4
+		WHERE tournament_id = $5 AND board_no = $6`,
+		event.North, event.East, event.South, event.West, event.TournamentId, event.BoardNo)
 	return err
 }
 

@@ -635,6 +635,112 @@ button.accept {
   color: #111;
 }
 
+.cards-heading {
+  margin: 0;
+}
+
+.cards-heading-label,
+.cards-heading-seats {
+  display: block;
+}
+
+.cards-heading-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.cards-heading-seats {
+  margin-top: 0.25rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+}
+
+.cards-seat + .cards-seat {
+  margin-left: 0.9rem;
+}
+
+.cards-seat-current {
+  color: #111;
+}
+
+.cards-seat-todo {
+  color: #b0b0b0;
+}
+
+.cards-seat-done {
+  color: #7a9a7a;
+}
+
+.card-grid {
+  width: 100%;
+}
+
+.card-row {
+  display: flex;
+  width: 100%;
+}
+
+.card-row + .card-row {
+  margin-top: 0.35rem;
+}
+
+.card-choice {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0 0.12rem;
+}
+
+.card-choice input {
+  position: absolute !important;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  width: 1px;
+  border: 0;
+  overflow: hidden;
+}
+
+.card-choice label {
+  display: block;
+  margin: 0;
+  background: #f0f0f0;
+  color: #111;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
+  user-select: none;
+  min-height: 2.75rem;
+  line-height: 2.75rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.card-choice input:checked + label {
+  background: rgb(0, 90, 215);
+  color: white;
+}
+
+.card-choice input:checked + label .suit {
+  color: white;
+}
+
+.card-choice.card-used label {
+  background: #ddd;
+  color: #888;
+  border-color: #bbb;
+}
+
+.card-choice.card-used label .suit {
+  color: #888;
+}
+
+.hint {
+  margin: 0.35rem 0 0.6rem;
+  color: #444;
+}
+
 .button-link {
   display: inline-block;
   vertical-align: middle;

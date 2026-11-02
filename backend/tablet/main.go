@@ -89,6 +89,8 @@ func main() {
 	authed.Get("/play/umpire-call", getUmpireCall)
 	authed.Post("/play/umpire-call", postUmpireCall)
 	authed.Post("/play/advance", postAdvance)
+	authed.Get("/play/boards/:dealNo/cards", getBoardCards)
+	authed.Post("/play/boards/:dealNo/cards", postBoardCards)
 	authed.Get("/play/boards/:dealNo", getBoard)
 	authed.Post("/play/verify", postVerify)
 	authed.Post("/play/add", postAdd)

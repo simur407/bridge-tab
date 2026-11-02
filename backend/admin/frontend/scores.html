@@ -130,6 +130,20 @@
   {{ range .Deals }}
   <section class="deal">
     <h3>Rozdanie {{ .Deal }}{{ if .Vulnerable }}, po partii: {{ .Vulnerable }}{{ end }}</h3>
+    {{ if .HasHands }}
+    <table class="hands">
+      <tbody>
+        <tr>
+          <td>N: {{ .Hands.North }}</td>
+          <td>E: {{ .Hands.East }}</td>
+        </tr>
+        <tr>
+          <td>S: {{ .Hands.South }}</td>
+          <td>W: {{ .Hands.West }}</td>
+        </tr>
+      </tbody>
+    </table>
+    {{ end }}
     <table>
       <thead>
         <tr>

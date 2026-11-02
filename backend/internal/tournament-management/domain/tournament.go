@@ -182,6 +182,15 @@ type BoardProtocolRemoved struct {
 	BoardNo      int
 }
 
+type BoardProtocolHandsSet struct {
+	TournamentId TournamentId
+	BoardNo      int
+	North        string
+	East         string
+	South        string
+	West         string
+}
+
 type ScheduleAdded struct {
 	TournamentId TournamentId
 	RoundNo      int
@@ -749,6 +758,43 @@ func (t *Tournament) RemoveBoardProtocol(boardNo int) error {
 
 	t.State.BoardProtocols = slices.Delete(t.State.BoardProtocols, protocolIndex, protocolIndex+1)
 	t.events = append(t.events, BoardProtocolRemoved{TournamentId: t.State.Id, BoardNo: boardNo})
+	return nil
+}
+
+func (t *Tournament) SetBoardHands(boardNo int, north, east, south, west string, overwrite bool) error {
+	if t.State.removed {
+		return ErrTournamentRemoved
+	}
+
+	protocolIndex := slices.IndexFunc(t.State.BoardProtocols, func(bp *BoardProtocol) bool {
+		return bp.BoardNo == boardNo
+	})
+	if protocolIndex == -1 {
+		return ErrNoSuchBoardProtocol
+	}
+
+	protocol := t.State.BoardProtocols[protocolIndex]
+	if !overwrite && protocol.HandsComplete() {
+		return ErrBoardHandsAlreadySet
+	}
+
+	hands, err := NormalizeAndValidateDeal(north, east, south, west)
+	if err != nil {
+		return err
+	}
+
+	protocol.North = hands.North
+	protocol.East = hands.East
+	protocol.South = hands.South
+	protocol.West = hands.West
+	t.events = append(t.events, BoardProtocolHandsSet{
+		TournamentId: t.State.Id,
+		BoardNo:      boardNo,
+		North:        hands.North,
+		East:         hands.East,
+		South:        hands.South,
+		West:         hands.West,
+	})
 	return nil
 }
 

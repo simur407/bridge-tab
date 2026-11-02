@@ -104,6 +104,44 @@ table.sheet.duel tbody td.x {
   text-align: center;
 }
 
+table.hands {
+  margin: 0.5rem 0 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+table.hands td {
+  white-space: nowrap;
+  padding: 0.4rem 0.75rem;
+}
+
+table.hands .suit-spade {
+  color: #111;
+}
+
+table.hands .suit-heart {
+  color: #c00;
+}
+
+table.hands .suit-diamond {
+  color: #e67e22;
+}
+
+table.hands .suit-club {
+  color: #2e7d32;
+}
+
+@media print {
+  table.hands .suit-spade,
+  table.hands .suit-heart,
+  table.hands .suit-diamond,
+  table.hands .suit-club {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
 a {
   color: black;
 }
@@ -152,6 +190,12 @@ pre.movement {
 
 form.inline {
   display: inline;
+}
+
+input.hand-input {
+  min-width: 10rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .print-only {

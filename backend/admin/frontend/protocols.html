@@ -1,7 +1,19 @@
 <h1>Protokoły</h1>
+{{ if .CanHideHands }}
+<p class="noprint">
+  {{ if .ShowHands }}
+  Karty są odkryte.
+  <a href="{{ base }}/tournaments/{{ .TournamentId }}/protocols">Ukryj karty</a>
+  {{ else }}
+  Karty rozdań są ukryte, dopóki turniej się nie skończy.
+  <a href="{{ base }}/tournaments/{{ .TournamentId }}/protocols?reveal=1">Pokaż karty</a>
+  {{ end }}
+</p>
+{{ end }}
 {{ if not .Started }}
 <form method="post" action="{{ base }}/tournaments/{{ .TournamentId }}/protocols" class="noprint">
   <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  {{ if .Reveal }}<input type="hidden" name="reveal" value="1">{{ end }}
   <label>
     Numer rozdania
     <input name="board" value="{{ .FormBoard }}" inputmode="numeric" required>
@@ -24,18 +36,53 @@
     <tr>
       <th>Rozdanie</th>
       <th>Partia</th>
+      <th>Karty</th>
+      {{ if .ShowHands }}
+      <th>N</th>
+      <th>E</th>
+      <th>S</th>
+      <th>W</th>
+      <th class="noprint"></th>
+      {{ end }}
       {{ if not .Started }}<th class="noprint"></th>{{ end }}
     </tr>
   </thead>
   <tbody>
     {{ range .Protocols }}
     <tr>
-      <td>{{ .BoardNo }}</td>
+      <td>
+        {{ .BoardNo }}
+        {{ if $.ShowHands }}
+        <form id="hands-{{ .BoardNo }}" method="post" action="{{ base }}/tournaments/{{ $.TournamentId }}/protocols/{{ .BoardNo }}/hands">
+          <input type="hidden" name="csrf" value="{{ $.CSRF }}">
+          {{ if $.Reveal }}<input type="hidden" name="reveal" value="1">{{ end }}
+        </form>
+        {{ end }}
+      </td>
       <td>{{ .Vulnerable }}</td>
+      <td>{{ if .HandsSet }}wpisane{{ else }}brak{{ end }}</td>
+      {{ if $.ShowHands }}
+      <td>
+        <input form="hands-{{ .BoardNo }}" name="north" value="{{ if and (eq $.FormHandsBoard .BoardNo) $.FormNorth }}{{ $.FormNorth }}{{ else }}{{ .North }}{{ end }}" placeholder="AT985.QJ32.AT.543" autocomplete="off" class="hand-input">
+      </td>
+      <td>
+        <input form="hands-{{ .BoardNo }}" name="east" value="{{ if and (eq $.FormHandsBoard .BoardNo) $.FormEast }}{{ $.FormEast }}{{ else }}{{ .East }}{{ end }}" placeholder="AT985.QJ32.AT.543" autocomplete="off" class="hand-input">
+      </td>
+      <td>
+        <input form="hands-{{ .BoardNo }}" name="south" value="{{ if and (eq $.FormHandsBoard .BoardNo) $.FormSouth }}{{ $.FormSouth }}{{ else }}{{ .South }}{{ end }}" placeholder="AT985.QJ32.AT.543" autocomplete="off" class="hand-input">
+      </td>
+      <td>
+        <input form="hands-{{ .BoardNo }}" name="west" value="{{ if and (eq $.FormHandsBoard .BoardNo) $.FormWest }}{{ $.FormWest }}{{ else }}{{ .West }}{{ end }}" placeholder="AT985.QJ32.AT.543" autocomplete="off" class="hand-input">
+      </td>
+      <td class="noprint">
+        <button form="hands-{{ .BoardNo }}" type="submit">Zapisz</button>
+      </td>
+      {{ end }}
       {{ if not $.Started }}
       <td class="noprint">
         <form method="post" action="{{ base }}/tournaments/{{ $.TournamentId }}/protocols/{{ .BoardNo }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
           <input type="hidden" name="csrf" value="{{ $.CSRF }}">
+          {{ if $.Reveal }}<input type="hidden" name="reveal" value="1">{{ end }}
           <button type="submit">Usuń</button>
         </form>
       </td>

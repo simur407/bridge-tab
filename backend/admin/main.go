@@ -103,6 +103,7 @@ func main() {
 	authed.Get("/tournaments/:id/protocols", getProtocols)
 	authed.Post("/tournaments/:id/protocols", postProtocol)
 	authed.Post("/tournaments/:id/protocols/:board/remove", postRemoveProtocol)
+	authed.Post("/tournaments/:id/protocols/:board/hands", postProtocolHands)
 
 	authed.Get("/tournaments/:id/sets", getSets)
 	authed.Post("/tournaments/:id/sets", postSet)

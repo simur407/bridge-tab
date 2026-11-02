@@ -143,6 +143,16 @@ func main() {
 		middleware.Transaction(db, &sql.TxOptions{ReadOnly: true}),
 		GetTeamResults,
 	)
+	app.Get("/round-registration/:gameSessionId/boards/:dealNo/cards",
+		middleware.JwtGuard(),
+		middleware.Transaction(db, &sql.TxOptions{ReadOnly: true}),
+		GetTeamBoardCards,
+	)
+	app.Post("/round-registration/:gameSessionId/boards/:dealNo/cards",
+		middleware.JwtGuard(),
+		middleware.Transaction(db, nil),
+		PostTeamBoardCards,
+	)
 	app.Get("/round-registration/:gameSessionId/boards/:dealNo",
 		middleware.JwtGuard(),
 		middleware.Transaction(db, &sql.TxOptions{ReadOnly: true}),
@@ -748,6 +758,22 @@ func translateError(e error) string {
 		return "Brak drużyn w rozgrywce"
 	case errors.Is(e, play_domain.ErrMatchesAreEmpty):
 		return "Brak rozdań w rozgrywce"
+	case errors.Is(e, tournament_management_domain.ErrInvalidHandFormat):
+		return "Zły format kart (np. AT985.QJ32.AT.543)"
+	case errors.Is(e, tournament_management_domain.ErrInvalidHandRank):
+		return "Niedozwolona figura w kartach"
+	case errors.Is(e, tournament_management_domain.ErrDuplicateCardInHand):
+		return "Powtórzona karta w ręce"
+	case errors.Is(e, tournament_management_domain.ErrHandWrongLength):
+		return "Każda ręka musi mieć 13 kart"
+	case errors.Is(e, tournament_management_domain.ErrDealDuplicateCard):
+		return "Ta sama karta jest w więcej niż jednej ręce"
+	case errors.Is(e, tournament_management_domain.ErrDealIncomplete):
+		return "Rozdanie musi zawierać wszystkie 52 karty"
+	case errors.Is(e, tournament_management_domain.ErrBoardHandsAlreadySet):
+		return "Karty tego rozdania są już zapisane"
+	case errors.Is(e, tournament_management_domain.ErrNoSuchBoardProtocol):
+		return "Brak protokołu rozdania"
 	case errors.Is(e, sql.ErrNoRows):
 		return "Nie znaleziono pojedynku"
 	default:

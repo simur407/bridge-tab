@@ -215,8 +215,7 @@ func postAdd(c *fiber.Ctx) error {
 		setHoldRound(c, play.RoundNo)
 	}
 
-	c.Set("HX-Redirect", path("/play/boards/"+strconv.Itoa(body.DealNo)))
-	return c.SendStatus(fiber.StatusNoContent)
+	return redirectAfterTabletAdd(c, a.TournamentId, body.DealNo)
 }
 
 func getResults(c *fiber.Ctx) error {
