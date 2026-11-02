@@ -1,0 +1,33 @@
+<div class="entry">
+<header class="play-meta">
+  <h1>Stół {{ .TableNumber }}</h1>
+  <p>Runda {{ .RoundNo }} · rozdanie {{ .DealNo }}</p>
+</header>
+
+{{ if .Error }}
+<p class="warn">{{ .Error }}</p>
+{{ end }}
+
+<form id="cards-form" method="post" action="{{ .CardsPostURL }}">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  <input type="hidden" name="north" id="hand-north" value="">
+  <input type="hidden" name="east" id="hand-east" value="">
+  <input type="hidden" name="south" id="hand-south" value="">
+  <input type="hidden" name="west" id="hand-west" value="">
+
+  <section class="step" id="cards-step">
+    <div class="step-body">
+      <h2 id="cards-title" class="cards-heading">Karty</h2>
+      <p class="hint" id="cards-count"></p>
+      <div id="cards-grid" class="card-grid"></div>
+    </div>
+    <div class="actions">
+      <div class="actions-nav">
+        <button type="button" id="cards-back">Wstecz</button>
+        <button type="button" class="accept" id="cards-next">Dalej</button>
+      </div>
+    </div>
+  </section>
+</form>
+</div>
+<script src="{{ base }}/script/cards.js"></script>

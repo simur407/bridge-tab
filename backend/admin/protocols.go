@@ -16,6 +16,11 @@ import (
 type protocolRow struct {
 	BoardNo    int
 	Vulnerable string
+	HandsSet   bool
+	North      string
+	East       string
+	South      string
+	West       string
 }
 
 func getProtocols(c *fiber.Ctx) error {
@@ -24,7 +29,7 @@ func getProtocols(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	data, err := protocolsPage(s, tournament)
+	data, err := protocolsPage(s, tournament, c.Query("reveal") == "1")
 	if err != nil {
 		return err
 	}
@@ -37,7 +42,8 @@ func postProtocol(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	data, err := protocolsPage(s, tournament)
+	reveal := c.FormValue("reveal") == "1" || c.Query("reveal") == "1"
+	data, err := protocolsPage(s, tournament, reveal)
 	if err != nil {
 		return err
 	}
@@ -60,7 +66,7 @@ func postProtocol(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "protocols", data, err)
 	}
-	return c.Redirect(path("/tournaments/"+tournament.Id+"/protocols"), fiber.StatusSeeOther)
+	return c.Redirect(protocolsPath(tournament.Id, reveal), fiber.StatusSeeOther)
 }
 
 func postRemoveProtocol(c *fiber.Ctx) error {
@@ -69,7 +75,8 @@ func postRemoveProtocol(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	data, err := protocolsPage(s, tournament)
+	reveal := c.FormValue("reveal") == "1" || c.Query("reveal") == "1"
+	data, err := protocolsPage(s, tournament, reveal)
 	if err != nil {
 		return err
 	}
@@ -81,10 +88,51 @@ func postRemoveProtocol(c *fiber.Ctx) error {
 	if err := cmd.Execute(s.tournament); err != nil {
 		return reject(c, "protocols", data, err)
 	}
-	return c.Redirect(path("/tournaments/"+tournament.Id+"/protocols"), fiber.StatusSeeOther)
+	return c.Redirect(protocolsPath(tournament.Id, reveal), fiber.StatusSeeOther)
 }
 
-func protocolsPage(s stores, tournament *tournament_domain.TournamentDto) (fiber.Map, error) {
+func postProtocolHands(c *fiber.Ctx) error {
+	s := newStores(c)
+	tournament, err := loadTournament(c, s)
+	if err != nil {
+		return err
+	}
+	reveal := c.FormValue("reveal") == "1"
+	data, err := protocolsPage(s, tournament, reveal)
+	if err != nil {
+		return err
+	}
+	boardNo, err := pathInt(c, "board")
+	if err != nil {
+		return err
+	}
+
+	north := strings.TrimSpace(c.FormValue("north"))
+	east := strings.TrimSpace(c.FormValue("east"))
+	south := strings.TrimSpace(c.FormValue("south"))
+	west := strings.TrimSpace(c.FormValue("west"))
+	data["FormHandsBoard"] = boardNo
+	data["FormNorth"] = north
+	data["FormEast"] = east
+	data["FormSouth"] = south
+	data["FormWest"] = west
+
+	cmd := tournament_cmd.SetBoardHandsCommand{
+		TournamentId: tournament.Id,
+		BoardNo:      boardNo,
+		North:        north,
+		East:         east,
+		South:        south,
+		West:         west,
+		Overwrite:    true,
+	}
+	if err := cmd.Execute(s.tournament); err != nil {
+		return reject(c, "protocols", data, err)
+	}
+	return c.Redirect(protocolsPath(tournament.Id, reveal), fiber.StatusSeeOther)
+}
+
+func protocolsPage(s stores, tournament *tournament_domain.TournamentDto, reveal bool) (fiber.Map, error) {
 	protocols, err := (&tournament_query.ListBoardProtocolsQuery{TournamentId: tournament.Id}).Execute(s.boards)
 	if err != nil {
 		return nil, err
@@ -92,18 +140,43 @@ func protocolsPage(s stores, tournament *tournament_domain.TournamentDto) (fiber
 	sort.Slice(protocols, func(i, j int) bool {
 		return protocols[i].BoardNo < protocols[j].BoardNo
 	})
+	showHands := tournament.FinishedAt != "" || reveal
 	rows := make([]protocolRow, len(protocols))
 	for i, protocol := range protocols {
-		rows[i] = protocolRow{
+		row := protocolRow{
 			BoardNo:    protocol.BoardNo,
 			Vulnerable: vulLabel(protocol.Vulnerable),
+			HandsSet:   protocol.HandsComplete(),
 		}
+		if showHands {
+			row.North = protocol.North
+			row.East = protocol.East
+			row.South = protocol.South
+			row.West = protocol.West
+		}
+		rows[i] = row
 	}
 	data := pageData(tournament)
 	data["Protocols"] = rows
 	data["FormBoard"] = ""
 	data["FormVulnerable"] = ""
+	data["FormHandsBoard"] = 0
+	data["FormNorth"] = ""
+	data["FormEast"] = ""
+	data["FormSouth"] = ""
+	data["FormWest"] = ""
+	data["ShowHands"] = showHands
+	data["CanHideHands"] = tournament.FinishedAt == ""
+	data["Reveal"] = reveal
 	return data, nil
+}
+
+func protocolsPath(tournamentId string, reveal bool) string {
+	target := "/tournaments/" + tournamentId + "/protocols"
+	if reveal {
+		target += "?reveal=1"
+	}
+	return path(target)
 }
 
 func vulnerableValue(value string) (tournament_domain.Vulnerable, error) {

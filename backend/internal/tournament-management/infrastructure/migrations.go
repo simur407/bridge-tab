@@ -17,6 +17,7 @@ func Migrate(db *sql.DB) {
 	m0008_protocol_without_round(db)
 	m0009_require_team_members(db)
 	m0010_score_entry_mode(db)
+	m0011_board_hands(db)
 }
 
 func m0001_initial(db *sql.DB) {
@@ -251,6 +252,22 @@ func m0010_score_entry_mode(db *sql.DB) {
 		ALTER TABLE tournament_management.tournament
 		ADD CONSTRAINT tournament_score_entry_mode_check
 		CHECK (score_entry_mode IN ('tablet', 'contestant', 'both', 'umpire'));
+	`)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func m0011_board_hands(db *sql.DB) {
+	_, err := db.Exec(`
+		ALTER TABLE tournament_management.board_protocol
+		ADD COLUMN IF NOT EXISTS north TEXT;
+		ALTER TABLE tournament_management.board_protocol
+		ADD COLUMN IF NOT EXISTS east TEXT;
+		ALTER TABLE tournament_management.board_protocol
+		ADD COLUMN IF NOT EXISTS south TEXT;
+		ALTER TABLE tournament_management.board_protocol
+		ADD COLUMN IF NOT EXISTS west TEXT;
 	`)
 	if err != nil {
 		panic(err)

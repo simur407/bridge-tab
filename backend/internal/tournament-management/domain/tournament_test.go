@@ -739,6 +739,58 @@ func TestCreateBoardProtocol(t *testing.T) {
 	})
 }
 
+func TestSetBoardHands(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	assertNoError(t, Tournament.CreateBoardProtocol(1, None))
+	Tournament.Commit()
+
+	assertNoError(t, Tournament.SetBoardHands(1, allSpades, allHearts, allDiamonds, allClubs, false))
+	assertEvent(t, Tournament.GetEvents(), BoardProtocolHandsSet{
+		TournamentId: id,
+		BoardNo:      1,
+		North:        allSpades,
+		East:         allHearts,
+		South:        allDiamonds,
+		West:         allClubs,
+	})
+	if !Tournament.State.BoardProtocols[0].HandsComplete() {
+		t.Fatal("expected hands complete")
+	}
+}
+
+func TestSetBoardHandsRejectsSecondWriteWithoutOverwrite(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	assertNoError(t, Tournament.CreateBoardProtocol(1, None))
+	assertNoError(t, Tournament.SetBoardHands(1, allSpades, allHearts, allDiamonds, allClubs, false))
+	Tournament.Commit()
+
+	err := Tournament.SetBoardHands(1, allSpades, allHearts, allDiamonds, allClubs, false)
+	assertError(t, err, ErrBoardHandsAlreadySet)
+}
+
+func TestSetBoardHandsOverwrite(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	assertNoError(t, Tournament.CreateBoardProtocol(1, None))
+	assertNoError(t, Tournament.SetBoardHands(1, allSpades, allHearts, allDiamonds, allClubs, false))
+	Tournament.Commit()
+
+	assertNoError(t, Tournament.SetBoardHands(1, allClubs, allDiamonds, allHearts, allSpades, true))
+	assertEvent(t, Tournament.GetEvents(), BoardProtocolHandsSet{
+		TournamentId: id,
+		BoardNo:      1,
+		North:        allClubs,
+		East:         allDiamonds,
+		South:        allHearts,
+		West:         allSpades,
+	})
+}
+
+func TestSetBoardHandsMissingProtocol(t *testing.T) {
+	Tournament := CreateTournament(id, "name")
+	err := Tournament.SetBoardHands(1, allSpades, allHearts, allDiamonds, allClubs, false)
+	assertError(t, err, ErrNoSuchBoardProtocol)
+}
+
 func TestRemoveTournamentWithTables(t *testing.T) {
 	Tournament := CreateTournament(id, "name")
 	var tableId TableId = "table"

@@ -185,6 +185,22 @@ func explain(err error) error {
 		return errors.New("numer rundy musi być dodatni")
 	case errors.Is(err, tournament_domain.ErrBoardProtocolBelongsToSet):
 		return errors.New("rozdanie należy do seta")
+	case errors.Is(err, tournament_domain.ErrNoSuchBoardProtocol):
+		return errors.New("brak protokołu rozdania")
+	case errors.Is(err, tournament_domain.ErrInvalidHandFormat):
+		return errors.New("zły format kart (np. AT985.QJ32.AT.543)")
+	case errors.Is(err, tournament_domain.ErrInvalidHandRank):
+		return errors.New("niedozwolona figura w kartach")
+	case errors.Is(err, tournament_domain.ErrDuplicateCardInHand):
+		return errors.New("powtórzona karta w ręce")
+	case errors.Is(err, tournament_domain.ErrHandWrongLength):
+		return errors.New("każda ręka musi mieć 13 kart")
+	case errors.Is(err, tournament_domain.ErrDealDuplicateCard):
+		return errors.New("ta sama karta jest w więcej niż jednej ręce")
+	case errors.Is(err, tournament_domain.ErrDealIncomplete):
+		return errors.New("rozdanie musi zawierać wszystkie 52 karty")
+	case errors.Is(err, tournament_domain.ErrBoardHandsAlreadySet):
+		return errors.New("karty tego rozdania są już zapisane")
 	case errors.Is(err, play_domain.ErrBoardResultAlreadyRecorded):
 		return errors.New("to rozdanie jest już zapisane")
 	case errors.Is(err, play_domain.ErrBoardResultNotFound):

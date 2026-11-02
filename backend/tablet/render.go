@@ -15,9 +15,11 @@ import (
 )
 
 type stores struct {
+	tournament     tournament_domain.TournamentRepository
 	tournamentRead tournament_domain.TournamentReadRepository
 	tables         tournament_domain.TableReadRepository
 	teams          tournament_domain.TeamReadRepository
+	boards         tournament_domain.BoardProtocolReadRepository
 	playSession    play_domain.PlaySessionRepository
 	boardResult    play_domain.BoardResultRepository
 	boardResults   play_domain.BoardResultReadRepository
@@ -28,9 +30,11 @@ func newStores(c *fiber.Ctx) stores {
 	tx := c.Locals("tx").(*sql.Tx)
 	ctx := c.UserContext()
 	return stores{
+		tournament:     &tournament_infra.PostgresTournamentRepository{Ctx: ctx, Tx: tx},
 		tournamentRead: &tournament_infra.PostgresTournamentReadRepository{Ctx: ctx, Tx: tx},
 		tables:         &tournament_infra.PostgresTableReadRepository{Ctx: ctx, Tx: tx},
 		teams:          &tournament_infra.PostgresTeamReadRepository{Ctx: ctx, Tx: tx},
+		boards:         &tournament_infra.PostgresBoardProtocolReadRepository{Ctx: ctx, Tx: tx},
 		playSession:    &play_infra.PostgresPlaySessionRepository{Ctx: ctx, Tx: tx},
 		boardResult:    &play_infra.PostgresBoardResultRepository{Ctx: ctx, Tx: tx},
 		boardResults:   &play_infra.PostgresBoardResultReadRepository{Ctx: ctx, Tx: tx},
@@ -114,6 +118,22 @@ func explain(err error) error {
 		return errors.New("nie znaleziono zespołu")
 	case errors.Is(err, tournament_domain.ErrNoSuchTableInTournament):
 		return errors.New("nie znaleziono stołu")
+	case errors.Is(err, tournament_domain.ErrInvalidHandFormat):
+		return errors.New("zły format kart (np. AT985.QJ32.AT.543)")
+	case errors.Is(err, tournament_domain.ErrInvalidHandRank):
+		return errors.New("niedozwolona figura w kartach")
+	case errors.Is(err, tournament_domain.ErrDuplicateCardInHand):
+		return errors.New("powtórzona karta w ręce")
+	case errors.Is(err, tournament_domain.ErrHandWrongLength):
+		return errors.New("każda ręka musi mieć 13 kart")
+	case errors.Is(err, tournament_domain.ErrDealDuplicateCard):
+		return errors.New("ta sama karta jest w więcej niż jednej ręce")
+	case errors.Is(err, tournament_domain.ErrDealIncomplete):
+		return errors.New("rozdanie musi zawierać wszystkie 52 karty")
+	case errors.Is(err, tournament_domain.ErrBoardHandsAlreadySet):
+		return errors.New("karty tego rozdania są już zapisane")
+	case errors.Is(err, tournament_domain.ErrNoSuchBoardProtocol):
+		return errors.New("brak protokołu rozdania")
 	default:
 		if err == nil {
 			return errors.New("błąd")

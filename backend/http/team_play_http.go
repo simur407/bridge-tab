@@ -183,11 +183,7 @@ func PostTeamAdd(c *fiber.Ctx) error {
 	if teamRoundComplete(matchesForRound(matches, loaded.teamNumber, play.RoundNo)) {
 		setHoldRound(c, play.RoundNo)
 	}
-	c.Set("HX-Redirect", path("/round-registration/"+id+"/boards/"+strconv.Itoa(body.DealNo)))
-	if !isHTMX(c) {
-		return c.Redirect(path("/round-registration/"+id+"/boards/"+strconv.Itoa(body.DealNo)), fiber.StatusSeeOther)
-	}
-	return c.SendStatus(fiber.StatusNoContent)
+	return redirectAfterBoardAdd(c, id, body.DealNo, "/round-registration/"+id+"/boards/"+strconv.Itoa(body.DealNo))
 }
 
 func GetTeamResults(c *fiber.Ctx) error {

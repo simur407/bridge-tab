@@ -1,6 +1,7 @@
 package main
 
 import (
+	"html/template"
 	"sort"
 	"strconv"
 	"strings"
@@ -37,9 +38,18 @@ type boardLine struct {
 	EwAward     string
 }
 
+type dealHands struct {
+	North template.HTML
+	East  template.HTML
+	South template.HTML
+	West  template.HTML
+}
+
 type dealTable struct {
 	Deal       int
 	Vulnerable string
+	HasHands   bool
+	Hands      dealHands
 	Lines      []boardLine
 }
 
@@ -200,8 +210,9 @@ func scoreGroups(sets []tournament_domain.SetDto, boards []score_domain.BoardSco
 	}
 	played := indexBoardResults(boardResults)
 	vulnerable := indexVulnerable(protocols)
+	hands := indexHands(protocols)
 	if len(sets) == 0 {
-		return []scoreGroup{boardGroup("Rozdania", boards, teams, played, vulnerable, false)}
+		return []scoreGroup{boardGroup("Rozdania", boards, teams, played, vulnerable, hands, false)}
 	}
 
 	assigned := map[int]bool{}
@@ -222,7 +233,7 @@ func scoreGroups(sets []tournament_domain.SetDto, boards []score_domain.BoardSco
 		if len(lines) == 0 {
 			continue
 		}
-		groups = append(groups, boardGroup(set.Label, lines, teams, played, vulnerable, true))
+		groups = append(groups, boardGroup(set.Label, lines, teams, played, vulnerable, hands, true))
 	}
 
 	var rest []score_domain.BoardScoreDto
@@ -232,12 +243,12 @@ func scoreGroups(sets []tournament_domain.SetDto, boards []score_domain.BoardSco
 		}
 	}
 	if len(rest) > 0 {
-		groups = append(groups, boardGroup("Poza setami", rest, teams, played, vulnerable, true))
+		groups = append(groups, boardGroup("Poza setami", rest, teams, played, vulnerable, hands, true))
 	}
 	return groups
 }
 
-func boardGroup(label string, boards []score_domain.BoardScoreDto, teams []tournament_domain.TeamDto, played map[boardKey]play_domain.BoardResultDto, vulnerable map[int]string, pageBreak bool) scoreGroup {
+func boardGroup(label string, boards []score_domain.BoardScoreDto, teams []tournament_domain.TeamDto, played map[boardKey]play_domain.BoardResultDto, vulnerable map[int]string, hands map[int]dealHands, pageBreak bool) scoreGroup {
 	sorted := append([]score_domain.BoardScoreDto(nil), boards...)
 	sort.Slice(sorted, func(i, j int) bool {
 		if sorted[i].DealNo == sorted[j].DealNo {
@@ -263,11 +274,16 @@ func boardGroup(label string, boards []score_domain.BoardScoreDto, teams []tourn
 			}
 		}
 		if len(deals) == 0 || deals[len(deals)-1].Deal != board.DealNo {
-			deals = append(deals, dealTable{
+			deal := dealTable{
 				Deal:       board.DealNo,
 				Vulnerable: vulnerable[board.DealNo],
 				Lines:      []boardLine{line},
-			})
+			}
+			if hand, ok := hands[board.DealNo]; ok {
+				deal.HasHands = true
+				deal.Hands = hand
+			}
+			deals = append(deals, deal)
 			continue
 		}
 		last := &deals[len(deals)-1]
@@ -556,6 +572,53 @@ func indexVulnerable(protocols []tournament_domain.BoardProtocolDto) map[int]str
 		out[protocol.BoardNo] = vulLabel(protocol.Vulnerable)
 	}
 	return out
+}
+
+func indexHands(protocols []tournament_domain.BoardProtocolDto) map[int]dealHands {
+	out := make(map[int]dealHands)
+	for _, protocol := range protocols {
+		if !protocol.HandsComplete() {
+			continue
+		}
+		out[protocol.BoardNo] = dealHands{
+			North: formatHandDiagram(protocol.North),
+			East:  formatHandDiagram(protocol.East),
+			South: formatHandDiagram(protocol.South),
+			West:  formatHandDiagram(protocol.West),
+		}
+	}
+	return out
+}
+
+func formatHandDiagram(hand string) template.HTML {
+	parts := strings.Split(hand, ".")
+	if len(parts) != 4 {
+		return template.HTML(template.HTMLEscapeString(hand))
+	}
+	symbols := []string{"♠", "♥", "♦", "♣"}
+	classes := []string{"suit-spade", "suit-heart", "suit-diamond", "suit-club"}
+	suits := make([]string, 0, 4)
+	for i, part := range parts {
+		ranks := formatHandRanks(part)
+		if ranks == "" {
+			continue
+		}
+		text := symbols[i] + " " + ranks
+		suits = append(suits, `<span class="`+classes[i]+`">`+text+`</span>`)
+	}
+	return template.HTML(strings.Join(suits, " "))
+}
+
+func formatHandRanks(part string) string {
+	ranks := make([]string, 0, len(part))
+	for i := 0; i < len(part); i++ {
+		if part[i] == 'T' {
+			ranks = append(ranks, "10")
+			continue
+		}
+		ranks = append(ranks, string(part[i]))
+	}
+	return strings.Join(ranks, " ")
 }
 
 func displayContract(contract string) string {

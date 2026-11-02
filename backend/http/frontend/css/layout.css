@@ -570,6 +570,112 @@ h3 {
 .team-play .suit.red { color: #c00; }
 .team-play .suit.club { color: #111; }
 
+.team-play .cards-heading {
+  margin: 0;
+}
+
+.team-play .cards-heading-label,
+.team-play .cards-heading-seats {
+  display: block;
+}
+
+.team-play .cards-heading-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.team-play .cards-heading-seats {
+  margin-top: 0.25rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+}
+
+.team-play .cards-seat + .cards-seat {
+  margin-left: 0.9rem;
+}
+
+.team-play .cards-seat-current {
+  color: #111;
+}
+
+.team-play .cards-seat-todo {
+  color: #b0b0b0;
+}
+
+.team-play .cards-seat-done {
+  color: #7a9a7a;
+}
+
+.team-play .card-grid {
+  width: 100%;
+}
+
+.team-play .card-row {
+  display: flex;
+  width: 100%;
+}
+
+.team-play .card-row + .card-row {
+  margin-top: 0.35rem;
+}
+
+.team-play .card-choice {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0 0.12rem;
+}
+
+.team-play .card-choice input {
+  position: absolute !important;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  width: 1px;
+  border: 0;
+  overflow: hidden;
+}
+
+.team-play .card-choice label {
+  display: block;
+  margin: 0;
+  background: #f0f0f0;
+  color: #111;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
+  user-select: none;
+  min-height: 2.75rem;
+  line-height: 2.75rem;
+  font-size: clamp(0.72rem, 3.4vw, 1.05rem);
+  font-weight: 600;
+}
+
+.team-play .card-choice input:checked + label {
+  background: rgb(0, 90, 215);
+  color: white;
+}
+
+.team-play .card-choice input:checked + label .suit {
+  color: white;
+}
+
+.team-play .card-choice.card-used label {
+  background: #ddd;
+  color: #888;
+  border-color: #bbb;
+}
+
+.team-play .card-choice.card-used label .suit {
+  color: #888;
+}
+
+.team-play .hint {
+  margin: 0.35rem 0 0.6rem;
+  color: #444;
+}
+
 .team-play .warn { color: #c00; }
 
 .team-play .advance-form button {
