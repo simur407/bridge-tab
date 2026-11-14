@@ -1,0 +1,28 @@
+<h1>Protokół {{ .Protocol.BoardNo }}</h1>
+<p><a href="{{ base }}/tournaments/{{ .TournamentId }}/protocols{{ if .Reveal }}?reveal=1{{ end }}">Wróć do listy</a></p>
+{{ if .Protocol.Found }}
+<p>Partia: {{ .Protocol.Vulnerable }}</p>
+<form method="post" action="{{ base }}/tournaments/{{ .TournamentId }}/protocols/{{ .Protocol.BoardNo }}/hands">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  {{ if .Reveal }}<input type="hidden" name="reveal" value="1">{{ end }}
+
+  <label>
+    N
+    <input name="north" value="{{ .Protocol.North }}" placeholder="AT985.QJ32.AT.543" autocomplete="off" class="hand-input" required>
+  </label>
+  <label>
+    E
+    <input name="east" value="{{ .Protocol.East }}" placeholder="AT985.QJ32.AT.543" autocomplete="off" class="hand-input" required>
+  </label>
+  <label>
+    S
+    <input name="south" value="{{ .Protocol.South }}" placeholder="AT985.QJ32.AT.543" autocomplete="off" class="hand-input" required>
+  </label>
+  <label>
+    W
+    <input name="west" value="{{ .Protocol.West }}" placeholder="AT985.QJ32.AT.543" autocomplete="off" class="hand-input" required>
+  </label>
+  <p class="hint">Format: AT985.QJ32.AT.543 (♠♥♦♣).</p>
+  <button type="submit">{{ if .Protocol.HandsSet }}Popraw karty{{ else }}Zapisz karty{{ end }}</button>
+</form>
+{{ end }}

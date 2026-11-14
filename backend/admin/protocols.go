@@ -23,6 +23,17 @@ type protocolRow struct {
 	West       string
 }
 
+type protocolForm struct {
+	BoardNo    int
+	Vulnerable string
+	North      string
+	East       string
+	South      string
+	West       string
+	HandsSet   bool
+	Found      bool
+}
+
 func getProtocols(c *fiber.Ctx) error {
 	s := newStores(c)
 	tournament, err := loadTournament(c, s)
@@ -34,6 +45,25 @@ func getProtocols(c *fiber.Ctx) error {
 		return err
 	}
 	return view(c, "protocols", data)
+}
+
+func getProtocol(c *fiber.Ctx) error {
+	s := newStores(c)
+	tournament, err := loadTournament(c, s)
+	if err != nil {
+		return err
+	}
+	form, err := loadProtocolForm(c, s, tournament)
+	if err != nil {
+		return err
+	}
+	data := pageData(tournament)
+	data["Protocol"] = form
+	data["Reveal"] = c.Query("reveal") == "1"
+	if !form.Found {
+		data["Error"] = "protokół nie istnieje"
+	}
+	return view(c, "protocol", data)
 }
 
 func postProtocol(c *fiber.Ctx) error {
@@ -98,28 +128,30 @@ func postProtocolHands(c *fiber.Ctx) error {
 		return err
 	}
 	reveal := c.FormValue("reveal") == "1"
-	data, err := protocolsPage(s, tournament, reveal)
+	form, err := loadProtocolForm(c, s, tournament)
 	if err != nil {
 		return err
 	}
-	boardNo, err := pathInt(c, "board")
-	if err != nil {
-		return err
+	data := pageData(tournament)
+	data["Reveal"] = reveal
+	if !form.Found {
+		data["Protocol"] = form
+		return reject(c, "protocol", data, fmt.Errorf("protokół nie istnieje"))
 	}
 
 	north := strings.TrimSpace(c.FormValue("north"))
 	east := strings.TrimSpace(c.FormValue("east"))
 	south := strings.TrimSpace(c.FormValue("south"))
 	west := strings.TrimSpace(c.FormValue("west"))
-	data["FormHandsBoard"] = boardNo
-	data["FormNorth"] = north
-	data["FormEast"] = east
-	data["FormSouth"] = south
-	data["FormWest"] = west
+	form.North = north
+	form.East = east
+	form.South = south
+	form.West = west
+	data["Protocol"] = form
 
 	cmd := tournament_cmd.SetBoardHandsCommand{
 		TournamentId: tournament.Id,
-		BoardNo:      boardNo,
+		BoardNo:      form.BoardNo,
 		North:        north,
 		East:         east,
 		South:        south,
@@ -127,9 +159,13 @@ func postProtocolHands(c *fiber.Ctx) error {
 		Overwrite:    true,
 	}
 	if err := cmd.Execute(s.tournament); err != nil {
-		return reject(c, "protocols", data, err)
+		return reject(c, "protocol", data, err)
 	}
-	return c.Redirect(protocolsPath(tournament.Id, reveal), fiber.StatusSeeOther)
+	target := protocolPath(tournament.Id, form.BoardNo)
+	if reveal {
+		target += "?reveal=1"
+	}
+	return c.Redirect(target, fiber.StatusSeeOther)
 }
 
 func protocolsPage(s stores, tournament *tournament_domain.TournamentDto, reveal bool) (fiber.Map, error) {
@@ -160,15 +196,33 @@ func protocolsPage(s stores, tournament *tournament_domain.TournamentDto, reveal
 	data["Protocols"] = rows
 	data["FormBoard"] = ""
 	data["FormVulnerable"] = ""
-	data["FormHandsBoard"] = 0
-	data["FormNorth"] = ""
-	data["FormEast"] = ""
-	data["FormSouth"] = ""
-	data["FormWest"] = ""
 	data["ShowHands"] = showHands
 	data["CanHideHands"] = tournament.FinishedAt == ""
 	data["Reveal"] = reveal
 	return data, nil
+}
+
+func loadProtocolForm(c *fiber.Ctx, s stores, tournament *tournament_domain.TournamentDto) (protocolForm, error) {
+	boardNo, err := pathInt(c, "board")
+	if err != nil {
+		return protocolForm{}, err
+	}
+	form := protocolForm{BoardNo: boardNo}
+	protocol, err := s.boards.FindByBoardNo(&tournament.Id, boardNo)
+	if err != nil {
+		return protocolForm{}, err
+	}
+	if protocol == nil {
+		return form, nil
+	}
+	form.Found = true
+	form.Vulnerable = vulLabel(protocol.Vulnerable)
+	form.North = protocol.North
+	form.East = protocol.East
+	form.South = protocol.South
+	form.West = protocol.West
+	form.HandsSet = protocol.HandsComplete()
+	return form, nil
 }
 
 func protocolsPath(tournamentId string, reveal bool) string {
@@ -177,6 +231,10 @@ func protocolsPath(tournamentId string, reveal bool) string {
 		target += "?reveal=1"
 	}
 	return path(target)
+}
+
+func protocolPath(tournamentId string, boardNo int) string {
+	return path(fmt.Sprintf("/tournaments/%s/protocols/%d", tournamentId, boardNo))
 }
 
 func vulnerableValue(value string) (tournament_domain.Vulnerable, error) {

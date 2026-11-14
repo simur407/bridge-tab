@@ -41,10 +41,97 @@
         var link = document.getElementById("umpire-nav");
         var stack = document.getElementById("umpire-stack");
         if (!link || !stack) return;
+
+        var knownCount = null;
+        var audioCtx = null;
+        var armed = false;
+        var activeNotes = [];
+
+        function unlockAudio() {
+          try {
+            var Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return;
+            if (!audioCtx) audioCtx = new Ctx();
+            if (audioCtx.state === "suspended") audioCtx.resume();
+          } catch (e) {}
+        }
+
+        function requestNotify() {
+          if (!("Notification" in window)) return;
+          if (Notification.permission === "default") {
+            Notification.requestPermission().catch(function () {});
+          }
+        }
+
+        function armAlerts() {
+          if (armed) return;
+          armed = true;
+          unlockAudio();
+          requestNotify();
+        }
+
+        document.addEventListener("pointerdown", armAlerts, { once: true });
+        document.addEventListener("keydown", armAlerts, { once: true });
+
+        function beep() {
+          unlockAudio();
+          if (!audioCtx) return;
+          try {
+            var now = audioCtx.currentTime;
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.type = "square";
+            osc.frequency.value = 880;
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.12, now + 0.03);
+            gain.gain.setValueAtTime(0.12, now + 0.55);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.9);
+          } catch (e) {}
+        }
+
+        function desktopNotify(count, detail) {
+          if (!("Notification" in window)) return;
+          if (Notification.permission !== "granted") {
+            requestNotify();
+            return;
+          }
+          try {
+            // Keep a reference: Firefox may GC notifications and never show them.
+            // Unique tag each time: Firefox replaces same-tag notes without a banner.
+            var note = new Notification("Wezwanie sędziego", {
+              body: detail || ("Otwarte wezwania: " + count),
+              tag: "umpire-call-" + Date.now(),
+              requireInteraction: true,
+            });
+            activeNotes.push(note);
+            if (activeNotes.length > 5) {
+              var old = activeNotes.shift();
+              try { old.close(); } catch (e) {}
+            }
+            note.onclick = function () {
+              window.focus();
+              link.focus();
+              note.close();
+            };
+          } catch (e) {}
+        }
+
+        function alertNew(count) {
+          var first = stack.querySelector(".umpire-note a");
+          var detail = first ? first.textContent.trim() : "";
+          beep();
+          desktopNotify(count, detail);
+        }
+
         function apply(html) {
           stack.innerHTML = html;
           var root = stack.querySelector("[data-open]");
           var count = root ? parseInt(root.getAttribute("data-open"), 10) : 0;
+          if (isNaN(count)) count = 0;
           if (count > 0) {
             link.className = "open-calls";
             link.textContent = "Wezwania (" + count + ")";
@@ -52,7 +139,16 @@
             link.className = "";
             link.textContent = "Wezwania";
           }
+          if (knownCount === null) {
+            knownCount = count;
+          } else if (count > knownCount) {
+            alertNew(count);
+            knownCount = count;
+          } else {
+            knownCount = count;
+          }
         }
+
         function poll() {
           fetch(link.getAttribute("data-open-url"), { credentials: "same-origin" }).then(function (res) {
             if (!res.ok) return null;

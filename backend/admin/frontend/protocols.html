@@ -42,42 +42,24 @@
       <th>E</th>
       <th>S</th>
       <th>W</th>
-      <th class="noprint"></th>
       {{ end }}
+      <th class="noprint"></th>
       {{ if not .Started }}<th class="noprint"></th>{{ end }}
     </tr>
   </thead>
   <tbody>
     {{ range .Protocols }}
     <tr>
-      <td>
-        {{ .BoardNo }}
-        {{ if $.ShowHands }}
-        <form id="hands-{{ .BoardNo }}" method="post" action="{{ base }}/tournaments/{{ $.TournamentId }}/protocols/{{ .BoardNo }}/hands">
-          <input type="hidden" name="csrf" value="{{ $.CSRF }}">
-          {{ if $.Reveal }}<input type="hidden" name="reveal" value="1">{{ end }}
-        </form>
-        {{ end }}
-      </td>
+      <td>{{ .BoardNo }}</td>
       <td>{{ .Vulnerable }}</td>
       <td>{{ if .HandsSet }}wpisane{{ else }}brak{{ end }}</td>
       {{ if $.ShowHands }}
-      <td>
-        <input form="hands-{{ .BoardNo }}" name="north" value="{{ if and (eq $.FormHandsBoard .BoardNo) $.FormNorth }}{{ $.FormNorth }}{{ else }}{{ .North }}{{ end }}" placeholder="AT985.QJ32.AT.543" autocomplete="off" class="hand-input">
-      </td>
-      <td>
-        <input form="hands-{{ .BoardNo }}" name="east" value="{{ if and (eq $.FormHandsBoard .BoardNo) $.FormEast }}{{ $.FormEast }}{{ else }}{{ .East }}{{ end }}" placeholder="AT985.QJ32.AT.543" autocomplete="off" class="hand-input">
-      </td>
-      <td>
-        <input form="hands-{{ .BoardNo }}" name="south" value="{{ if and (eq $.FormHandsBoard .BoardNo) $.FormSouth }}{{ $.FormSouth }}{{ else }}{{ .South }}{{ end }}" placeholder="AT985.QJ32.AT.543" autocomplete="off" class="hand-input">
-      </td>
-      <td>
-        <input form="hands-{{ .BoardNo }}" name="west" value="{{ if and (eq $.FormHandsBoard .BoardNo) $.FormWest }}{{ $.FormWest }}{{ else }}{{ .West }}{{ end }}" placeholder="AT985.QJ32.AT.543" autocomplete="off" class="hand-input">
-      </td>
-      <td class="noprint">
-        <button form="hands-{{ .BoardNo }}" type="submit">Zapisz</button>
-      </td>
+      <td>{{ .North }}</td>
+      <td>{{ .East }}</td>
+      <td>{{ .South }}</td>
+      <td>{{ .West }}</td>
       {{ end }}
+      <td class="noprint"><a href="{{ base }}/tournaments/{{ $.TournamentId }}/protocols/{{ .BoardNo }}{{ if and $.CanHideHands $.ShowHands }}?reveal=1{{ end }}">szczegóły</a></td>
       {{ if not $.Started }}
       <td class="noprint">
         <form method="post" action="{{ base }}/tournaments/{{ $.TournamentId }}/protocols/{{ .BoardNo }}/remove" class="inline" onsubmit="return confirm('Usunąć?')">
