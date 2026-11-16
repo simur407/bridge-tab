@@ -101,6 +101,7 @@ func main() {
 	authed.Post("/tournaments/:id/tables/:tableId/remove", postRemoveTable)
 
 	authed.Get("/tournaments/:id/protocols", getProtocols)
+	authed.Get("/tournaments/:id/protocols/:board", getProtocol)
 	authed.Post("/tournaments/:id/protocols", postProtocol)
 	authed.Post("/tournaments/:id/protocols/:board/remove", postRemoveProtocol)
 	authed.Post("/tournaments/:id/protocols/:board/hands", postProtocolHands)
