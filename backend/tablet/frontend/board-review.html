@@ -23,12 +23,12 @@
 </div>
 <div class="actions">
   <div class="actions-nav">
-    <a class="button-link" href="{{ base }}/play">Wróć</a>
+    <a class="button-link" href="{{ base }}/play">Kolejne rozdanie</a>
     <button type="button"
             hx-get="{{ base }}/play/boards/{{ .DealNo }}/results"
             hx-target="#other-results"
             hx-swap="innerHTML">
-      Pokaż wyniki
+      Wyniki innych
     </button>
   </div>
 </div>
