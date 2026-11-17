@@ -30,7 +30,7 @@ func getHome(c *fiber.Ctx) error {
 		})
 	}
 	if tournament.StartedAt == "" {
-		return view(c, "waiting", waitingData(tournament, a))
+		return playView(c, "waiting", waitingData(tournament, a))
 	}
 	if isHTMX(c) {
 		c.Set("HX-Redirect", path("/play"))
@@ -202,6 +202,7 @@ func waitingData(tournament *tournament_domain.TournamentDto, a assignment) fibe
 		"TournamentId":   tournament.Id,
 		"TournamentName": tournament.Name,
 		"TableNumber":    a.TableNumber,
+		"Waiting":        true,
 	}
 }
 
