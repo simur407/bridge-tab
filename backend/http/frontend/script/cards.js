@@ -7,12 +7,25 @@
   var seats = ["N", "E", "S", "W"];
   var seatNames = { N: "North", E: "East", S: "South", W: "West" };
   var suits = [
-    { code: "S", symbol: "♠", cls: "club" },
-    { code: "H", symbol: "♥", cls: "red" },
-    { code: "D", symbol: "♦", cls: "red" },
-    { code: "C", symbol: "♣", cls: "club" }
+    { code: "S", symbol: "♠", cls: "club", handCls: "hand-suit-S" },
+    { code: "H", symbol: "♥", cls: "red", handCls: "hand-suit-H" },
+    { code: "D", symbol: "♦", cls: "red", handCls: "hand-suit-D" },
+    { code: "C", symbol: "♣", cls: "club", handCls: "hand-suit-C" }
   ];
   var ranks = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"];
+
+  var phases = [{ type: "intro" }];
+  var seatIndex;
+  var suitIndex;
+  for (seatIndex = 0; seatIndex < seats.length; seatIndex++) {
+    if (seatIndex > 0) {
+      phases.push({ type: "next", seatIndex: seatIndex });
+    }
+    for (suitIndex = 0; suitIndex < 4; suitIndex++) {
+      phases.push({ type: "suit", seatIndex: seatIndex, suitIndex: suitIndex });
+    }
+  }
+  phases.push({ type: "summary" });
 
   var stepIndex = 0;
   var westReady = false;
@@ -75,6 +88,21 @@
     westReady = true;
   }
 
+  function clearWestSelection() {
+    westReady = false;
+    selections.W = [[], [], [], []];
+  }
+
+  function shouldKeepWest(phase) {
+    if (!phase) {
+      return false;
+    }
+    if (phase.type === "summary") {
+      return true;
+    }
+    return phase.type === "suit" && seats[phase.seatIndex] === "W";
+  }
+
   function setHidden(el, on) {
     if (!el) {
       return;
@@ -92,8 +120,16 @@
     });
   }
 
+  function displayRank(rank) {
+    return rank === "T" ? "10" : rank;
+  }
+
   function toggleRank(suitIndex, rank, checked) {
-    var seat = seats[Math.floor(stepIndex / 4)];
+    var phase = phases[stepIndex];
+    if (!phase || phase.type !== "suit") {
+      return;
+    }
+    var seat = seats[phase.seatIndex];
     var list = selections[seat][suitIndex];
     var idx = list.indexOf(rank);
     if (checked && idx < 0) {
@@ -106,20 +142,134 @@
     updateCount();
   }
 
-  function updateCount() {
-    var seat = seats[Math.floor(stepIndex / 4)];
-    var suitIndex = stepIndex % 4;
-    var suitCount = selections[seat][suitIndex].length;
-    var total = seatCardCount(seat);
-    countEl.innerHTML = "Kolor: " + suitCount + " · ręka: " + total + " / 13";
+  function seatsProgressHtml(currentSeatIndex) {
+    var seatsHtml = "";
+    var i;
+    for (i = 0; i < seats.length; i++) {
+      var seatClass = "cards-seat";
+      if (i < currentSeatIndex) {
+        seatClass += " cards-seat-done";
+      } else if (i === currentSeatIndex) {
+        seatClass += " cards-seat-current";
+      } else {
+        seatClass += " cards-seat-todo";
+      }
+      seatsHtml += '<span class="' + seatClass + '">' + seatNames[seats[i]] + "</span>";
+    }
+    return seatsHtml;
   }
 
-  function renderStep() {
-    var seatIndex = Math.floor(stepIndex / 4);
-    var suitIndex = stepIndex % 4;
-    var seat = seats[seatIndex];
-    var suit = suits[suitIndex];
-    var used = usedCardsBefore(seatIndex);
+  function updateCount() {
+    var phase = phases[stepIndex];
+    if (!phase || phase.type !== "suit") {
+      countEl.innerHTML = "";
+      return;
+    }
+    var seat = seats[phase.seatIndex];
+    var suitCount = selections[seat][phase.suitIndex].length;
+    var total = seatCardCount(seat);
+    var text = "Kolor: " + suitCount + " · ręka: " + total + " / 13";
+    if (seat === "W") {
+      text += " · karty dobrane automatycznie";
+    }
+    countEl.innerHTML = text;
+  }
+
+  function formatHandHtml(seat) {
+    var parts = [];
+    var suit;
+    for (suit = 0; suit < 4; suit++) {
+      var list = selections[seat][suit];
+      if (!list.length) {
+        continue;
+      }
+      var ranksHtml = [];
+      var i;
+      for (i = 0; i < list.length; i++) {
+        ranksHtml.push(displayRank(list[i]));
+      }
+      parts.push(
+        '<span class="hand-suit ' + suits[suit].handCls + '">' +
+          suits[suit].symbol +
+          " " +
+          ranksHtml.join(" ") +
+          "</span>"
+      );
+    }
+    return parts.join(" ");
+  }
+
+  function renderInfoPanel(messageHtml) {
+    gridEl.innerHTML = '<div class="cards-info">' + messageHtml + "</div>";
+  }
+
+  function renderIntro() {
+    titleEl.innerHTML =
+      '<span class="cards-heading-label">Zapis kart</span>' +
+      '<span class="cards-heading-seats">' +
+      seatsProgressHtml(0) +
+      "</span>";
+    countEl.innerHTML = "";
+    renderInfoPanel(
+      "<p>Zapisujemy karty rozdania.</p>" +
+        "<p class=\"cards-info-emphasis\">Zaczynamy od <strong>North</strong>.</p>" +
+        "<p class=\"cards-info-hint\">Jeśli w danym kolorze nie ma kart, kliknij <strong>Dalej</strong>, żeby go pominąć.</p>"
+    );
+    setHidden(backBtn, true);
+    nextBtn.innerHTML = "Dalej";
+  }
+
+  function renderNext(phase) {
+    var seat = seats[phase.seatIndex];
+    var name = seatNames[seat];
+    var detail =
+      seat === "W"
+        ? "<p>Karty West są już wstępnie zaznaczone — to pozostałe karty po innych rękach. Sprawdź je i popraw, jeśli trzeba.</p>"
+        : "<p>Teraz wpisz karty " + name + ".</p>";
+    titleEl.innerHTML =
+      '<span class="cards-heading-label">Kolejna ręka</span>' +
+      '<span class="cards-heading-seats">' +
+      seatsProgressHtml(phase.seatIndex) +
+      "</span>";
+    countEl.innerHTML = "";
+    renderInfoPanel(
+      "<p class=\"cards-info-emphasis\">Następny: <strong>" + name + "</strong></p>" + detail
+    );
+    setHidden(backBtn, false);
+    nextBtn.innerHTML = "Dalej";
+  }
+
+  function renderSummary() {
+    ensureWestSelection();
+    var html = '<div class="hand-summary">';
+    var i;
+    for (i = 0; i < seats.length; i++) {
+      var seat = seats[i];
+      html +=
+        '<div class="hand-summary-seat">' +
+        '<div class="hand-summary-name">' +
+        seatNames[seat] +
+        ":</div>" +
+        '<div class="hand-summary-cards">' +
+        formatHandHtml(seat) +
+        "</div></div>";
+    }
+    html += "</div>";
+    titleEl.innerHTML =
+      '<span class="cards-heading-label">Podsumowanie</span>' +
+      '<span class="cards-heading-seats">' +
+      seatsProgressHtml(seats.length) +
+      "</span>";
+    countEl.innerHTML = "Sprawdź karty przed zapisem.";
+    gridEl.innerHTML = html;
+    setHidden(backBtn, false);
+    nextBtn.innerHTML = "Zapisz";
+  }
+
+  function renderSuit(phase) {
+    var seat = seats[phase.seatIndex];
+    var suit = suits[phase.suitIndex];
+    var used = usedCardsBefore(phase.seatIndex);
     var selected = {};
     var i;
 
@@ -127,25 +277,19 @@
       ensureWestSelection();
     }
 
-    for (i = 0; i < selections[seat][suitIndex].length; i++) {
-      selected[selections[seat][suitIndex][i]] = true;
+    for (i = 0; i < selections[seat][phase.suitIndex].length; i++) {
+      selected[selections[seat][phase.suitIndex][i]] = true;
     }
 
-    var seatsHtml = "";
-    for (i = 0; i < seats.length; i++) {
-      var seatClass = "cards-seat";
-      if (i < seatIndex) {
-        seatClass += " cards-seat-done";
-      } else if (i === seatIndex) {
-        seatClass += " cards-seat-current";
-      } else {
-        seatClass += " cards-seat-todo";
-      }
-      seatsHtml += '<span class="' + seatClass + '">' + seatNames[seats[i]] + "</span>";
-    }
     titleEl.innerHTML =
-      '<span class="cards-heading-label">Karty <span class="suit ' + suit.cls + '">' + suit.symbol + "</span></span>" +
-      '<span class="cards-heading-seats">' + seatsHtml + "</span>";
+      '<span class="cards-heading-label">Karty <span class="suit ' +
+      suit.cls +
+      '">' +
+      suit.symbol +
+      "</span></span>" +
+      '<span class="cards-heading-seats">' +
+      seatsProgressHtml(phase.seatIndex) +
+      "</span>";
     gridEl.innerHTML = "";
 
     var rows = [ranks.slice(0, 7), ranks.slice(7)];
@@ -155,7 +299,7 @@
       row.className = "card-row";
       for (i = 0; i < rows[rowIndex].length; i++) {
         var rank = rows[rowIndex][i];
-        var key = cardKey(suitIndex, rank);
+        var key = cardKey(phase.suitIndex, rank);
         var id = "card-" + seat + "-" + suit.code + "-" + rank;
         var wrap = document.createElement("div");
         wrap.className = "card-choice";
@@ -173,13 +317,14 @@
         var label = document.createElement("label");
         label.htmlFor = id;
         label.className = suit.cls;
-        label.innerHTML = (rank === "T" ? "10" : rank) + '<span class="suit ' + suit.cls + '">' + suit.symbol + "</span>";
+        label.innerHTML =
+          displayRank(rank) + '<span class="suit ' + suit.cls + '">' + suit.symbol + "</span>";
 
         (function (sIdx, rk, inp) {
           input.onchange = function () {
             toggleRank(sIdx, rk, inp.checked);
           };
-        })(suitIndex, rank, input);
+        })(phase.suitIndex, rank, input);
 
         wrap.appendChild(input);
         wrap.appendChild(label);
@@ -187,9 +332,26 @@
       }
       gridEl.appendChild(row);
     }
-    setHidden(backBtn, stepIndex === 0);
-    nextBtn.innerHTML = stepIndex === 15 ? "Zapisz" : "Dalej";
+    setHidden(backBtn, false);
+    nextBtn.innerHTML = "Dalej";
     updateCount();
+  }
+
+  function renderStep() {
+    var phase = phases[stepIndex];
+    if (phase.type === "intro") {
+      renderIntro();
+      return;
+    }
+    if (phase.type === "next") {
+      renderNext(phase);
+      return;
+    }
+    if (phase.type === "summary") {
+      renderSummary();
+      return;
+    }
+    renderSuit(phase);
   }
 
   function serializeHand(seat) {
@@ -215,22 +377,24 @@
       return;
     }
     stepIndex -= 1;
-    if (stepIndex < 12) {
-      westReady = false;
-      selections.W = [[], [], [], []];
+    if (!shouldKeepWest(phases[stepIndex])) {
+      clearWestSelection();
     }
     renderStep();
   };
 
   nextBtn.onclick = function () {
-    var seatIndex = Math.floor(stepIndex / 4);
-    var suitIndex = stepIndex % 4;
-    var seat = seats[seatIndex];
-    if (suitIndex === 3 && seatCardCount(seat) !== 13) {
-      window.alert("Ręka " + seatNames[seat] + " musi mieć dokładnie 13 kart (teraz: " + seatCardCount(seat) + ").");
-      return;
+    var phase = phases[stepIndex];
+    if (phase.type === "suit" && phase.suitIndex === 3) {
+      var seat = seats[phase.seatIndex];
+      if (seatCardCount(seat) !== 13) {
+        window.alert(
+          "Ręka " + seatNames[seat] + " musi mieć dokładnie 13 kart (teraz: " + seatCardCount(seat) + ")."
+        );
+        return;
+      }
     }
-    if (stepIndex === 15) {
+    if (phase.type === "summary") {
       finish();
       return;
     }
