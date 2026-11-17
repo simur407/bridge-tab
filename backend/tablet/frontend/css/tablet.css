@@ -171,13 +171,22 @@ button.accept {
 
 .end-screen {
   position: absolute;
-  top: 50%;
-  right: 1.5rem;
-  left: 1.5rem;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   margin: 0;
+  padding: 0 1.5rem;
   text-align: center;
-  -webkit-transform: translateY(-50%);
-  transform: translateY(-50%);
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
+  -webkit-box-pack: center;
+  justify-content: center;
+  -webkit-box-align: center;
+  align-items: center;
 }
 
 .end-kicker {
@@ -204,6 +213,64 @@ button.accept {
 .end-name {
   margin: 0.85rem 0 0;
   font-size: 1.45rem;
+}
+
+.wait-suits {
+  margin: 1rem 0 0;
+  font-size: 1.15rem;
+  line-height: 1.2;
+}
+
+.wait-suit {
+  position: relative;
+  top: 0;
+  display: inline-block;
+  margin: 0 0.22em;
+  -webkit-animation: wait-suit-hop 1.6s ease-in-out infinite;
+  animation: wait-suit-hop 1.6s ease-in-out infinite;
+}
+
+.wait-suits .wait-suit:nth-child(1) {
+  -webkit-animation-delay: 0s;
+  animation-delay: 0s;
+}
+
+.wait-suits .wait-suit:nth-child(2) {
+  -webkit-animation-delay: 0.4s;
+  animation-delay: 0.4s;
+}
+
+.wait-suits .wait-suit:nth-child(3) {
+  -webkit-animation-delay: 0.8s;
+  animation-delay: 0.8s;
+}
+
+.wait-suits .wait-suit:nth-child(4) {
+  -webkit-animation-delay: 1.2s;
+  animation-delay: 1.2s;
+}
+
+/* top (not transform) so the hop runs under Gecko 68. */
+@-webkit-keyframes wait-suit-hop {
+  0%,
+  25%,
+  100% {
+    top: 0;
+  }
+  12% {
+    top: -0.55em;
+  }
+}
+
+@keyframes wait-suit-hop {
+  0%,
+  25%,
+  100% {
+    top: 0;
+  }
+  12% {
+    top: -0.55em;
+  }
 }
 
 /* The entry fills the center. Each step grows so its buttons share the bottom

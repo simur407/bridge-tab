@@ -15,8 +15,8 @@
     <link rel="stylesheet" href="{{ base }}/css/tablet.css">
   </head>
   <body class="play-body">
-    <div class="play-frame{{ if or .Finished (and .AllDone (not .Held)) }} ended{{ end }}" aria-label="{{ if .Finished }}Turniej zakończony{{ else if and .AllDone (not .Held) }}Wszystkie rundy zakończone{{ else }}Stół, północ u góry{{ end }}">
-      {{ if not (or .Finished (and .AllDone (not .Held))) }}
+    <div class="play-frame{{ if or .Finished .Waiting (and .AllDone (not .Held)) }} ended{{ end }}" aria-label="{{ if .Finished }}Turniej zakończony{{ else if .Waiting }}Oczekiwanie na start{{ else if and .AllDone (not .Held) }}Wszystkie rundy zakończone{{ else }}Stół, północ u góry{{ end }}">
+      {{ if not (or .Finished .Waiting (and .AllDone (not .Held))) }}
       <div class="dir n{{ if .ShowVulnerability }} {{ if .NsVulnerable }}vul{{ else }}nv{{ end }}{{ end }}">
         {{ if .RoundNo }}
         <div id="umpire-call" class="umpire-call idle" aria-live="polite">
@@ -43,7 +43,7 @@
         {{ end }}
         {{embed}}
       </main>
-      {{ if not (or .Finished (and .AllDone (not .Held))) }}
+      {{ if not (or .Finished .Waiting (and .AllDone (not .Held))) }}
       <div class="dir e{{ if .ShowVulnerability }} {{ if .EwVulnerable }}vul{{ else }}nv{{ end }}{{ end }}">
         <span class="seat">E</span>
         <span class="team" id="ew-team-e">{{ .EwTeamLabel }}</span>
