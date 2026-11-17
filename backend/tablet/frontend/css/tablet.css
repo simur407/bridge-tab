@@ -741,6 +741,78 @@ button.accept {
   color: #7a9a7a;
 }
 
+.cards-info {
+  margin-top: 0.75rem;
+  padding: 1.1rem 1rem;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1.15rem;
+  line-height: 1.45;
+  color: #222;
+}
+
+.cards-info p {
+  margin: 0;
+}
+
+.cards-info p + p {
+  margin-top: 0.55rem;
+}
+
+.cards-info-emphasis {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.cards-info-hint {
+  margin-top: 0.85rem;
+  font-size: 1rem;
+  color: #555;
+}
+
+.hand-summary {
+  margin-top: 0.5rem;
+}
+
+.hand-summary-seat + .hand-summary-seat {
+  margin-top: 0.85rem;
+}
+
+.hand-summary-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.hand-summary-cards {
+  margin-top: 0.2rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  line-height: 1.45;
+}
+
+.hand-suit + .hand-suit {
+  margin-left: 0.55rem;
+}
+
+.hand-suit-S {
+  color: #111;
+}
+
+.hand-suit-H {
+  color: #c00;
+}
+
+.hand-suit-D {
+  color: #e67e22;
+}
+
+.hand-suit-C {
+  color: #2e7d32;
+}
+
 .card-grid {
   width: 100%;
 }

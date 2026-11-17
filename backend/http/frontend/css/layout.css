@@ -609,6 +609,78 @@ h3 {
   color: #7a9a7a;
 }
 
+.team-play .cards-info {
+  margin-top: 0.75rem;
+  padding: 1.1rem 1rem;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1.15rem;
+  line-height: 1.45;
+  color: #222;
+}
+
+.team-play .cards-info p {
+  margin: 0;
+}
+
+.team-play .cards-info p + p {
+  margin-top: 0.55rem;
+}
+
+.team-play .cards-info-emphasis {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.team-play .cards-info-hint {
+  margin-top: 0.85rem;
+  font-size: 1rem;
+  color: #555;
+}
+
+.team-play .hand-summary {
+  margin-top: 0.5rem;
+}
+
+.team-play .hand-summary-seat + .hand-summary-seat {
+  margin-top: 0.85rem;
+}
+
+.team-play .hand-summary-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.team-play .hand-summary-cards {
+  margin-top: 0.2rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  line-height: 1.45;
+}
+
+.team-play .hand-suit + .hand-suit {
+  margin-left: 0.55rem;
+}
+
+.team-play .hand-suit-S {
+  color: #111;
+}
+
+.team-play .hand-suit-H {
+  color: #c00;
+}
+
+.team-play .hand-suit-D {
+  color: #e67e22;
+}
+
+.team-play .hand-suit-C {
+  color: #2e7d32;
+}
+
 .team-play .card-grid {
   width: 100%;
 }
