@@ -41,6 +41,13 @@ type BoardResultEdited struct {
 	OpeningLead   string
 }
 
+type BoardResultReset struct {
+	PlaySessionId PlaySessionId
+	DealNo        int
+	NsTeamId      TeamId
+	EwTeamId      TeamId
+}
+
 var ErrBoardResultNotFound = errors.New("board result not found")
 var ErrBoardResultAlreadyRecorded = errors.New("board result already recorded")
 
@@ -90,6 +97,15 @@ func (b *BoardResult) Edit(contract string, tricks int, declarer string, opening
 		Tricks:        tricks,
 		Declarer:      declarer,
 		OpeningLead:   openingLead,
+	})
+}
+
+func (b *BoardResult) Reset() {
+	b.events = append(b.events, BoardResultReset{
+		PlaySessionId: b.State.PlaySessionId,
+		DealNo:        b.State.DealNo,
+		NsTeamId:      b.State.NsTeamId,
+		EwTeamId:      b.State.EwTeamId,
 	})
 }
 

@@ -54,6 +54,8 @@ func (r *PostgresBoardResultRepository) Save(result *domain.BoardResult) error {
 			err = r.boardResultRecorded(event)
 		case domain.BoardResultEdited:
 			err = r.boardResultEdited(event)
+		case domain.BoardResultReset:
+			err = r.boardResultReset(event)
 		default:
 			return errors.New("unknown event")
 		}
@@ -84,6 +86,15 @@ func (r *PostgresBoardResultRepository) boardResultEdited(event domain.BoardResu
 		WHERE play_session_id = $1 AND deal_no = $2 AND ns_team_id = $3 AND ew_team_id = $4`,
 		event.PlaySessionId, event.DealNo, event.NsTeamId, event.EwTeamId,
 		event.Contract, event.Tricks, event.Declarer, event.OpeningLead,
+	)
+	return err
+}
+
+func (r *PostgresBoardResultRepository) boardResultReset(event domain.BoardResultReset) error {
+	_, err := r.Tx.ExecContext(r.Ctx, `
+		DELETE FROM play.board_result
+		WHERE play_session_id = $1 AND deal_no = $2 AND ns_team_id = $3 AND ew_team_id = $4`,
+		event.PlaySessionId, event.DealNo, event.NsTeamId, event.EwTeamId,
 	)
 	return err
 }

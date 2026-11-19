@@ -54,6 +54,15 @@ func (r *PostgresPlayedResultRepository) Save(id domain.TournamentScoreId, resul
 	return err
 }
 
+func (r *PostgresPlayedResultRepository) Delete(id domain.TournamentScoreId, dealNo int, nsTeamId, ewTeamId string) error {
+	_, err := r.Tx.ExecContext(r.Ctx, `
+		DELETE FROM score_registration.played_result
+		WHERE tournament_id = $1 AND deal_no = $2 AND ns_team_id = $3 AND ew_team_id = $4`,
+		id, dealNo, nsTeamId, ewTeamId,
+	)
+	return err
+}
+
 func (r *PostgresPlayedResultRepository) Find(id domain.TournamentScoreId) ([]domain.PlayedResult, error) {
 	rows, err := r.Tx.QueryContext(r.Ctx, `
 		SELECT deal_no, ns_team_id, ew_team_id, contract, tricks, declarer, ns_vulnerable, ew_vulnerable

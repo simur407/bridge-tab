@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	play_app "bridge-tab/internal/play/application"
 	tournament_cmd "bridge-tab/internal/tournament-management/application/command"
 	tournament_query "bridge-tab/internal/tournament-management/application/query"
 	tournament_domain "bridge-tab/internal/tournament-management/domain"
@@ -159,6 +160,38 @@ func postProtocolHands(c *fiber.Ctx) error {
 		Overwrite:    true,
 	}
 	if err := cmd.Execute(s.tournament); err != nil {
+		return reject(c, "protocol", data, err)
+	}
+	target := protocolPath(tournament.Id, form.BoardNo)
+	if reveal {
+		target += "?reveal=1"
+	}
+	return c.Redirect(target, fiber.StatusSeeOther)
+}
+
+func postResetProtocol(c *fiber.Ctx) error {
+	s := newStores(c)
+	tournament, err := loadTournament(c, s)
+	if err != nil {
+		return err
+	}
+	reveal := c.FormValue("reveal") == "1"
+	form, err := loadProtocolForm(c, s, tournament)
+	if err != nil {
+		return err
+	}
+	data := pageData(tournament)
+	data["Reveal"] = reveal
+	data["Protocol"] = form
+	if !form.Found {
+		return reject(c, "protocol", data, fmt.Errorf("protokół nie istnieje"))
+	}
+
+	cmd := play_app.ResetDealResultsCommand{
+		PlaySessionId: tournament.Id,
+		DealNo:        form.BoardNo,
+	}
+	if err := cmd.Execute(s.boardResult, s.boardResults, s.played, s.scores); err != nil {
 		return reject(c, "protocol", data, err)
 	}
 	target := protocolPath(tournament.Id, form.BoardNo)

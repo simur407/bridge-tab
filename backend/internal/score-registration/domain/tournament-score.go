@@ -170,11 +170,13 @@ func (t *TournamentScore) Commit() {
 type TournamentScoreRepository interface {
 	Save(score *TournamentScore) error
 	Load(id *TournamentScoreId, method ScoringMethodName) (*TournamentScore, error)
+	Delete(id TournamentScoreId, method ScoringMethodName) error
 }
 
 type PlayedResultRepository interface {
 	Replace(id TournamentScoreId, results []PlayedResult) error
 	Save(id TournamentScoreId, result PlayedResult) error
+	Delete(id TournamentScoreId, dealNo int, nsTeamId, ewTeamId string) error
 	Find(id TournamentScoreId) ([]PlayedResult, error)
 }
 

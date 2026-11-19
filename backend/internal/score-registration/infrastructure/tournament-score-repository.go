@@ -66,6 +66,13 @@ func (r *PostgresTournamentScoreRepository) Load(id *domain.TournamentScoreId, m
 	return &score, nil
 }
 
+func (r *PostgresTournamentScoreRepository) Delete(id domain.TournamentScoreId, method domain.ScoringMethodName) error {
+	_, err := r.Tx.ExecContext(r.Ctx, `
+		DELETE FROM score_registration.tournament_score
+		WHERE tournament_id = $1 AND method = $2`, id, method)
+	return err
+}
+
 func (r *PostgresTournamentScoreRepository) Save(score *domain.TournamentScore) error {
 	for _, event := range score.GetEvents() {
 		switch event := event.(type) {

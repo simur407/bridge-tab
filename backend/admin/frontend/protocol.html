@@ -25,4 +25,9 @@
   <p class="hint">Format: AT985.QJ32.AT.543 (♠♥♦♣).</p>
   <button type="submit">{{ if .Protocol.HandsSet }}Popraw karty{{ else }}Zapisz karty{{ end }}</button>
 </form>
+<form method="post" action="{{ base }}/tournaments/{{ .TournamentId }}/protocols/{{ .Protocol.BoardNo }}/reset" class="noprint" onsubmit="return confirm('Zresetować rozdanie? Usunie wszystkie wyniki tego rozdania.')">
+  <input type="hidden" name="csrf" value="{{ .CSRF }}">
+  {{ if .Reveal }}<input type="hidden" name="reveal" value="1">{{ end }}
+  <button type="submit">Reset</button>
+</form>
 {{ end }}
