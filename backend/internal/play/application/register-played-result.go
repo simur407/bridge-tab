@@ -37,6 +37,23 @@ func registerPlayedResult(
 	return nil
 }
 
+func unregisterPlayedResult(
+	playSessionId string,
+	state domain.BoardResultState,
+	playedResultRepository score_domain.PlayedResultRepository,
+) error {
+	tournamentId := score_domain.TournamentScoreId(playSessionId)
+	if err := playedResultRepository.Delete(
+		tournamentId,
+		state.DealNo,
+		string(state.NsTeamId),
+		string(state.EwTeamId),
+	); err != nil {
+		return fmt.Errorf("unregister played result: %w", err)
+	}
+	return nil
+}
+
 func vulnerabilityFlags(vulnerable string) (nsVulnerable bool, ewVulnerable bool) {
 	switch vulnerable {
 	case "NS":
